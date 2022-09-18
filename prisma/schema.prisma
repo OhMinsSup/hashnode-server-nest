@@ -1,0 +1,68 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["interactiveTransactions"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             Int                 @id @default(autoincrement())
+  email          String              @unique // 이메일 max 255
+  username       String              @unique // 유저명 max 255
+  passwordHash   String // 비밀번호
+  createdAt      DateTime            @default(now()) // 생성일
+  updatedAt      DateTime            @updatedAt // 업데이트일
+  deletedAt      DateTime? // 삭제일 
+  authentication UserAuthentication? // 인증정보
+  profile        UserProfile? // 프로필
+}
+
+model UserProfile {
+  id                  Int                   @id @default(autoincrement())
+  userId              Int                   @unique
+  name                String // max 255
+  bio                 String?
+  avatarUrl           String?
+  availableText       String? // max 140
+  location            String?
+  website             String? // string object array
+  createdAt           DateTime              @default(now()) // 생성일
+  updatedAt           DateTime              @updatedAt // 업데이트일
+  deletedAt           DateTime? // 삭제일 
+  user                User                  @relation(fields: [userId], references: [id])
+  profileOnTechStacks ProfileOnTechStacks[]
+}
+
+model UserAuthentication {
+  id              Int       @id @default(autoincrement())
+  userId          Int       @unique // 유저 아이디
+  lastValidatedAt DateTime // 마지막으로 검증된 날짜
+  expiresAt       DateTime // 만료시간
+  createdAt       DateTime  @default(now()) // 생성일
+  updatedAt       DateTime  @updatedAt // 업데이트일
+  deletedAt       DateTime? // 삭제일
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model ProfileOnTechStacks {
+  id          Int         @id @default(autoincrement())
+  profile     UserProfile @relation(fields: [profileId], references: [id]) // 스토리
+  techStack   TechStack   @relation(fields: [techStackId], references: [id]) // 태그
+  profileId   Int // 프로필 아이디
+  techStackId Int // 기술 스택 아이디
+}
+
+model TechStack {
+  id                  Int                   @id @default(autoincrement())
+  name                String                @unique // 기술스택 이름
+  createdAt           DateTime              @default(now()) // 생성일
+  updatedAt           DateTime              @updatedAt // 업데이트일
+  deletedAt           DateTime? // 삭제일 
+  profileOnTechStacks ProfileOnTechStacks[]
+}
