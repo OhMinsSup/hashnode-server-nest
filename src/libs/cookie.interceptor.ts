@@ -34,7 +34,7 @@ export class CookiInterceptor<T> implements NestInterceptor<T, Response<T>> {
               httpOnly: true,
               domain: this.config.get('COOKIE_DOMAIN'),
               path: this.config.get('COOKIE_PATH'),
-              maxAge: 1000 * 60 * 60 * 24 * 30,
+              maxAge: 1000 * 60 * 60 * 24 * 7,
               sameSite: this.config.get('COOKIE_SAMESITE'),
             },
           );

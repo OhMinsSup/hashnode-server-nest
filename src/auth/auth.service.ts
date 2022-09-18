@@ -80,7 +80,7 @@ export class AuthService {
       throw new BadRequestException({
         status: EXCEPTION_CODE.ALREADY_EXIST,
         message: [message],
-        error: 'Already Exists',
+        error: exists.email === input.email ? 'email' : 'username',
       });
     }
 
