@@ -6,7 +6,8 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
-import { CommonResponseDto } from 'src/libs/http-response.dto';
+
+// body
 
 export class CreateRequestDto {
   @IsEmail()
@@ -52,43 +53,4 @@ export class CreateRequestDto {
     required: true,
   })
   password: string;
-}
-
-// signup DTO
-
-export class OkResponseDto {
-  @ApiProperty({
-    type: 'number',
-  })
-  userId: number;
-
-  @ApiProperty({
-    type: 'string',
-  })
-  accessToken: string | null;
-}
-
-export class CreateOkResponseDto extends CommonResponseDto {
-  @ApiProperty({
-    type: OkResponseDto,
-  })
-  result: OkResponseDto;
-}
-
-export class CreateBadRequestResponseDto extends CommonResponseDto {
-  @ApiProperty({
-    type: 'string',
-  })
-  message: string;
-
-  @ApiProperty({
-    type: 'string',
-  })
-  error: string;
-
-  @ApiProperty({
-    type: 'object',
-    nullable: true,
-  })
-  result: Record<string, any> | null;
 }

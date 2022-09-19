@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { addDays } from 'date-fns';
 import * as bcrypt from 'bcrypt';
@@ -12,7 +16,7 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // dto
 import { CreateRequestDto } from './dto/create.request.dto';
-
+import { SigninRequestDto } from './dto/signin.request.dto';
 // types
 import type { UserAuthentication } from '@prisma/client';
 
@@ -24,7 +28,7 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
-  async generateToken(
+  private async _generateToken(
     userId: number,
     authentication?: UserAuthentication | null,
   ) {
@@ -49,6 +53,51 @@ export class AuthService {
 
     return {
       accessToken: token,
+    };
+  }
+
+  /**
+   * @description 로그인
+   * @param {SigninRequestDto} input
+   */
+  async signin(input: SigninRequestDto) {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: input.email,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException({
+        status: EXCEPTION_CODE.ALREADY_EXIST,
+        message: ['가입되지 않은 이메일입니다.'],
+        error: 'email',
+      });
+    }
+
+    const passwordMatch = await bcrypt.compare(
+      input.password,
+      user.passwordHash,
+    );
+
+    if (!passwordMatch) {
+      throw new BadRequestException({
+        status: EXCEPTION_CODE.INCORRECT_PASSWORD,
+        message: ['비밀번호가 일치하지 않습니다.'],
+        error: 'password',
+      });
+    }
+
+    const { accessToken } = await this._generateToken(user.id);
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        userId: user.id,
+        accessToken,
+      },
     };
   }
 
@@ -104,7 +153,7 @@ export class AuthService {
       },
     });
 
-    const { accessToken } = await this.generateToken(user.id);
+    const { accessToken } = await this._generateToken(user.id);
 
     return {
       resultCode: EXCEPTION_CODE.OK,

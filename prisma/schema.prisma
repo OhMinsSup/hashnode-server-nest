@@ -12,15 +12,15 @@ datasource db {
 }
 
 model User {
-  id             Int                 @id @default(autoincrement())
-  email          String              @unique // 이메일 max 255
-  username       String              @unique // 유저명 max 255
-  passwordHash   String // 비밀번호
-  createdAt      DateTime            @default(now()) // 생성일
-  updatedAt      DateTime            @updatedAt // 업데이트일
-  deletedAt      DateTime? // 삭제일 
-  authentication UserAuthentication? // 인증정보
-  profile        UserProfile? // 프로필
+  id              Int                  @id @default(autoincrement())
+  email           String               @unique // 이메일 max 255
+  username        String               @unique // 유저명 max 255
+  passwordHash    String // 비밀번호
+  createdAt       DateTime             @default(now()) // 생성일
+  updatedAt       DateTime             @updatedAt // 업데이트일
+  deletedAt       DateTime? // 삭제일 
+  profile         UserProfile? // 프로필
+  authentications UserAuthentication[] // 인증정보
 }
 
 model UserProfile {
@@ -41,13 +41,13 @@ model UserProfile {
 
 model UserAuthentication {
   id              Int       @id @default(autoincrement())
-  userId          Int       @unique // 유저 아이디
   lastValidatedAt DateTime // 마지막으로 검증된 날짜
   expiresAt       DateTime // 만료시간
   createdAt       DateTime  @default(now()) // 생성일
   updatedAt       DateTime  @updatedAt // 업데이트일
   deletedAt       DateTime? // 삭제일
   user            User      @relation(fields: [userId], references: [id])
+  userId          Int
 }
 
 model ProfileOnTechStacks {
