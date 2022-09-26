@@ -21,6 +21,7 @@ model User {
   deletedAt       DateTime? // 삭제일 
   profile         UserProfile? // 프로필
   authentications UserAuthentication[] // 인증정보
+  posts           Post[] // 포스트 정보
 }
 
 model UserProfile {
@@ -65,4 +66,59 @@ model TechStack {
   updatedAt           DateTime              @updatedAt // 업데이트일
   deletedAt           DateTime? // 삭제일 
   profileOnTechStacks ProfileOnTechStacks[]
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String // max 255
+  subTitle  String? // max 255
+  content   String // max 255
+  thumbnail String?
+  tags      Tag[]
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일 
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  postsTags PostsTags[]
+  postLike  PostLike[]
+
+  @@index([createdAt(sort: Desc)])
+}
+
+model Tag {
+  id        Int         @id @default(autoincrement())
+  name      String      @unique
+  post      Post?       @relation(fields: [postId], references: [id])
+  postId    Int?
+  postsTags PostsTags[]
+
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일 
+}
+
+model PostsTags {
+  post   Post @relation(fields: [postId], references: [id])
+  postId Int
+  tag    Tag  @relation(fields: [tagId], references: [id])
+  tagId  Int
+
+  @@id([postId, tagId])
+  @@index(tagId)
+  @@index(postId)
+}
+
+model PostLike {
+  id        Int      @id @default(autoincrement())
+  postId    Int
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index(postId)
 }
