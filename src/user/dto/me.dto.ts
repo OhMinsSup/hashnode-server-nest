@@ -1,45 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { CommonResponseDto } from 'src/libs/http-response.dto';
+import { MeEntity } from './common.response.dto';
 
-export class MeDto {
-  @ApiProperty({
-    description: '아이디',
-    type: 'number',
-  })
-  id: number;
+// 200 response
 
+export class MeOkResponseDto extends CommonResponseDto {
   @ApiProperty({
-    example: 'tester@email.com',
-    description: '이메일',
-    type: 'string',
+    type: MeEntity,
   })
-  email: string;
-
-  @ApiProperty({
-    example: 'tester',
-    description: '유저명',
-    type: 'string',
-  })
-  username: string;
-}
-
-export class MeOkResponseDto {
-  @ApiProperty({
-    type: 'number',
-  })
-  resultCode: number;
-
-  @ApiProperty({
-    type: 'string',
-  })
-  message: string | null;
-
-  @ApiProperty({
-    type: 'string',
-  })
-  error: string | null;
-
-  @ApiProperty({
-    type: MeDto,
-  })
-  result: MeDto;
+  result: MeEntity;
 }
