@@ -9,6 +9,7 @@ import { AuthModule } from './auth/auth.module';
 import { JwtModule } from './modules/jwt/jwt.module';
 import { UserModule } from './user/user.module';
 import { AuthGuardModule } from './modules/auth/auth.module';
+import { PostsModule } from './posts/posts.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -44,6 +45,7 @@ const isProd = process.env.NODE_ENV === 'production';
     AuthGuardModule,
     AuthModule,
     UserModule,
+    PostsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,5 +1,13 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { type Response } from 'express';
 import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
 import { MeOkResponseDto } from './dto/me.dto';
@@ -21,5 +29,11 @@ export class UserController {
   @UseGuards(LoggedInGuard)
   me(@AuthUser() user: AuthUserSchema) {
     return this.service.getUserInfo(user);
+  }
+
+  @Post('logout')
+  @ApiOperation({ summary: '로그아웃' })
+  logout(@Res() res: Response) {
+    return res.status(HttpStatus.OK).json(this.service.logout(res));
   }
 }

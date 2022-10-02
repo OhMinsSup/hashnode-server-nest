@@ -69,15 +69,16 @@ model TechStack {
 }
 
 model Post {
-  id        Int       @id @default(autoincrement())
-  title     String // max 255
-  subTitle  String? // max 255
-  content   String // max 255
-  thumbnail String?
-  tags      Tag[]
-  createdAt DateTime  @default(now()) // 생성일
-  updatedAt DateTime  @updatedAt // 업데이트일
-  deletedAt DateTime? // 삭제일 
+  id          Int       @id @default(autoincrement())
+  title       String // max 255
+  subTitle    String? // max 255
+  content     String // max 255
+  description String // min 10 max 255
+  thumbnail   String?
+  tags        Tag[]
+  createdAt   DateTime  @default(now()) // 생성일
+  updatedAt   DateTime  @updatedAt // 업데이트일
+  deletedAt   DateTime? // 삭제일 
 
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
