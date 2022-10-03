@@ -15,7 +15,7 @@ export const EXCEPTION_CODE = {
   NOT_SUPPORTED: 2005,
   // 중복된 값
   DUPLICATE: 2006,
-  // 삭제 권한이 없음
+  // 권한이 없음
   NO_PERMISSION: 2007,
 
   // 만료된 토큰

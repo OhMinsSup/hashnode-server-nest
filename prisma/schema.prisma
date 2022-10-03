@@ -120,3 +120,12 @@ model PostLike {
   @@unique([postId, userId])
   @@index(postId)
 }
+
+model File {
+  id        Int       @id @default(autoincrement())
+  name      String
+  url       String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime? // 삭제일 
+}

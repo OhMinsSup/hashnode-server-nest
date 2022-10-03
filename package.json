@@ -30,6 +30,7 @@
     "@nestjs/platform-express": "^9.0.0",
     "@nestjs/swagger": "^6.1.2",
     "@prisma/client": "4.3.1",
+    "axios": "^0.27.2",
     "bcrypt": "^5.0.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
@@ -38,6 +39,7 @@
     "date-fns": "^2.29.3",
     "helmet": "^6.0.0",
     "jsonwebtoken": "^8.5.1",
+    "multer": "^1.4.5-lts.1",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0"
@@ -53,6 +55,7 @@
     "@types/hapi__joi": "^17.1.8",
     "@types/jest": "28.1.4",
     "@types/jsonwebtoken": "^8.5.9",
+    "@types/multer": "^1.4.7",
     "@types/node": "^16.0.0",
     "@types/supertest": "^2.0.11",
     "@typescript-eslint/eslint-plugin": "^5.0.0",

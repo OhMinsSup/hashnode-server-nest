@@ -10,6 +10,7 @@ import { JwtModule } from './modules/jwt/jwt.module';
 import { UserModule } from './user/user.module';
 import { AuthGuardModule } from './modules/auth/auth.module';
 import { PostsModule } from './posts/posts.module';
+import { FileModule } from './file/file.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -37,6 +38,9 @@ const isProd = process.env.NODE_ENV === 'production';
         COOKIE_SECRET: joi.string().required(),
         PORT: joi.number().optional().default(8000),
         SALT_ROUNDS: joi.number().optional().default(8),
+        CLOUDFLARE_URL: joi.string().required(),
+        CLOUDFLARE_API_TOKEN: joi.string().required(),
+        ACCOUNT_IDENTIFIER: joi.string().required(),
       }),
     }),
     JwtModule.forRoot({
@@ -46,6 +50,7 @@ const isProd = process.env.NODE_ENV === 'production';
     AuthModule,
     UserModule,
     PostsModule,
+    FileModule,
   ],
   controllers: [AppController],
   providers: [AppService],
