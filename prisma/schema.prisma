@@ -75,7 +75,6 @@ model Post {
   content     String // max 255
   description String // min 10 max 255
   thumbnail   String?
-  tags        Tag[]
   createdAt   DateTime  @default(now()) // 생성일
   updatedAt   DateTime  @updatedAt // 업데이트일
   deletedAt   DateTime? // 삭제일 
@@ -92,8 +91,6 @@ model Post {
 model Tag {
   id        Int         @id @default(autoincrement())
   name      String      @unique
-  post      Post?       @relation(fields: [postId], references: [id])
-  postId    Int?
   postsTags PostsTags[]
 
   createdAt DateTime  @default(now()) // 생성일
