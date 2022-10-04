@@ -5,10 +5,7 @@ import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { FileService } from './file.service';
 
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
-import {
-  CreateSignedUrlRequestDto,
-  UploadRequestDto,
-} from './dto/upload.request.dto';
+import { UploadRequestDto } from './dto/upload.request.dto';
 import { AuthUser, type AuthUserSchema } from 'src/libs/get-user.decorator';
 
 @ApiTags('파일')
@@ -21,11 +18,14 @@ export class FileController {
   @ApiBody({
     required: true,
     description: '파일 업로드 URL 생성 API',
-    type: CreateSignedUrlRequestDto,
+    type: UploadRequestDto,
   })
   @UseGuards(LoggedInGuard)
-  createSignedUrl(@Body() body: CreateSignedUrlRequestDto) {
-    return this.service.createSignedUrl(body.filename);
+  createSignedUrl(
+    @AuthUser() user: AuthUserSchema,
+    @Body() body: UploadRequestDto,
+  ) {
+    return this.service.createSignedUrl(user, body);
   }
 
   @Post('upload')

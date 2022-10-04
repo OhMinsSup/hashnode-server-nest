@@ -29,24 +29,9 @@ export class UploadRequestDto {
   })
   mediaType: MediaType;
 
-  // @ApiProperty({
-  //   type: 'string',
-  //   required: true,
-  // })
-  // uploadUrl: string;
-
   @ApiProperty({
     type: 'string',
     required: true,
-  })
-  filename: string;
-}
-
-export class CreateSignedUrlRequestDto {
-  @ApiProperty({
-    description: '파일명',
-    required: true,
-    type: 'string',
   })
   filename: string;
 }

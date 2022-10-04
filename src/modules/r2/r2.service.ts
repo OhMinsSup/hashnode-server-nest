@@ -46,7 +46,7 @@ export class R2Service {
     return this._r2Client;
   }
 
-  async getSignedUrl(filename: string) {
+  async getSignedUrl(key: string) {
     if (!this._r2Client) {
       throw new Error('R2 client is not initialized');
     }
@@ -57,7 +57,7 @@ export class R2Service {
 
     const command = new PutObjectCommand({
       Bucket: bucket,
-      Key: filename,
+      Key: key,
       ContentType: 'application/octet-stream',
     });
 

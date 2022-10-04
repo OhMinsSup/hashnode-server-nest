@@ -19,12 +19,24 @@ export class FileService {
     private readonly r2: R2Service,
   ) {}
 
+  private _generateKey(user: AuthUserSchema, body: UploadRequestDto) {
+    return `${
+      user.id
+    }/${body.uploadType.toLowerCase()}/${body.mediaType.toLowerCase()}/${
+      body.filename
+    }`;
+  }
+
   /**
    * @description 파일 업로드 URL 생성
-   * @param {string} filename
+   * @param {AuthUserSchema} user
+   * @param {UploadRequestDto} body
    */
-  async createSignedUrl(filename: string) {
-    const signed_url = await this.r2.getSignedUrl(filename);
+  async createSignedUrl(user: AuthUserSchema, body: UploadRequestDto) {
+    const signed_url = await this.r2.getSignedUrl(
+      this._generateKey(user, body),
+    );
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
