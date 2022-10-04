@@ -11,6 +11,7 @@ import { UserModule } from './user/user.module';
 import { AuthGuardModule } from './modules/auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { FileModule } from './file/file.module';
+import { R2Module } from './modules/r2/r2.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -38,14 +39,17 @@ const isProd = process.env.NODE_ENV === 'production';
         COOKIE_SECRET: joi.string().required(),
         PORT: joi.number().optional().default(8000),
         SALT_ROUNDS: joi.number().optional().default(8),
-        CLOUDFLARE_URL: joi.string().required(),
-        CLOUDFLARE_API_TOKEN: joi.string().required(),
-        ACCOUNT_IDENTIFIER: joi.string().required(),
+        CF_R2_URL: joi.string().required(),
+        CF_R2_ACCESS_KEY: joi.string().required(),
+        CF_R2_SECRET_ACCESS_KEY: joi.string().required(),
+        CF_R2_BUCKET: joi.string().required(),
+        CF_R2_PUBLIC_URL: joi.string().required(),
       }),
     }),
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
+    R2Module.forRoot(),
     AuthGuardModule,
     AuthModule,
     UserModule,

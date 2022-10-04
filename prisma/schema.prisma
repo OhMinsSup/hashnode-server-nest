@@ -122,10 +122,12 @@ model PostLike {
 }
 
 model File {
-  id        Int       @id @default(autoincrement())
-  name      String
-  url       String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @default(now()) @updatedAt
-  deletedAt DateTime? // 삭제일 
+  id         Int       @id @default(autoincrement())
+  name       String
+  url        String
+  uploadType String // PROFILE | IMAGE | POST_THUMBNAIL
+  mediaType  String //  IMAGE
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @default(now()) @updatedAt
+  deletedAt  DateTime? // 삭제일 
 }

@@ -1,31 +1,20 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {} from 'class-validator';
 
 const UPLOAD_TYPE = {
   PROFILE: 'PROFILE',
-  POST: 'POST',
-  THUMBNAIL: 'THUMBNAIL',
+  IMAGE: 'IMAGE',
+  POST_THUMBNAIL: 'POST_THUMBNAIL',
 };
 
 export type UploadType = keyof typeof UPLOAD_TYPE;
 
 const MEDIA_TYPE = {
   IMAGE: 'IMAGE',
-  THUMBNAIL: 'THUMBNAIL',
 };
 
 export type MediaType = keyof typeof MEDIA_TYPE;
 
 export class UploadRequestDto {
-  @ApiProperty({
-    example: 'KakaoTalk_Photo_2021-08-11-01-13-45.json',
-    description: '업로드 파일',
-    required: true,
-    type: 'string',
-    format: 'binary',
-  })
-  file: Express.Multer.File;
-
   @ApiProperty({
     type: 'string',
     enum: UPLOAD_TYPE,
@@ -39,15 +28,25 @@ export class UploadRequestDto {
     required: true,
   })
   mediaType: MediaType;
+
+  // @ApiProperty({
+  //   type: 'string',
+  //   required: true,
+  // })
+  // uploadUrl: string;
+
+  @ApiProperty({
+    type: 'string',
+    required: true,
+  })
+  filename: string;
 }
 
-export class UploadThumbnailRequestDto {
+export class CreateSignedUrlRequestDto {
   @ApiProperty({
-    example: 'KakaoTalk_Photo_2021-08-11-01-13-45.json',
-    description: '업로드 파일',
+    description: '파일명',
     required: true,
     type: 'string',
-    format: 'binary',
   })
-  file: Express.Multer.File;
+  filename: string;
 }
