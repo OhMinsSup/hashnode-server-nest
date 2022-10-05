@@ -53,11 +53,28 @@ export class FileService {
    * @param {UploadRequestDto} body
    */
   async upload(user: AuthUserSchema, body: UploadRequestDto) {
+    const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
+
+    const data = await this.prisma.file.create({
+      data: {
+        name: body.filename,
+        url: `${publicUrl}/${this._generateKey(user, body)}`,
+        uploadType: body.uploadType,
+        mediaType: body.mediaType,
+      },
+    });
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {},
+      result: {
+        id: data.id,
+        name: data.name,
+        url: data.url,
+        uploadType: data.uploadType,
+        mediaType: data.mediaType,
+      },
     };
   }
 }
