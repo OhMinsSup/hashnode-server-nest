@@ -35,3 +35,13 @@ export class UploadRequestDto {
   })
   filename: string;
 }
+
+export class SignedUrlUploadResponseDto extends UploadRequestDto {
+  @ApiProperty({
+    description: '업로드 파일',
+    required: true,
+    type: 'string',
+    format: 'binary',
+  })
+  file: Express.Multer.File;
+}

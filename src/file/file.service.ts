@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import axios from 'axios';
 
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';
@@ -9,7 +10,10 @@ import { ConfigService } from '@nestjs/config';
 import { R2Service } from '../modules/r2/r2.service';
 
 import { type AuthUserSchema } from 'src/libs/get-user.decorator';
-import { UploadRequestDto } from './dto/upload.request.dto';
+import {
+  UploadRequestDto,
+  SignedUrlUploadResponseDto,
+} from './dto/upload.request.dto';
 
 @Injectable()
 export class FileService {
@@ -30,20 +34,29 @@ export class FileService {
   /**
    * @description 파일 업로드 URL 생성
    * @param {AuthUserSchema} user
-   * @param {UploadRequestDto} body
+   * @param {SignedUrlUploadResponseDto} body
    */
-  async createSignedUrl(user: AuthUserSchema, body: UploadRequestDto) {
+  async createSignedUrl(
+    user: AuthUserSchema,
+    body: SignedUrlUploadResponseDto,
+    file: Express.Multer.File,
+  ) {
     const signed_url = await this.r2.getSignedUrl(
       this._generateKey(user, body),
     );
+
+    // birnay 업로드
+    await axios.put(signed_url, file.buffer, {
+      headers: {
+        'Content-Type': file.mimetype,
+      },
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {
-        uploadUrl: signed_url,
-      },
+      result: null,
     };
   }
 
