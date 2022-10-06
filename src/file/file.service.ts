@@ -14,6 +14,7 @@ import {
   UploadRequestDto,
   SignedUrlUploadResponseDto,
 } from './dto/upload.request.dto';
+import { ListRequestDto } from 'src/libs/list.request.dto';
 
 @Injectable()
 export class FileService {
@@ -32,7 +33,55 @@ export class FileService {
   }
 
   /**
-   * @description 파일 업로드 URL 생성
+   * @description 파일 리스트
+   * @param {ListRequestDto} listRequestDto
+   */
+  private async _getRecentItems({ cursor, limit }: ListRequestDto) {
+    const [totalCount, list] = await Promise.all([
+      this.prisma.file.count(),
+      this.prisma.file.findMany({
+        orderBy: {
+          id: 'desc',
+        },
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+        },
+        select: {
+          id: true,
+          name: true,
+          url: true,
+          uploadType: true,
+          mediaType: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.file.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        })) > 0
+      : false;
+
+    return { totalCount, list, endCursor, hasNextPage };
+  }
+
+  /**
+   * @description 파일 r2 업로드 생성
    * @param {AuthUserSchema} user
    * @param {SignedUrlUploadResponseDto} body
    */
@@ -57,6 +106,30 @@ export class FileService {
       message: null,
       error: null,
       result: null,
+    };
+  }
+
+  /**
+   * @description 파일 목록 리스트
+   * @param {ListRequestDto} query
+   */
+  async list(query: ListRequestDto) {
+    const result = await this._getRecentItems(query);
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list,
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
     };
   }
 

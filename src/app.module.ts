@@ -37,7 +37,7 @@ const isProd = process.env.NODE_ENV === 'production';
           .required(),
         DATABASE_URL: joi.string().required(),
         COOKIE_SECRET: joi.string().required(),
-        PORT: joi.number().optional().default(8000),
+        PORT: joi.number().optional().default(8080),
         SALT_ROUNDS: joi.number().optional().default(8),
         CF_R2_URL: joi.string().required(),
         CF_R2_ACCESS_KEY: joi.string().required(),
