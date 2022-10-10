@@ -21,10 +21,7 @@ import {
 import { FileService } from './file.service';
 
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
-import {
-  UploadRequestDto,
-  SignedUrlUploadResponseDto,
-} from './dto/upload.request.dto';
+import { SignedUrlUploadResponseDto } from './dto/upload.request.dto';
 import { AuthUser, type AuthUserSchema } from 'src/libs/get-user.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ListRequestDto } from 'src/libs/list.request.dto';
@@ -48,7 +45,7 @@ export class FileController {
     return this.service.list(query);
   }
 
-  @Post('upload_url')
+  @Post('upload')
   @ApiOperation({ summary: '파일 업로드 URL API' })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
@@ -58,7 +55,7 @@ export class FileController {
     type: SignedUrlUploadResponseDto,
   })
   @UseGuards(LoggedInGuard)
-  createSignedUrl(
+  upload(
     @AuthUser() user: AuthUserSchema,
     @Body() body: SignedUrlUploadResponseDto,
     @UploadedFile(
@@ -68,18 +65,6 @@ export class FileController {
     )
     file: Express.Multer.File,
   ) {
-    return this.service.createSignedUrl(user, body, file);
-  }
-
-  @Post('upload')
-  @ApiOperation({ summary: '파일 업로드 API' })
-  @ApiBody({
-    required: true,
-    description: '파일 업로드 API',
-    type: UploadRequestDto,
-  })
-  @UseGuards(LoggedInGuard)
-  upload(@AuthUser() user: AuthUserSchema, @Body() body: UploadRequestDto) {
-    return this.service.upload(user, body);
+    return this.service.upload(user, body, file);
   }
 }

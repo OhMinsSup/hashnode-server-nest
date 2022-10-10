@@ -85,7 +85,7 @@ export class FileService {
    * @param {AuthUserSchema} user
    * @param {SignedUrlUploadResponseDto} body
    */
-  async createSignedUrl(
+  async upload(
     user: AuthUserSchema,
     body: SignedUrlUploadResponseDto,
     file: Express.Multer.File,
@@ -101,11 +101,28 @@ export class FileService {
       },
     });
 
+    const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
+
+    const data = await this.prisma.file.create({
+      data: {
+        name: body.filename,
+        url: `${publicUrl}/${this._generateKey(user, body)}`,
+        uploadType: body.uploadType,
+        mediaType: body.mediaType,
+      },
+    });
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: null,
+      result: {
+        id: data.id,
+        name: data.name,
+        url: data.url,
+        uploadType: data.uploadType,
+        mediaType: data.mediaType,
+      },
     };
   }
 
@@ -129,37 +146,6 @@ export class FileService {
           endCursor: hasNextPage ? endCursor : null,
           hasNextPage,
         },
-      },
-    };
-  }
-
-  /**
-   * @description 파일 업로드
-   * @param {AuthUserSchema} user
-   * @param {UploadRequestDto} body
-   */
-  async upload(user: AuthUserSchema, body: UploadRequestDto) {
-    const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
-
-    const data = await this.prisma.file.create({
-      data: {
-        name: body.filename,
-        url: `${publicUrl}/${this._generateKey(user, body)}`,
-        uploadType: body.uploadType,
-        mediaType: body.mediaType,
-      },
-    });
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        id: data.id,
-        name: data.name,
-        url: data.url,
-        uploadType: data.uploadType,
-        mediaType: data.mediaType,
       },
     };
   }
