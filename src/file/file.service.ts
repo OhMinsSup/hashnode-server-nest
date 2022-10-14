@@ -10,11 +10,12 @@ import { ConfigService } from '@nestjs/config';
 import { R2Service } from '../modules/r2/r2.service';
 
 import { type AuthUserSchema } from 'src/libs/get-user.decorator';
+import { ListRequestDto } from 'src/libs/list.request.dto';
 import {
   UploadRequestDto,
   SignedUrlUploadResponseDto,
 } from './dto/upload.request.dto';
-import { ListRequestDto } from 'src/libs/list.request.dto';
+import { isString } from '../libs/assertion';
 
 @Injectable()
 export class FileService {
@@ -37,6 +38,14 @@ export class FileService {
    * @param {ListRequestDto} listRequestDto
    */
   private async _getRecentItems({ cursor, limit }: ListRequestDto) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
     const [totalCount, list] = await Promise.all([
       this.prisma.file.count(),
       this.prisma.file.findMany({
