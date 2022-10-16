@@ -18,8 +18,7 @@ export class TagsController {
     required: false,
     description: '페이지네이션',
   })
-  @UseGuards(LoggedInGuard)
-  list(@AuthUser() user: AuthUserSchema, @Query() query: TagListRequestDto) {
+  list(@Query() query: TagListRequestDto) {
     return this.service.list(query);
   }
 }

@@ -41,7 +41,6 @@ export class FileController {
   })
   @UseGuards(LoggedInGuard)
   list(@AuthUser() user: AuthUserSchema, @Query() query: ListRequestDto) {
-    console.log(query);
     return this.service.list(query);
   }
 
