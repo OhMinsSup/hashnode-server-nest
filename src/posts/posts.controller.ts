@@ -1,11 +1,15 @@
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 
 // service
 import { PostsService } from './posts.service';
 
 // dto
 import { CreateRequestDto } from './dto/create.request.dto';
+import {
+  PostListRequestDto,
+  SimpleTrendingRequestDto,
+} from './dto/list.request.dto';
 
 // guard
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
@@ -15,6 +19,30 @@ import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
 @Controller('api/v1/posts')
 export class PostsController {
   constructor(private readonly service: PostsService) {}
+
+  @Get()
+  @ApiOperation({ summary: '게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: PostListRequestDto,
+    required: false,
+    description: '페이지네이션',
+  })
+  list(@Query() query: PostListRequestDto) {
+    return this.service.list(query);
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: '게시물 인기 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: SimpleTrendingRequestDto,
+    required: true,
+    description: '페이지네이션',
+  })
+  trending(@Query() query: SimpleTrendingRequestDto) {
+    return this.service.trending(query);
+  }
 
   @Post()
   @ApiOperation({ summary: '게시글 작성' })
