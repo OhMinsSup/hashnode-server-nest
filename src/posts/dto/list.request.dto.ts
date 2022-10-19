@@ -56,5 +56,5 @@ export class SimpleTrendingRequestDto {
     required: true,
     description: '게시물 리스트 타입',
   })
-  type: '1W' | '1M' | '3M' | '6M';
+  dataType: '1W' | '1M' | '3M' | '6M';
 }

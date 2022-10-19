@@ -130,7 +130,7 @@ export class PostsService {
   }
 
   async trending(query: SimpleTrendingRequestDto) {
-    const { startDate, endDate } = this._getSimpleTrendingTimes(query.type);
+    const { startDate, endDate } = this._getSimpleTrendingTimes(query.dataType);
 
     const result = await this._getSimpleTrendingItems(startDate, endDate);
 
