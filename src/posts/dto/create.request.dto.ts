@@ -1,6 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
+  IsBoolean,
+  IsNumber,
   IsOptional,
   IsString,
   IsUrl,
@@ -75,4 +77,34 @@ export class CreateRequestDto {
     required: false,
   })
   tags?: string[] | null;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: '댓글 작성 가능 여부',
+    type: 'boolean',
+    nullable: true,
+    required: false,
+  })
+  disabledComment?: boolean;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: '공개 여부',
+    type: 'boolean',
+    nullable: true,
+    required: false,
+  })
+  isPublic?: boolean;
+
+  @IsNumber()
+  @IsOptional()
+  @ApiProperty({
+    description: '발행일',
+    type: 'number',
+    nullable: true,
+    required: false,
+  })
+  publishingDate?: number;
 }
