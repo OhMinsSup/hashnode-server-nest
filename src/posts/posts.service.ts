@@ -129,7 +129,7 @@ export class PostsService {
     };
   }
 
-  async trending(query: SimpleTrendingRequestDto) {
+  async simpleTrending(query: SimpleTrendingRequestDto) {
     const { startDate, endDate } = this._getSimpleTrendingTimes(query.dataType);
 
     const result = await this._getSimpleTrendingItems(startDate, endDate);
@@ -155,7 +155,6 @@ export class PostsService {
       where: {
         createdAt: {
           gte: startDate,
-          lte: endDate,
         },
       },
       include: {
@@ -177,7 +176,6 @@ export class PostsService {
             },
             createdAt: {
               gte: startDate,
-              lte: endDate,
             },
           },
           orderBy: [

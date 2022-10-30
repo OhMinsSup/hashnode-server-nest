@@ -32,7 +32,7 @@ export class PostsController {
     return this.service.list(query);
   }
 
-  @Get('trending')
+  @Get('trending/simple')
   @ApiOperation({ summary: '게시물 인기 리스트' })
   @ApiQuery({
     name: 'query',
@@ -41,7 +41,7 @@ export class PostsController {
     description: '페이지네이션',
   })
   trending(@Query() query: SimpleTrendingRequestDto) {
-    return this.service.trending(query);
+    return this.service.simpleTrending(query);
   }
 
   @Post()
