@@ -64,6 +64,11 @@ export class PostsService {
           content: input.content,
           description: input.description,
           thumbnail: input.thumbnail ?? null,
+          disabledComment: input.disabledComment ?? true,
+          isPublic: input.isPublic ?? false,
+          publishingDate: input.publishingDate
+            ? new Date(input.publishingDate)
+            : null,
         },
       });
 
