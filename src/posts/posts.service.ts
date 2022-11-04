@@ -26,6 +26,51 @@ export class PostsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * @description 게시물 상세 조회
+   * @param {number} id
+   */
+  async detail(id: number) {
+    const post = await this.prisma.post.findUnique({
+      where: {
+        id,
+      },
+      include: {
+        user: {
+          include: {
+            profile: true,
+          },
+        },
+        postsTags: {
+          include: {
+            tag: true,
+          },
+        },
+        _count: {
+          select: {
+            postLike: true,
+          },
+        },
+      },
+    });
+
+    if (!post) {
+      throw new BadRequestException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '게시물을 찾을 수 없습니다.',
+        error: null,
+        result: null,
+      });
+    }
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: post,
+    };
+  }
+
+  /**
    * @description 게시글 생성
    * @param {AuthUserSchema} user
    * @param {CreateRequestDto} input
@@ -134,10 +179,15 @@ export class PostsService {
     };
   }
 
+  /**
+   * @description 날짜 별 인기 게시물 목록
+   * @param {SimpleTrendingRequestDto} query
+   * @returns
+   */
   async simpleTrending(query: SimpleTrendingRequestDto) {
-    const { startDate, endDate } = this._getSimpleTrendingTimes(query.dataType);
+    const { startDate } = this._getSimpleTrendingTimes(query.dataType);
 
-    const result = await this._getSimpleTrendingItems(startDate, endDate);
+    const result = await this._getSimpleTrendingItems(startDate);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -150,7 +200,7 @@ export class PostsService {
     };
   }
 
-  private async _getSimpleTrendingItems(startDate: Date, endDate: Date) {
+  private async _getSimpleTrendingItems(startDate: Date) {
     const list = await this.prisma.post.findMany({
       orderBy: [
         {
@@ -158,6 +208,7 @@ export class PostsService {
         },
       ],
       where: {
+        isPublic: true,
         createdAt: {
           gte: startDate,
         },
@@ -176,6 +227,7 @@ export class PostsService {
     const hasNextPage = endCursor
       ? (await this.prisma.post.count({
           where: {
+            isPublic: true,
             id: {
               lt: endCursor,
             },
@@ -237,6 +289,7 @@ export class PostsService {
             gte: d1,
             lte: d2,
           },
+          isPublic: true,
         },
       }),
       this.prisma.post.findMany({
@@ -255,6 +308,7 @@ export class PostsService {
             gte: d1,
             lte: d2,
           },
+          isPublic: true,
         },
         include: {
           user: true,
@@ -274,6 +328,7 @@ export class PostsService {
               gte: d1,
               lte: d2,
             },
+            isPublic: true,
           },
           orderBy: [
             {
@@ -348,6 +403,10 @@ export class PostsService {
     return time[type];
   }
 
+  /**
+   * @description 리스트 데이터 serialize
+   * @param list
+   */
   private _serialize(
     list: (Post & {
       user: User & {

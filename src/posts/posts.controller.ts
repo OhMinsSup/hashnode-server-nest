@@ -1,5 +1,14 @@
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 
 // service
 import { PostsService } from './posts.service';
@@ -31,6 +40,11 @@ export class PostsController {
   list(@Query() query: PostListRequestDto) {
     return this.service.list(query);
   }
+  @Get(':id')
+  @ApiOperation({ summary: '게시물 상세 조회' })
+  detail(@Param('id', ParseIntPipe) id: number) {
+    return this.service.detail(id);
+  }
 
   @Get('trending/simple')
   @ApiOperation({ summary: '게시물 인기 리스트' })
@@ -40,7 +54,7 @@ export class PostsController {
     required: true,
     description: '페이지네이션',
   })
-  trending(@Query() query: SimpleTrendingRequestDto) {
+  simpleTrending(@Query() query: SimpleTrendingRequestDto) {
     return this.service.simpleTrending(query);
   }
 
