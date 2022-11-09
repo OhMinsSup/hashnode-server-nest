@@ -18,7 +18,7 @@ import {
 } from './dto/list.request.dto';
 
 // types
-import type { Post, Tag, User, UserProfile } from '@prisma/client';
+import type { Post, PostsTags, Tag, User, UserProfile } from '@prisma/client';
 import type { AuthUserSchema } from '../libs/get-user.decorator';
 
 @Injectable()
@@ -66,7 +66,7 @@ export class PostsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: post,
+      result: this._serialize(post),
     };
   }
 
@@ -194,7 +194,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this._serialize(result.list),
+        list: this._serializes(result.list),
         hasNextPage: result.hasNextPage,
       },
     };
@@ -407,7 +407,7 @@ export class PostsService {
    * @description 리스트 데이터 serialize
    * @param list
    */
-  private _serialize(
+  private _serializes(
     list: (Post & {
       user: User & {
         profile: UserProfile;
@@ -437,5 +437,54 @@ export class PostsService {
         },
       },
     }));
+  }
+
+  /**
+   * @description 리스트 데이터 serialize
+   * @param list
+   */
+  private _serialize(
+    item: Post & {
+      user: User & {
+        profile: UserProfile;
+      };
+      postsTags: (PostsTags & {
+        tag: Tag;
+      })[];
+      _count: {
+        postLike: number;
+      };
+    },
+  ) {
+    return {
+      id: item.id,
+      title: item.title,
+      subTitle: item.subTitle,
+      content: item.content,
+      description: item.description,
+      thumbnail: item.thumbnail,
+      createdAt: item.createdAt,
+      updatedAt: item.updatedAt,
+      tags: item.postsTags.flatMap((item) => ({
+        id: item.tag.id,
+        name: item.tag.name,
+      })),
+      user: {
+        id: item.user.id,
+        username: item.user.username,
+        email: item.user.email,
+        profile: {
+          name: item.user.profile.name,
+          bio: item.user.profile.bio,
+          avatarUrl: item.user.profile.avatarUrl,
+          availableText: item.user.profile.availableText,
+          location: item.user.profile.location,
+          website: item.user.profile.website,
+        },
+      },
+      count: {
+        postLike: item._count.postLike,
+      },
+    };
   }
 }
