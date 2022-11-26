@@ -40,6 +40,7 @@ export class PostsController {
   list(@Query() query: PostListRequestDto) {
     return this.service.list(query);
   }
+
   @Get(':id')
   @ApiOperation({ summary: '게시물 상세 조회' })
   detail(@Param('id', ParseIntPipe) id: number) {

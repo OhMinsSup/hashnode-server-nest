@@ -53,7 +53,7 @@ export class SimpleTrendingRequestDto {
     name: 'type',
     type: 'string',
     enum: ['1W', '1M', '3M', '6M'],
-    required: true,
+    required: false,
     description: '게시물 리스트 타입',
   })
   dataType: '1W' | '1M' | '3M' | '6M';

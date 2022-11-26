@@ -158,7 +158,7 @@ export class PostsService {
         result = await this._getPastItems(query);
         break;
       default:
-        result = await this._getPastItems(query);
+        result = await this._getItems(query);
         break;
     }
 
@@ -169,7 +169,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list,
+        list: this._serializes(list),
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -187,20 +187,6 @@ export class PostsService {
   async simpleTrending(query: SimpleTrendingRequestDto) {
     const { startDate } = this._getSimpleTrendingTimes(query.dataType);
 
-    const result = await this._getSimpleTrendingItems(startDate);
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        list: this._serializes(result.list),
-        hasNextPage: result.hasNextPage,
-      },
-    };
-  }
-
-  private async _getSimpleTrendingItems(startDate: Date) {
     const list = await this.prisma.post.findMany({
       orderBy: [
         {
@@ -217,6 +203,16 @@ export class PostsService {
         user: {
           include: {
             profile: true,
+          },
+        },
+        postsTags: {
+          include: {
+            tag: true,
+          },
+        },
+        _count: {
+          select: {
+            postLike: true,
           },
         },
       },
@@ -244,7 +240,87 @@ export class PostsService {
       : false;
 
     return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this._serializes(list),
+        hasNextPage,
+      },
+    };
+  }
+
+  private async _getItems({ cursor, limit }: PostListRequestDto) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          isPublic: true,
+        },
+      }),
+      this.prisma.post.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          isPublic: true,
+        },
+        include: {
+          user: {
+            include: {
+              profile: true,
+            },
+          },
+          postsTags: {
+            include: {
+              tag: true,
+            },
+          },
+          _count: {
+            select: {
+              postLike: true,
+            },
+          },
+        },
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.post.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            isPublic: true,
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
       list,
+      endCursor,
       hasNextPage,
     };
   }
@@ -311,7 +387,21 @@ export class PostsService {
           isPublic: true,
         },
         include: {
-          user: true,
+          user: {
+            include: {
+              profile: true,
+            },
+          },
+          postsTags: {
+            include: {
+              tag: true,
+            },
+          },
+          _count: {
+            select: {
+              postLike: true,
+            },
+          },
         },
         take: limit,
       }),
@@ -412,31 +502,15 @@ export class PostsService {
       user: User & {
         profile: UserProfile;
       };
+      postsTags: (PostsTags & {
+        tag: Tag;
+      })[];
+      _count: {
+        postLike: number;
+      };
     })[],
   ) {
-    return list.map((item) => ({
-      id: item.id,
-      title: item.title,
-      subTitle: item.subTitle,
-      content: item.content,
-      description: item.description,
-      thumbnail: item.thumbnail,
-      createdAt: item.createdAt,
-      updatedAt: item.updatedAt,
-      user: {
-        id: item.user.id,
-        username: item.user.username,
-        email: item.user.email,
-        profile: {
-          name: item.user.profile.name,
-          bio: item.user.profile.bio,
-          avatarUrl: item.user.profile.avatarUrl,
-          availableText: item.user.profile.availableText,
-          location: item.user.profile.location,
-          website: item.user.profile.website,
-        },
-      },
-    }));
+    return list.map(this._serialize);
   }
 
   /**
