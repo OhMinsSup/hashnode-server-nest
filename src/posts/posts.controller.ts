@@ -17,7 +17,7 @@ import { PostsService } from './posts.service';
 import { CreateRequestDto } from './dto/create.request.dto';
 import {
   PostListRequestDto,
-  SimpleTrendingRequestDto,
+  GetTopPostsRequestDto,
 } from './dto/list.request.dto';
 
 // guard
@@ -41,22 +41,22 @@ export class PostsController {
     return this.service.list(query);
   }
 
+  @Get('get-top-posts')
+  @ApiOperation({ summary: '화면 위에 보이는 포스트 정보' })
+  @ApiQuery({
+    name: 'query',
+    type: GetTopPostsRequestDto,
+    required: true,
+    description: '조회 기간',
+  })
+  getTopPosts(@Query() query: GetTopPostsRequestDto) {
+    return this.service.getTopPosts(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '게시물 상세 조회' })
   detail(@Param('id', ParseIntPipe) id: number) {
     return this.service.detail(id);
-  }
-
-  @Get('trending/simple')
-  @ApiOperation({ summary: '게시물 인기 리스트' })
-  @ApiQuery({
-    name: 'query',
-    type: SimpleTrendingRequestDto,
-    required: true,
-    description: '페이지네이션',
-  })
-  simpleTrending(@Query() query: SimpleTrendingRequestDto) {
-    return this.service.simpleTrending(query);
   }
 
   @Post()

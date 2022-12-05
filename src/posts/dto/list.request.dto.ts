@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsEnum, IsOptional, IsString, IsNumber } from 'class-validator';
 import { paginationRequestDto } from '../../libs/pagination.request.dto';
 
 export class PostListRequestDto extends paginationRequestDto {
@@ -46,15 +47,14 @@ export class PostListRequestDto extends paginationRequestDto {
   endDate?: string;
 }
 
-export class SimpleTrendingRequestDto {
-  @IsString()
-  @IsEnum(['1W', '1M', '3M', '6M'])
+export class GetTopPostsRequestDto {
+  @Type(() => Number)
+  @IsNumber()
   @ApiProperty({
-    name: 'type',
-    type: 'string',
-    enum: ['1W', '1M', '3M', '6M'],
-    required: false,
-    description: '게시물 리스트 타입',
+    name: 'duration',
+    type: 'number',
+    required: true,
+    description: '조회 기간',
   })
-  dataType: '1W' | '1M' | '3M' | '6M';
+  duration: number;
 }

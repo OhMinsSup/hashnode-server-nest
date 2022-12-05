@@ -13,8 +13,8 @@ import { EXCEPTION_CODE } from 'src/constants/exception.code';
 // types
 import { CreateRequestDto } from './dto/create.request.dto';
 import {
+  GetTopPostsRequestDto,
   PostListRequestDto,
-  SimpleTrendingRequestDto,
 } from './dto/list.request.dto';
 
 // types
@@ -181,13 +181,17 @@ export class PostsService {
 
   /**
    * @description 날짜 별 인기 게시물 목록
-   * @param {SimpleTrendingRequestDto} query
+   * @param {GetTopPostsRequestDto} query
    * @returns
    */
-  async simpleTrending(query: SimpleTrendingRequestDto) {
-    const { startDate } = this._getSimpleTrendingTimes(query.dataType);
+  async getTopPosts(query: GetTopPostsRequestDto) {
+    const { duration } = query;
 
-    const list = await this.prisma.post.findMany({
+    const date = new Date();
+    date.setDate(date.getDate() - duration);
+    date.setHours(0, 0, 0, 0);
+
+    const posts = await this.prisma.post.findMany({
       orderBy: [
         {
           id: 'desc',
@@ -196,7 +200,7 @@ export class PostsService {
       where: {
         isPublic: true,
         createdAt: {
-          gte: startDate,
+          gte: date,
         },
       },
       include: {
@@ -219,33 +223,12 @@ export class PostsService {
       take: 6,
     });
 
-    const endCursor = list.at(-1)?.id ?? null;
-    const hasNextPage = endCursor
-      ? (await this.prisma.post.count({
-          where: {
-            isPublic: true,
-            id: {
-              lt: endCursor,
-            },
-            createdAt: {
-              gte: startDate,
-            },
-          },
-          orderBy: [
-            {
-              id: 'desc',
-            },
-          ],
-        })) > 0
-      : false;
-
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
       result: {
-        list: this._serializes(list),
-        hasNextPage,
+        posts: this._serializes(posts),
       },
     };
   }
@@ -439,7 +422,7 @@ export class PostsService {
   /**
    *  @description 심플 트렌딩 리스트 타임
    */
-  private _getSimpleTrendingTimes(type: '1W' | '1M' | '3M' | '6M') {
+  private _getTopPostsDuration() {
     //  1week 인데 첫날은 0시 0분 0초로 시작해서 7일이 아니라 6일 23시 59분 59초로 끝남
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 7);
@@ -471,7 +454,7 @@ export class PostsService {
     const endDate4 = new Date();
     endDate4.setHours(23, 59, 59, 999);
 
-    const time = {
+    return {
       '1W': {
         startDate,
         endDate,
@@ -489,8 +472,6 @@ export class PostsService {
         endDate: endDate4,
       },
     };
-
-    return time[type];
   }
 
   /**
