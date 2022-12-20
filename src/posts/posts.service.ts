@@ -26,6 +26,92 @@ export class PostsService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * @description  좋아요 카운트
+   * @param {number} postId
+   * @returns
+   */
+  async countLikes(postId: number) {
+    const count = await this.prisma.postLike.count({
+      where: {
+        postId,
+      },
+    });
+    return count;
+  }
+
+  /**
+   * @description 게시물 좋아요
+   * @param {AuthUserSchema} user
+   * @param {number} id
+   */
+  async like(user: AuthUserSchema, id: number) {
+    const alreadyLiked = await this.prisma.postLike.findUnique({
+      where: {
+        postId_userId: {
+          postId: id,
+          userId: user.id,
+        },
+      },
+    });
+
+    if (!alreadyLiked) {
+      try {
+        await this.prisma.postLike.create({
+          data: {
+            postId: id,
+            userId: user.id,
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    const likes = await this.countLikes(id);
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        likes,
+        isLiked: true,
+      },
+    };
+  }
+
+  /**
+   * @description 게시물 안좋아요
+   * @param {AuthUserSchema} user
+   * @param {number} id
+   */
+  async unlike(user: AuthUserSchema, id: number) {
+    try {
+      await this.prisma.postLike.delete({
+        where: {
+          postId_userId: {
+            postId: id,
+            userId: user.id,
+          },
+        },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+
+    const likes = await this.countLikes(id);
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        likes,
+        isLiked: false,
+      },
+    };
+  }
+
+  /**
    * @description 게시물 상세 조회
    * @param {number} id
    */

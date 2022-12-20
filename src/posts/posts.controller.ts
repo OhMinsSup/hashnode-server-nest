@@ -2,6 +2,7 @@ import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -69,5 +70,25 @@ export class PostsController {
   @UseGuards(LoggedInGuard)
   create(@AuthUser() user: AuthUserSchema, @Body() input: CreateRequestDto) {
     return this.service.create(user, input);
+  }
+
+  @Post(':id/like')
+  @ApiOperation({ summary: '게시글 좋아요' })
+  @UseGuards(LoggedInGuard)
+  like(
+    @AuthUser() user: AuthUserSchema,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.like(user, id);
+  }
+
+  @Delete(':id/like')
+  @ApiOperation({ summary: '게시글 싫어요' })
+  @UseGuards(LoggedInGuard)
+  unlike(
+    @AuthUser() user: AuthUserSchema,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.unlike(user, id);
   }
 }
