@@ -11,6 +11,7 @@ import { escapeForUrl } from '../libs/utils';
 import { EXCEPTION_CODE } from 'src/constants/exception.code';
 
 // types
+import { TempRequestDto } from './dto/temp.request.dto';
 import { CreateRequestDto } from './dto/create.request.dto';
 import {
   GetTopPostsRequestDto,
@@ -24,6 +25,33 @@ import type { AuthUserSchema } from '../libs/get-user.decorator';
 @Injectable()
 export class PostsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * @description 게시물 저장하기
+   * @param {AuthUserSchema} user
+   * @param {TempRequestDto} input
+   */
+  async saveData(user: AuthUserSchema, input: TempRequestDto) {
+    const exists = await this.detail(input.postId);
+
+    // 게시물이 존재하는 경우 (수정)
+    if (exists.result) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: {},
+      };
+    }
+
+    // 게시물이 존재하지 않는 경우 (생성)
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {},
+    };
+  }
 
   /**
    * @description  좋아요 카운트
@@ -502,61 +530,6 @@ export class PostsService {
       list,
       endCursor,
       hasNextPage,
-    };
-  }
-
-  /**
-   *  @description 심플 트렌딩 리스트 타임
-   */
-  private _getTopPostsDuration() {
-    //  1week 인데 첫날은 0시 0분 0초로 시작해서 7일이 아니라 6일 23시 59분 59초로 끝남
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-    startDate.setHours(0, 0, 0, 0);
-
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999);
-
-    // 1months
-    const startDate2 = new Date();
-    startDate2.setMonth(startDate2.getMonth() - 1);
-    startDate2.setHours(0, 0, 0, 0);
-
-    const endDate2 = new Date();
-    endDate2.setHours(23, 59, 59, 999);
-
-    // 3months
-    const startDate3 = new Date();
-    startDate3.setMonth(startDate3.getMonth() - 3);
-    startDate3.setHours(0, 0, 0, 0);
-
-    const endDate3 = new Date();
-    endDate3.setHours(23, 59, 59, 999);
-
-    // 6months
-    const startDate4 = new Date();
-    startDate4.setMonth(startDate4.getMonth() - 6);
-
-    const endDate4 = new Date();
-    endDate4.setHours(23, 59, 59, 999);
-
-    return {
-      '1W': {
-        startDate,
-        endDate,
-      },
-      '1M': {
-        startDate: startDate2,
-        endDate: endDate2,
-      },
-      '3M': {
-        startDate: startDate3,
-        endDate: endDate3,
-      },
-      '6M': {
-        startDate: startDate4,
-        endDate: endDate4,
-      },
     };
   }
 

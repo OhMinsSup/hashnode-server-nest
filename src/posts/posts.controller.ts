@@ -24,6 +24,7 @@ import {
 // guard
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
 import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
+import { TempRequestDto } from './dto/temp.request.dto';
 
 @ApiTags('게시물')
 @Controller('api/v1/posts')
@@ -54,10 +55,16 @@ export class PostsController {
     return this.service.getTopPosts(query);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '게시물 상세 조회' })
-  detail(@Param('id', ParseIntPipe) id: number) {
-    return this.service.detail(id);
+  @Post('save-data')
+  @ApiOperation({ summary: '임시 게시글 작성' })
+  @ApiBody({
+    required: true,
+    description: '게시글 작성 API',
+    type: TempRequestDto,
+  })
+  @UseGuards(LoggedInGuard)
+  saveData(@AuthUser() user: AuthUserSchema, @Body() input: TempRequestDto) {
+    return this.service.saveData(user, input);
   }
 
   @Post()
@@ -70,6 +77,12 @@ export class PostsController {
   @UseGuards(LoggedInGuard)
   create(@AuthUser() user: AuthUserSchema, @Body() input: CreateRequestDto) {
     return this.service.create(user, input);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '게시물 상세 조회' })
+  detail(@Param('id', ParseIntPipe) id: number) {
+    return this.service.detail(id);
   }
 
   @Post(':id/like')

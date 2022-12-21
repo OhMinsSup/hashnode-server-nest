@@ -91,6 +91,15 @@ model Post {
   @@index([createdAt(sort: Desc)])
 }
 
+model TempPost {
+  id     Int @id @default(autoincrement())
+  postId Int
+
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일 
+}
+
 model Tag {
   id        Int         @id @default(autoincrement())
   name      String      @unique
