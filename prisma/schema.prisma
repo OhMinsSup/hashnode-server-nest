@@ -22,6 +22,7 @@ model User {
   profile         UserProfile? // 프로필
   authentications UserAuthentication[] // 인증정보
   posts           Post[] // 포스트 정보
+  temps           PostTemp[] // 임시저장 포스트 정보
 }
 
 model UserProfile {
@@ -91,13 +92,25 @@ model Post {
   @@index([createdAt(sort: Desc)])
 }
 
-model TempPost {
-  id     Int @id @default(autoincrement())
-  postId Int
+model PostTemp {
+  id Int @id @default(autoincrement())
+
+  title           String // max 255
+  subTitle        String? // max 255
+  content         String? // max 255
+  description     String? // min 10 max 255
+  thumbnail       String?
+  disabledComment Boolean?
+  isPublic        Boolean?
+  publishingDate  DateTime? // 발행일
+  tags            String? // 태그 - json stringfiy array
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 
   createdAt DateTime  @default(now()) // 생성일
   updatedAt DateTime  @updatedAt // 업데이트일
-  deletedAt DateTime? // 삭제일 
+  deletedAt DateTime? // 삭제일
 }
 
 model Tag {
