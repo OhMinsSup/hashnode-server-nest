@@ -3,7 +3,7 @@
 
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions"]
+  previewFeatures = []
 }
 
 datasource db {
@@ -22,7 +22,6 @@ model User {
   profile         UserProfile? // 프로필
   authentications UserAuthentication[] // 인증정보
   posts           Post[] // 포스트 정보
-  temps           PostTemp[] // 임시저장 포스트 정보
 }
 
 model UserProfile {
@@ -92,12 +91,12 @@ model Post {
   @@index([createdAt(sort: Desc)])
 }
 
-model PostTemp {
+model PostDraft {
   id Int @id @default(autoincrement())
 
   title           String // max 255
   subTitle        String? // max 255
-  content         String? // max 255
+  content         String? // max 255 - json stringfiy array
   description     String? // min 10 max 255
   thumbnail       String?
   disabledComment Boolean?
@@ -105,8 +104,7 @@ model PostTemp {
   publishingDate  DateTime? // 발행일
   tags            String? // 태그 - json stringfiy array
 
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
+  draftUserId Int // 초안 작성자 아이디
 
   createdAt DateTime  @default(now()) // 생성일
   updatedAt DateTime  @updatedAt // 업데이트일

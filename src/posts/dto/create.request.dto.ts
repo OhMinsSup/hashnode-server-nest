@@ -98,6 +98,16 @@ export class CreateRequestDto {
   })
   isPublic?: boolean;
 
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: '초안 작성 여부',
+    type: 'boolean',
+    nullable: true,
+    required: false,
+  })
+  isDraft?: boolean;
+
   @IsNumber()
   @IsOptional()
   @ApiProperty({

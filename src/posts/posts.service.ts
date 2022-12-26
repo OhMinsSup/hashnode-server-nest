@@ -11,7 +11,6 @@ import { escapeForUrl } from '../libs/utils';
 import { EXCEPTION_CODE } from 'src/constants/exception.code';
 
 // types
-import { TempRequestDto } from './dto/temp.request.dto';
 import { CreateRequestDto } from './dto/create.request.dto';
 import {
   GetTopPostsRequestDto,
@@ -25,33 +24,6 @@ import type { AuthUserSchema } from '../libs/get-user.decorator';
 @Injectable()
 export class PostsService {
   constructor(private readonly prisma: PrismaService) {}
-
-  /**
-   * @description 게시물 저장하기
-   * @param {AuthUserSchema} user
-   * @param {TempRequestDto} input
-   */
-  async saveData(user: AuthUserSchema, input: TempRequestDto) {
-    const exists = await this.detail(input.postId);
-
-    // 게시물이 존재하는 경우 (수정)
-    if (exists.result) {
-      return {
-        resultCode: EXCEPTION_CODE.OK,
-        message: null,
-        error: null,
-        result: {},
-      };
-    }
-
-    // 게시물이 존재하지 않는 경우 (생성)
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {},
-    };
-  }
 
   /**
    * @description  좋아요 카운트
@@ -144,9 +116,10 @@ export class PostsService {
    * @param {number} id
    */
   async detail(id: number) {
-    const post = await this.prisma.post.findUnique({
+    const post = await this.prisma.post.findFirst({
       where: {
         id,
+        isPublic: true,
       },
       include: {
         user: {
@@ -181,6 +154,20 @@ export class PostsService {
       message: null,
       error: null,
       result: this._serialize(post),
+    };
+  }
+
+  /**
+   * @description 게시글 수정
+   * @param {AuthUserSchema} user
+   * @param {any} input
+   */
+  async update(user: AuthUserSchema, input: any) {
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {},
     };
   }
 
