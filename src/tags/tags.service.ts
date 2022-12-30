@@ -5,11 +5,136 @@ import { PrismaService } from '../modules/database/prisma.service';
 import { TagListRequestDto } from './dto/list.request.dto';
 
 // types
-import type { Tag } from '@prisma/client';
+import type { Tag, TagStats } from '@prisma/client';
+import type { AuthUserSchema } from '../libs/get-user.decorator';
 
 @Injectable()
 export class TagsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * @description 태그 팔로우 생성
+   * @param {AuthUserSchema} user
+   * @param {number} tagId
+   */
+  async following(user: AuthUserSchema, tagId: number) {
+    const following = await this.prisma.tagFollowing.create({
+      data: {
+        tagId,
+        userId: user.id,
+      },
+    });
+
+    const count = await this.countFollowings(tagId);
+
+    await this._updateTagStatsFollowings(tagId, count);
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        dataId: following.id,
+        count: count,
+      },
+    };
+  }
+
+  /**
+   * @description 태그 팔로우 삭제
+   * @param {AuthUserSchema} user
+   * @param {number} tagId
+   */
+  async unfollowing(user: AuthUserSchema, tagId: number) {
+    const following = await this.prisma.tagFollowing.delete({
+      where: {
+        tagId_userId: {
+          tagId,
+          userId: user.id,
+        },
+      },
+    });
+
+    const count = await this.countFollowings(tagId);
+
+    await this._updateTagStatsFollowings(tagId, count);
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        dataId: following.id,
+        count: count,
+      },
+    };
+  }
+
+  /**
+   * @description 태그 상태값 - (following, score, clicks) 에 대한 정보를 생성
+   * @param {number} tagId
+   */
+  async createTagStats(tagId: number | number[]) {
+    const tagIds = Array.isArray(tagId) ? tagId : [tagId];
+
+    const tagStatsList: TagStats[] = [];
+    for (const id of tagIds) {
+      const tagStats = await this.prisma.tagStats.create({
+        data: {
+          tagId: id,
+        },
+      });
+      tagStatsList.push(tagStats);
+    }
+
+    return tagStatsList;
+  }
+
+  /**
+   * @description 태그 목록 리스트
+   * @param {TagListRequestDto} query
+   */
+  async list(query: TagListRequestDto) {
+    let result = undefined;
+    switch (query.type) {
+      case 'popular':
+        result = await this._getTrandingItems(query);
+        break;
+      default:
+        result = await this._getRecentItems(query);
+        break;
+    }
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this._serializeTag(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  /**
+   * @description 태그에 대해서 following 한 카운터 값을 가져온다.
+   * @param {number} tagId
+   */
+  async countFollowings(tagId: number) {
+    const count = await this.prisma.tagFollowing.count({
+      where: {
+        tagId,
+      },
+    });
+
+    return count;
+  }
 
   private _serializeTag(
     tags: (Tag & {
@@ -25,6 +150,23 @@ export class TagsService {
       updatedAt: tag.updatedAt,
       postsCount: tag._count.postsTags,
     }));
+  }
+
+  /**
+   * @description 태그 통계 - following 카운트 업데이트
+   * @param {number} tagId
+   * @param {number} count
+   * @returns
+   */
+  private async _updateTagStatsFollowings(tagId: number, count: number) {
+    return await this.prisma.tagStats.update({
+      where: {
+        tagId,
+      },
+      data: {
+        followings: count,
+      },
+    });
   }
 
   /**
@@ -159,37 +301,5 @@ export class TagsService {
       : false;
 
     return { totalCount, list, endCursor, hasNextPage };
-  }
-
-  /**
-   * @description 태그 목록 리스트
-   * @param {TagListRequestDto} query
-   */
-  async list(query: TagListRequestDto) {
-    let result = undefined;
-    switch (query.type) {
-      case 'popular':
-        result = await this._getTrandingItems(query);
-        break;
-      default:
-        result = await this._getRecentItems(query);
-        break;
-    }
-
-    const { list, totalCount, endCursor, hasNextPage } = result;
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        list: this._serializeTag(list),
-        totalCount,
-        pageInfo: {
-          endCursor: hasNextPage ? endCursor : null,
-          hasNextPage,
-        },
-      },
-    };
   }
 }

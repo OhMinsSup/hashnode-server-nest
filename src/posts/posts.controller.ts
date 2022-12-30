@@ -42,6 +42,22 @@ export class PostsController {
     return this.service.list(query);
   }
 
+  @Get('get-likes')
+  @ApiOperation({ summary: '게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: PostListRequestDto,
+    required: false,
+    description: '페이지네이션',
+  })
+  @UseGuards(LoggedInGuard)
+  getLikes(
+    @AuthUser() user: AuthUserSchema,
+    @Query() query: PostListRequestDto,
+  ) {
+    return this.service.getLikes(user, query);
+  }
+
   @Get('get-top-posts')
   @ApiOperation({ summary: '화면 위에 보이는 포스트 정보' })
   @ApiQuery({

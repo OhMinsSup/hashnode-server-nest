@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 
 // service
 import { PrismaService } from '../modules/database/prisma.service';
+import { TagsService } from '../tags/tags.service';
 
 // utils
 import { isEmpty, isString } from '../libs/assertion';
@@ -23,7 +24,10 @@ import type { AuthUserSchema } from '../libs/get-user.decorator';
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly tags: TagsService,
+  ) {}
 
   /**
    * @description  좋아요 카운트
@@ -237,6 +241,11 @@ export class PostsService {
         ),
       );
 
+      // 태그 통계 생성
+      this.tags
+        .createTagStats(createdTags.map((tag) => tag.id))
+        .catch((e) => console.error(e));
+
       return {
         resultCode: EXCEPTION_CODE.OK,
         message: null,
@@ -262,6 +271,26 @@ export class PostsService {
         result = await this._getItems(query);
         break;
     }
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this._serializes(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  async getLikes(user: AuthUserSchema, query: PostListRequestDto) {
+    const result = await this._getLikeItems(user, query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
 
@@ -404,6 +433,98 @@ export class PostsService {
     return {
       totalCount,
       list,
+      endCursor,
+      hasNextPage,
+    };
+  }
+
+  private async _getLikeItems(
+    user: AuthUserSchema,
+    { cursor, limit }: PostListRequestDto,
+  ) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    // 내가 좋아요한 게시물 목록
+    const [totalCount, list] = await Promise.all([
+      this.prisma.postLike.count({
+        where: {
+          userId: user.id,
+          post: {
+            isPublic: true,
+          },
+        },
+      }),
+      this.prisma.postLike.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          userId: user.id,
+          post: {
+            isPublic: true,
+          },
+        },
+        include: {
+          post: {
+            include: {
+              user: {
+                include: {
+                  profile: true,
+                },
+              },
+              postsTags: {
+                include: {
+                  tag: true,
+                },
+              },
+              _count: {
+                select: {
+                  postLike: true,
+                },
+              },
+            },
+          },
+        },
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.postLike.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            userId: user.id,
+            post: {
+              isPublic: true,
+            },
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list: list.flatMap((item) => item.post),
       endCursor,
       hasNextPage,
     };
