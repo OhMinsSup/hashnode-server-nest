@@ -524,7 +524,10 @@ export class PostsService {
 
     return {
       totalCount,
-      list: list.flatMap((item) => item.post),
+      list: list.flatMap((item) => ({
+        ...item.post,
+        cursorId: item.id,
+      })),
       endCursor,
       hasNextPage,
     };
@@ -676,6 +679,7 @@ export class PostsService {
       _count: {
         postLike: number;
       };
+      cursorId?: number;
     },
   ) {
     return {
@@ -707,6 +711,7 @@ export class PostsService {
       count: {
         postLike: item._count.postLike,
       },
+      ...(item.cursorId && { cursorId: item.cursorId }),
     };
   }
 }
