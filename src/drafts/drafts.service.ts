@@ -6,6 +6,9 @@ import { PrismaService } from '../modules/database/prisma.service';
 // constants
 import { EXCEPTION_CODE } from 'src/constants/exception.code';
 
+// utils
+import { isString } from '../libs/assertion';
+
 // dto
 import {
   DraftCreateRequestDto,
@@ -14,10 +17,36 @@ import {
 
 // types
 import type { AuthUserSchema } from '../libs/get-user.decorator';
+import { paginationRequestDto } from 'src/libs/pagination.request.dto';
 
 @Injectable()
 export class DraftsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * @description 초안 게시물 리스트 API
+   * @param {AuthUserSchema} user
+   * @param {paginationRequestDto} query
+   */
+  async list(user: AuthUserSchema, query: paginationRequestDto) {
+    const { list, totalCount, endCursor, hasNextPage } = await this._getItems(
+      query,
+    );
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list,
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
 
   /**
    * @description '최초 초안 게시물 상세 API
@@ -89,12 +118,86 @@ export class DraftsService {
    * @param {DraftRequestDto} input
    */
   async saveData(user: AuthUserSchema, input: DraftRequestDto) {
+    await this.prisma.postDraft.update({
+      where: {
+        id: input.draftId,
+      },
+      data: {
+        title: input.title ?? 'Temp Title',
+        subTitle: input.subTitle ?? null,
+        content: input.content ?? null,
+        description: input.description ?? null,
+        thumbnail: input.thumbnail ?? null,
+        disabledComment: input.disabledComment ?? true,
+        isPublic: input.isPublic ?? false,
+        publishingDate: input.publishingDate
+          ? new Date(input.publishingDate)
+          : null,
+        tags: input.tags ? JSON.stringify(input.tags) : null,
+        draftUserId: user.id,
+      },
+    });
+
     // 게시물이 존재하지 않는 경우 (생성)
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {},
+      result: {
+        dataId: input.draftId,
+      },
+    };
+  }
+
+  private async _getItems({ cursor, limit }: paginationRequestDto) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.postDraft.count(),
+      this.prisma.postDraft.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+        },
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.postDraft.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
     };
   }
 }

@@ -1,12 +1,21 @@
 import { ApiProperty, PartialType } from '@nestjs/swagger';
-import { IsNumber, IsOptional } from 'class-validator';
+import { IsNumber, IsOptional, IsString } from 'class-validator';
 import { CreateRequestDto } from '../../posts/dto/create.request.dto';
 // body
 
 // partial class validateor class
-export class DraftCreateRequestDto extends PartialType(CreateRequestDto) {}
+export class DraftCreateRequestDto extends PartialType(CreateRequestDto) {
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    description: '간단한 설명',
+    type: 'string',
+    required: true,
+  })
+  description?: string;
+}
 
-export class DraftRequestDto extends CreateRequestDto {
+export class DraftRequestDto extends DraftCreateRequestDto {
   @IsNumber()
   @IsOptional()
   @ApiProperty({
@@ -17,10 +26,12 @@ export class DraftRequestDto extends CreateRequestDto {
   })
   draftId?: number;
 
+  @IsString()
+  @IsOptional()
   @ApiProperty({
-    type: PartialType<CreateRequestDto>,
+    description: '간단한 설명',
+    type: 'string',
     required: true,
-    description: '수정한 데이터 정보',
   })
-  updateData: Partial<CreateRequestDto>;
+  description?: string;
 }

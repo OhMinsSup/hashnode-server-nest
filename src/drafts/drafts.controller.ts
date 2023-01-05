@@ -1,4 +1,4 @@
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
@@ -6,6 +6,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -18,6 +19,7 @@ import {
   DraftCreateRequestDto,
   DraftRequestDto,
 } from './dto/draft.request.dto';
+import { paginationRequestDto } from 'src/libs/pagination.request.dto';
 
 // services
 import { DraftsService } from './drafts.service';
@@ -26,6 +28,18 @@ import { DraftsService } from './drafts.service';
 @Controller('api/v1/drafts')
 export class DraftsController {
   constructor(private readonly service: DraftsService) {}
+
+  @Get()
+  @ApiOperation({ summary: '초안 게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: paginationRequestDto,
+    required: false,
+    description: '페이지네이션',
+  })
+  list(@AuthUser() user: AuthUserSchema, @Query() query: paginationRequestDto) {
+    return this.service.list(user, query);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: '초안 게시물 상세' })
