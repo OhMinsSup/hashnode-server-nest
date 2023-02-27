@@ -38,12 +38,12 @@ export class PostsController {
     required: false,
     description: '페이지네이션',
   })
-  list(@Query() query: PostListRequestDto) {
-    return this.service.list(query);
+  list(@Query() query: PostListRequestDto, @AuthUser() user?: AuthUserSchema) {
+    return this.service.list(query, user);
   }
 
   @Get('get-likes')
-  @ApiOperation({ summary: '게시물 리스트' })
+  @ApiOperation({ summary: '좋아요한 게시물 리스트' })
   @ApiQuery({
     name: 'query',
     type: PostListRequestDto,

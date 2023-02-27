@@ -88,8 +88,23 @@ model Post {
 
   postsTags PostsTags[]
   postLike  PostLike[]
+  postStats PostStats?
 
   @@index([createdAt(sort: Desc)])
+}
+
+model PostStats {
+  id            Int      @id @default(autoincrement())
+  postId        Int      @unique
+  likes         Int      @default(0)
+  clicks        Int      @default(0)
+  score         Float    @default(0)
+  commentsCount Int      @default(0)
+  post          Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([score(sort: Desc), postId(sort: Desc)])
+  @@index([likes(sort: Desc), postId(sort: Desc)])
 }
 
 model PostDraft {

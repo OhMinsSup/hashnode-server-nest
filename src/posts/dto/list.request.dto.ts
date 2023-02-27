@@ -15,12 +15,12 @@ export class PostListRequestDto extends paginationRequestDto {
   keyword?: string;
 
   @IsString()
-  @IsEnum(['recent', 'popular', 'past', 'search', 'like'])
+  @IsEnum(['recent', 'featured', 'past', 'personalized'])
   @IsOptional()
   @ApiProperty({
     name: 'type',
     type: 'string',
-    enum: ['recent', 'popular', 'past', 'search', 'like'],
+    enum: ['recent', 'featured', 'past', 'personalized'],
     required: false,
     description: '게시물 리스트 타입',
   })
