@@ -19,7 +19,7 @@ import {
   DraftCreateRequestDto,
   DraftRequestDto,
 } from './dto/draft.request.dto';
-import { paginationRequestDto } from 'src/libs/pagination.request.dto';
+import { DraftListRequestDto } from './dto/list.request.dto';
 
 // services
 import { DraftsService } from './drafts.service';
@@ -33,11 +33,11 @@ export class DraftsController {
   @ApiOperation({ summary: '초안 게시물 리스트' })
   @ApiQuery({
     name: 'query',
-    type: paginationRequestDto,
+    type: DraftListRequestDto,
     required: false,
     description: '페이지네이션',
   })
-  list(@AuthUser() user: AuthUserSchema, @Query() query: paginationRequestDto) {
+  list(@AuthUser() user: AuthUserSchema, @Query() query: DraftListRequestDto) {
     return this.service.list(user, query);
   }
 

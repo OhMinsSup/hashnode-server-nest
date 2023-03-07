@@ -14,10 +14,10 @@ import {
   DraftCreateRequestDto,
   DraftRequestDto,
 } from './dto/draft.request.dto';
+import { DraftListRequestDto } from './dto/list.request.dto';
 
 // types
 import type { AuthUserSchema } from '../libs/get-user.decorator';
-import { paginationRequestDto } from 'src/libs/pagination.request.dto';
 
 @Injectable()
 export class DraftsService {
@@ -26,9 +26,9 @@ export class DraftsService {
   /**
    * @description 초안 게시물 리스트 API
    * @param {AuthUserSchema} user
-   * @param {paginationRequestDto} query
+   * @param {DraftListRequestDto} query
    */
-  async list(user: AuthUserSchema, query: paginationRequestDto) {
+  async list(user: AuthUserSchema, query: DraftListRequestDto) {
     const { list, totalCount, endCursor, hasNextPage } = await this._getItems(
       query,
     );
@@ -149,7 +149,7 @@ export class DraftsService {
     };
   }
 
-  private async _getItems({ cursor, limit }: paginationRequestDto) {
+  private async _getItems({ cursor, limit, keyword }: DraftListRequestDto) {
     if (isString(cursor)) {
       cursor = Number(cursor);
     }
@@ -159,7 +159,15 @@ export class DraftsService {
     }
 
     const [totalCount, list] = await Promise.all([
-      this.prisma.postDraft.count(),
+      this.prisma.postDraft.count({
+        where: {
+          ...(keyword && {
+            title: {
+              contains: keyword,
+            },
+          }),
+        },
+      }),
       this.prisma.postDraft.findMany({
         orderBy: [
           {
@@ -172,6 +180,11 @@ export class DraftsService {
                 lt: cursor,
               }
             : undefined,
+          ...(keyword && {
+            title: {
+              contains: keyword,
+            },
+          }),
         },
         take: limit,
       }),
@@ -184,6 +197,11 @@ export class DraftsService {
             id: {
               lt: endCursor,
             },
+            ...(keyword && {
+              title: {
+                contains: keyword,
+              },
+            }),
           },
           orderBy: [
             {
