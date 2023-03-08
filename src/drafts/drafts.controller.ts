@@ -2,6 +2,7 @@ import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -49,6 +50,16 @@ export class DraftsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.detail(user, id);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '초안 게시물 삭제' })
+  @UseGuards(LoggedInGuard)
+  delete(
+    @AuthUser() user: AuthUserSchema,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.delete(user, id);
   }
 
   @Post('new')

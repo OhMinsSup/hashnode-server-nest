@@ -79,6 +79,42 @@ export class DraftsService {
   }
 
   /**
+   * @description 초안 게시물 삭제 API
+   * @param {AuthUserSchema} user
+   * @param {number} draftId
+   */
+  async delete(user: AuthUserSchema, draftId: number) {
+    const draft = await this.prisma.postDraft.findUnique({
+      where: {
+        id: draftId,
+      },
+    });
+
+    if (!draft) {
+      throw new BadRequestException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '초안 게시물을 찾을 수 없습니다.',
+        error: null,
+        result: null,
+      });
+    }
+
+    await this.prisma.postDraft.delete({
+      where: {
+        id: draftId,
+      },
+    });
+
+    // 게시물이 존재하는 경우
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
+  }
+
+  /**
    * @description '최초 초안 게시물 생성 API
    * @param {AuthUserSchema} user
    * @param {DraftCreateRequestDto} input
