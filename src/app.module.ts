@@ -14,6 +14,7 @@ import { FileModule } from './file/file.module';
 import { R2Module } from './modules/r2/r2.module';
 import { TagsModule } from './tags/tags.module';
 import { DraftsModule } from './drafts/drafts.module';
+import { WidgetModule } from './widget/widget.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -59,6 +60,7 @@ const isProd = process.env.NODE_ENV === 'production';
     FileModule,
     TagsModule,
     DraftsModule,
+    WidgetModule,
   ],
   controllers: [AppController],
   providers: [AppService],
