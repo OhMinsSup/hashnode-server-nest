@@ -15,7 +15,7 @@ export class WidgetService {
    * @description 회원 목록 리스트
    * @param {GetArticleCirclesRequestDto} query
    */
-  async getArticleCircles(__: GetArticleCirclesRequestDto) {
+  async getArticleCircles(_: GetArticleCirclesRequestDto) {
     // hows the user who created the most posts and received the most likes from among the users.
     const users = await this.prisma.$queryRaw`
         SELECT
