@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 import { PrismaService } from '../modules/database/prisma.service';
 import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
+import { WidgetBookmarksRequestDto } from './dto/widget-bookmarks.request.dto';
 
 @Injectable()
 export class WidgetService {
@@ -10,6 +11,48 @@ export class WidgetService {
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
   ) {}
+
+  /**
+   * @description 북마크 리스트
+   * @param {WidgetBookmarksRequestDto} query
+   */
+  async getWidgetBookmarks(params: WidgetBookmarksRequestDto) {
+    let userId: number | undefined;
+    if (params.userId) {
+      userId = parseInt(params.userId, 10);
+    }
+    const posts = await this.prisma.postLike.findMany({
+      where: {
+        userId,
+      },
+      select: {
+        post: {
+          select: {
+            id: true,
+            title: true,
+            user: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: 5,
+    });
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: posts.map((post) => ({
+        ...post.post,
+      })),
+    };
+  }
 
   /**
    * @description 회원 목록 리스트
