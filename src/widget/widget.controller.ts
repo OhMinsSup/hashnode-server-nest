@@ -1,7 +1,8 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { AuthUser, AuthUserSchema } from 'src/libs/get-user.decorator';
+import { LoggedInGuard } from 'src/modules/auth/logged-in.guard';
 import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
-import { WidgetBookmarksRequestDto } from './dto/widget-bookmarks.request.dto';
 import { WidgetService } from './widget.service';
 
 @ApiTags('위젯')
@@ -22,12 +23,8 @@ export class WidgetController {
 
   @Get('/bookmarks')
   @ApiOperation({ summary: '북마크 리스트' })
-  @ApiQuery({
-    name: 'query',
-    type: WidgetBookmarksRequestDto,
-    required: false,
-  })
-  getWidgetBookmarks(@Query() query: WidgetBookmarksRequestDto) {
-    return this.service.getWidgetBookmarks(query);
+  @UseGuards(LoggedInGuard)
+  getWidgetBookmarks(@AuthUser() user: AuthUserSchema) {
+    return this.service.getWidgetBookmarks(user);
   }
 }

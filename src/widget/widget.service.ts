@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { AuthUserSchema } from 'src/libs/get-user.decorator';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 import { PrismaService } from '../modules/database/prisma.service';
 import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
-import { WidgetBookmarksRequestDto } from './dto/widget-bookmarks.request.dto';
 
 @Injectable()
 export class WidgetService {
@@ -14,16 +14,12 @@ export class WidgetService {
 
   /**
    * @description 북마크 리스트
-   * @param {WidgetBookmarksRequestDto} query
+   * @param {AuthUserSchema} user
    */
-  async getWidgetBookmarks(params: WidgetBookmarksRequestDto) {
-    let userId: number | undefined;
-    if (params.userId) {
-      userId = parseInt(params.userId, 10);
-    }
+  async getWidgetBookmarks(user: AuthUserSchema) {
     const posts = await this.prisma.postLike.findMany({
       where: {
-        userId,
+        userId: user.id,
       },
       select: {
         post: {
@@ -44,6 +40,7 @@ export class WidgetService {
       },
       take: 5,
     });
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
