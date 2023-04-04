@@ -20,6 +20,10 @@ export class WidgetService {
     const posts = await this.prisma.postLike.findMany({
       where: {
         userId: user.id,
+        post: {
+          isPublic: true,
+          isDeleted: false,
+        },
       },
       select: {
         post: {

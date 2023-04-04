@@ -173,6 +173,28 @@ export class PostsService {
   }
 
   /**
+   * @description 게시물 삭제
+   * @param {AuthUserSchema} user
+   * @param {number} id
+   */
+  async delete(user: AuthUserSchema, id: number) {
+    await this.prisma.post.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
+  }
+
+  /**
    * @description 게시물 상세 조회
    * @param {number} id
    */
@@ -181,6 +203,7 @@ export class PostsService {
       where: {
         id,
         isPublic: true,
+        isDeleted: false,
       },
       include: {
         user: {
@@ -408,6 +431,7 @@ export class PostsService {
       ],
       where: {
         isPublic: true,
+        isDeleted: false,
         createdAt: {
           gte: date,
         },
@@ -460,6 +484,7 @@ export class PostsService {
       this.prisma.post.count({
         where: {
           isPublic: true,
+          isDeleted: false,
         },
       }),
       this.prisma.post.findMany({
@@ -474,6 +499,7 @@ export class PostsService {
                 lt: cursor,
               }
             : undefined,
+          isDeleted: false,
           isPublic: true,
         },
         include: {
@@ -505,6 +531,7 @@ export class PostsService {
               lt: endCursor,
             },
             isPublic: true,
+            isDeleted: false,
           },
           orderBy: [
             {
@@ -547,6 +574,7 @@ export class PostsService {
           userId: user.id,
           post: {
             isPublic: true,
+            isDeleted: false,
           },
         },
       }),
@@ -565,6 +593,7 @@ export class PostsService {
           userId: user.id,
           post: {
             isPublic: true,
+            isDeleted: false,
           },
         },
         include: {
@@ -602,6 +631,7 @@ export class PostsService {
             userId: user.id,
             post: {
               isPublic: true,
+              isDeleted: false,
             },
           },
           orderBy: [
@@ -664,6 +694,7 @@ export class PostsService {
             lte: d2,
           },
           isPublic: true,
+          isDeleted: false,
         },
       }),
       this.prisma.post.findMany({
@@ -683,6 +714,7 @@ export class PostsService {
             lte: d2,
           },
           isPublic: true,
+          isDeleted: false,
         },
         include: {
           user: {
@@ -717,6 +749,7 @@ export class PostsService {
               lte: d2,
             },
             isPublic: true,
+            isDeleted: false,
           },
           orderBy: [
             {
@@ -760,8 +793,8 @@ export class PostsService {
     });
 
     const cursorItem = cursor
-      ? await this.prisma.post.findUnique({
-          where: { id: cursor },
+      ? await this.prisma.post.findFirst({
+          where: { id: cursor, isPublic: true, isDeleted: false },
           include: {
             postStats: true,
           },
@@ -773,6 +806,8 @@ export class PostsService {
         ...(cursor
           ? {
               id: { lt: cursor },
+              isPublic: true,
+              isDeleted: false,
             }
           : {}),
         postStats: {
@@ -834,6 +869,8 @@ export class PostsService {
                 lte: list.at(-1)?.postStats?.score,
               },
             },
+            isPublic: true,
+            isDeleted: false,
           },
           orderBy: [
             {

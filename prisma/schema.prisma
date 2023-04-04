@@ -78,6 +78,7 @@ model Post {
   thumbnail       String?
   disabledComment Boolean?  @default(false) // 댓글 비활성화
   isPublic        Boolean?  @default(false) // 공개 여부
+  isDeleted       Boolean?  @default(false) // 삭제 여부
   publishingDate  DateTime? // 발행일
   createdAt       DateTime  @default(now()) // 생성일
   updatedAt       DateTime  @updatedAt // 업데이트일
@@ -119,12 +120,11 @@ model PostDraft {
   isPublic        Boolean?
   publishingDate  DateTime? // 발행일
   tags            String? // 태그 - json stringfiy array
-
-  draftUserId Int // 초안 작성자 아이디
-
-  createdAt DateTime  @default(now()) // 생성일
-  updatedAt DateTime  @updatedAt // 업데이트일
-  deletedAt DateTime? // 삭제일
+  isSubmitted     Boolean?  @default(false) // 제출 여부
+  draftUserId     Int // 초안 작성자 아이디
+  createdAt       DateTime  @default(now()) // 생성일
+  updatedAt       DateTime  @updatedAt // 업데이트일
+  deletedAt       DateTime? // 삭제일
 }
 
 model Tag {

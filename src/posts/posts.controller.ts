@@ -88,6 +88,16 @@ export class PostsController {
     return this.service.detail(id);
   }
 
+  @Delete(':id')
+  @ApiOperation({ summary: '게시물 삭제' })
+  @UseGuards(LoggedInGuard)
+  delete(
+    @AuthUser() user: AuthUserSchema,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.delete(user, id);
+  }
+
   @Post(':id/like')
   @ApiOperation({ summary: '게시글 좋아요' })
   @UseGuards(LoggedInGuard)
