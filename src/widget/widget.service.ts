@@ -1,9 +1,27 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { User, UserProfile } from '@prisma/client';
 import { AuthUserSchema } from 'src/libs/get-user.decorator';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 import { PrismaService } from '../modules/database/prisma.service';
 import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
+
+export interface ArticleCirclesSchema {
+  id: User['id'];
+  username: User['username'];
+  email: User['email'];
+  name: UserProfile['name'];
+  bio: UserProfile['bio'];
+  avatarUrl: UserProfile['avatarUrl'];
+  location: UserProfile['location'];
+  website: UserProfile['website'];
+  availableText: UserProfile['availableText'];
+  post_count: number;
+  total_likes: number;
+  latest_post_id: number;
+  latest_post_title: string;
+  latest_post_date: Date;
+}
 
 @Injectable()
 export class WidgetService {
@@ -21,8 +39,10 @@ export class WidgetService {
       where: {
         userId: user.id,
         post: {
-          isPublic: true,
           isDeleted: false,
+          publishingDate: {
+            lte: new Date(),
+          },
         },
       },
       select: {
@@ -61,7 +81,7 @@ export class WidgetService {
    */
   async getArticleCircles(_: GetArticleCirclesRequestDto) {
     // hows the user who created the most posts and received the most likes from among the users.
-    const users = await this.prisma.$queryRaw`
+    const users: ArticleCirclesSchema[] = await this.prisma.$queryRaw`
         SELECT
     u.id,
     u.username,
@@ -76,8 +96,7 @@ export class WidgetService {
     SUM( pl.likes ) AS total_likes,
     mp.id AS latest_post_id,
     mp.title AS latest_post_title,
-    mp.subtitle AS latest_post_subtitle,
-    mp.description AS latest_post_description 
+    mp.createdAt AS latest_post_date
   FROM
     User u
     JOIN UserProfile up ON u.id = up.userId
@@ -97,11 +116,16 @@ export class WidgetService {
       MAX( createdAt ) AS latest_post_date 
     FROM
       Post 
+    WHERE
+      isDeleted = false
+      AND publishingDate <= datetime('now')
     GROUP BY
       userId 
     ) lp ON u.id = lp.userId
     JOIN Post mp ON lp.userId = mp.userId 
-    AND lp.latest_post_date = mp.createdAt 
+    AND lp.latest_post_date = mp.createdAt
+    AND mp.isDeleted = false
+    AND mp.publishingDate <= datetime('now')
   GROUP BY
     u.id
   ORDER BY
@@ -115,7 +139,27 @@ export class WidgetService {
       message: null,
       error: null,
       result: {
-        circles: users,
+        circles: users.map((user) => ({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          profile: {
+            name: user.name,
+            bio: user.bio,
+            avatarUrl: user.avatarUrl,
+            location: user.location,
+            website: user.website,
+            availableText: user.availableText,
+          },
+          count: {
+            postLike: user.post_count,
+          },
+          lastPost: {
+            id: user.latest_post_id,
+            title: user.latest_post_title,
+            createdAt: user.latest_post_date,
+          },
+        })),
       },
     };
   }

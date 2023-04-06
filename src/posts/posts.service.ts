@@ -173,37 +173,18 @@ export class PostsService {
   }
 
   /**
-   * @description 게시물 삭제
-   * @param {AuthUserSchema} user
-   * @param {number} id
-   */
-  async delete(user: AuthUserSchema, id: number) {
-    await this.prisma.post.update({
-      where: {
-        id,
-      },
-      data: {
-        isDeleted: true,
-      },
-    });
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: null,
-    };
-  }
-
-  /**
    * @description 게시물 상세 조회
    * @param {number} id
    */
   async detail(id: number) {
+    const now = new Date();
     const post = await this.prisma.post.findFirst({
       where: {
         id,
-        isPublic: true,
         isDeleted: false,
+        publishingDate: {
+          lte: now,
+        },
       },
       include: {
         user: {
@@ -238,6 +219,28 @@ export class PostsService {
       message: null,
       error: null,
       result: this._serialize(post),
+    };
+  }
+
+  /**
+   * @description 게시물 삭제
+   * @param {AuthUserSchema} user
+   * @param {number} id
+   */
+  async delete(user: AuthUserSchema, id: number) {
+    await this.prisma.post.update({
+      where: {
+        id,
+      },
+      data: {
+        isDeleted: true,
+      },
+    });
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
     };
   }
 
@@ -292,10 +295,8 @@ export class PostsService {
           title: input.title,
           subTitle: input.subTitle ?? null,
           content: input.content,
-          description: input.description,
           thumbnail: input.thumbnail ?? null,
           disabledComment: input.disabledComment ?? true,
-          isPublic: input.isPublic ?? false,
           publishingDate: input.publishingDate
             ? new Date(input.publishingDate)
             : null,
@@ -419,6 +420,7 @@ export class PostsService {
   async getTopPosts(query: GetTopPostsRequestDto) {
     const { duration } = query;
 
+    const now = new Date();
     const date = new Date();
     date.setDate(date.getDate() - duration);
     date.setHours(0, 0, 0, 0);
@@ -430,11 +432,21 @@ export class PostsService {
         },
       ],
       where: {
-        isPublic: true,
-        isDeleted: false,
-        createdAt: {
-          gte: date,
-        },
+        AND: [
+          {
+            isDeleted: false,
+          },
+          {
+            publishingDate: {
+              lte: now,
+            },
+          },
+          {
+            createdAt: {
+              gte: date,
+            },
+          },
+        ],
       },
       include: {
         user: {
@@ -480,11 +492,15 @@ export class PostsService {
       limit = Number(limit);
     }
 
+    const now = new Date();
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
-          isPublic: true,
           isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
         },
       }),
       this.prisma.post.findMany({
@@ -500,7 +516,9 @@ export class PostsService {
               }
             : undefined,
           isDeleted: false,
-          isPublic: true,
+          publishingDate: {
+            lte: now,
+          },
         },
         include: {
           user: {
@@ -530,8 +548,10 @@ export class PostsService {
             id: {
               lt: endCursor,
             },
-            isPublic: true,
             isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
           orderBy: [
             {
@@ -567,14 +587,18 @@ export class PostsService {
       limit = Number(limit);
     }
 
+    const now = new Date();
+
     // 내가 좋아요한 게시물 목록
     const [totalCount, list] = await Promise.all([
       this.prisma.postLike.count({
         where: {
           userId: user.id,
           post: {
-            isPublic: true,
             isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
         },
       }),
@@ -592,8 +616,10 @@ export class PostsService {
             : undefined,
           userId: user.id,
           post: {
-            isPublic: true,
             isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
         },
         include: {
@@ -630,8 +656,10 @@ export class PostsService {
             },
             userId: user.id,
             post: {
-              isPublic: true,
               isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
             },
           },
           orderBy: [
@@ -683,6 +711,7 @@ export class PostsService {
       });
     }
 
+    const now = new Date();
     const d1 = new Date(`${startDate} 00:00:00`);
     const d2 = new Date(`${endDate} 23:59:59`);
 
@@ -693,8 +722,10 @@ export class PostsService {
             gte: d1,
             lte: d2,
           },
-          isPublic: true,
           isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
         },
       }),
       this.prisma.post.findMany({
@@ -704,17 +735,15 @@ export class PostsService {
           },
         ],
         where: {
-          id: cursor
-            ? {
-                lt: cursor,
-              }
-            : undefined,
+          id: cursor ? { lt: cursor } : undefined,
           createdAt: {
             gte: d1,
             lte: d2,
           },
-          isPublic: true,
           isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
         },
         include: {
           user: {
@@ -748,8 +777,10 @@ export class PostsService {
               gte: d1,
               lte: d2,
             },
-            isPublic: true,
             isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
           orderBy: [
             {
@@ -784,17 +815,31 @@ export class PostsService {
       limit = Number(limit);
     }
 
+    const now = new Date();
+
     const totalCount = await this.prisma.postStats.count({
       where: {
         score: {
           gte: 0.001,
+        },
+        post: {
+          isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
         },
       },
     });
 
     const cursorItem = cursor
       ? await this.prisma.post.findFirst({
-          where: { id: cursor, isPublic: true, isDeleted: false },
+          where: {
+            id: cursor,
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
+          },
           include: {
             postStats: true,
           },
@@ -805,11 +850,20 @@ export class PostsService {
       where: {
         ...(cursor
           ? {
-              id: { lt: cursor },
-              isPublic: true,
+              id: {
+                lt: cursor,
+              },
               isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
             }
-          : {}),
+          : {
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
+            }),
         postStats: {
           score: {
             gte: 0.001,
@@ -869,8 +923,10 @@ export class PostsService {
                 lte: list.at(-1)?.postStats?.score,
               },
             },
-            isPublic: true,
             isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
           orderBy: [
             {
@@ -938,7 +994,6 @@ export class PostsService {
       title: item.title,
       subTitle: item.subTitle,
       content: item.content,
-      description: item.description,
       thumbnail: item.thumbnail,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,

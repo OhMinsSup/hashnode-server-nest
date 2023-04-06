@@ -74,10 +74,8 @@ model Post {
   title           String // max 255
   subTitle        String? // max 255
   content         String // max 255
-  description     String // min 10 max 255
   thumbnail       String?
   disabledComment Boolean?  @default(false) // 댓글 비활성화
-  isPublic        Boolean?  @default(false) // 공개 여부
   isDeleted       Boolean?  @default(false) // 삭제 여부
   publishingDate  DateTime? // 발행일
   createdAt       DateTime  @default(now()) // 생성일
@@ -90,8 +88,21 @@ model Post {
   postsTags PostsTags[]
   postLike  PostLike[]
   postStats PostStats?
+  seo       PostSeo?
 
   @@index([createdAt(sort: Desc)])
+}
+
+model PostSeo {
+  id        Int       @id @default(autoincrement())
+  postId    Int       @unique
+  title     String? // max 50
+  desc      String? // max 156
+  image     String?
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @default(now()) @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일
+  post      Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model PostStats {
