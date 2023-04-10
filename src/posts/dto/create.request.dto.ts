@@ -12,6 +12,53 @@ import {
 
 // body
 
+export class CreateSeoRequestDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(50)
+  @ApiProperty({
+    description: 'SEO title',
+    maxLength: 50,
+    type: 'string',
+  })
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(156)
+  @ApiProperty({
+    description: 'SEO description',
+    maxLength: 156,
+    type: 'string',
+  })
+  desc?: string;
+
+  @IsOptional()
+  @IsUrl()
+  @ApiProperty({
+    description: 'SEO image',
+    type: 'string',
+  })
+  image?: string;
+}
+
+export class CreateThumbnailRequestDto {
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty({
+    description: '이미지 아이디',
+    type: 'number',
+  })
+  idx?: number;
+
+  @IsUrl()
+  @ApiProperty({
+    description: '이미지 url',
+    type: 'string',
+  })
+  url: string;
+}
+
 export class CreateRequestDto {
   @IsString()
   @MaxLength(255)
@@ -43,27 +90,15 @@ export class CreateRequestDto {
   content: string;
 
   @IsString()
-  @MinLength(10)
-  @MaxLength(255)
-  @ApiProperty({
-    description: '간단한 설명',
-    minLength: 10,
-    maxLength: 255,
-    type: 'string',
-    required: true,
-  })
-  description: string;
-
-  @IsString()
   @IsUrl()
   @IsOptional()
   @ApiProperty({
     description: '썸네일 이미지',
-    type: 'string',
+    type: CreateThumbnailRequestDto,
     nullable: true,
     required: false,
   })
-  thumbnail?: string | null;
+  thumbnail?: CreateThumbnailRequestDto | null;
 
   @IsArray()
   @IsOptional()
@@ -88,26 +123,6 @@ export class CreateRequestDto {
   })
   disabledComment?: boolean;
 
-  @IsBoolean()
-  @IsOptional()
-  @ApiProperty({
-    description: '공개 여부',
-    type: 'boolean',
-    nullable: true,
-    required: false,
-  })
-  isPublic?: boolean;
-
-  @IsBoolean()
-  @IsOptional()
-  @ApiProperty({
-    description: '초안 작성 여부',
-    type: 'boolean',
-    nullable: true,
-    required: false,
-  })
-  isDraft?: boolean;
-
   @IsNumber()
   @IsOptional()
   @ApiProperty({
@@ -117,4 +132,13 @@ export class CreateRequestDto {
     required: false,
   })
   publishingDate?: number;
+
+  @IsOptional()
+  @ApiProperty({
+    description: 'SEO',
+    type: CreateSeoRequestDto,
+    nullable: true,
+    required: false,
+  })
+  seo?: CreateSeoRequestDto | null;
 }

@@ -295,11 +295,20 @@ export class PostsService {
           title: input.title,
           subTitle: input.subTitle ?? null,
           content: input.content,
-          thumbnail: input.thumbnail ?? null,
+          thumbnail: input.thumbnail ? input.thumbnail.url : null,
           disabledComment: input.disabledComment ?? true,
           publishingDate: input.publishingDate
             ? new Date(input.publishingDate)
             : null,
+        },
+      });
+
+      await tx.postSeo.create({
+        data: {
+          postId: post.id,
+          title: input.seo?.title ?? null,
+          desc: input.seo?.desc ?? null,
+          image: input.seo?.image ?? null,
         },
       });
 
