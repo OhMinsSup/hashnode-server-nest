@@ -75,7 +75,7 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 작성 API',
-    type: 'object',
+    type: CreateRequestDto,
   })
   @UseGuards(LoggedInGuard)
   create(@AuthUser() user: AuthUserSchema, @Body() input: CreateRequestDto) {

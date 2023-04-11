@@ -3,11 +3,11 @@ import {
   IsArray,
   IsBoolean,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   IsUrl,
   MaxLength,
-  MinLength,
 } from 'class-validator';
 
 // body
@@ -51,7 +51,7 @@ export class CreateThumbnailRequestDto {
   })
   idx?: number;
 
-  @IsUrl()
+  @IsString()
   @ApiProperty({
     description: '이미지 url',
     type: 'string',
@@ -89,8 +89,7 @@ export class CreateRequestDto {
   })
   content: string;
 
-  @IsString()
-  @IsUrl()
+  @IsObject()
   @IsOptional()
   @ApiProperty({
     description: '썸네일 이미지',
@@ -123,15 +122,15 @@ export class CreateRequestDto {
   })
   disabledComment?: boolean;
 
-  @IsNumber()
+  @IsString()
   @IsOptional()
   @ApiProperty({
     description: '발행일',
-    type: 'number',
+    type: 'string',
     nullable: true,
     required: false,
   })
-  publishingDate?: number;
+  publishingDate?: string;
 
   @IsOptional()
   @ApiProperty({
