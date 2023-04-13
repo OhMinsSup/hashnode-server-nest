@@ -9,7 +9,7 @@ import {
 
 // body
 
-export class CreateRequestDto {
+export class SignupBody {
   @IsEmail()
   @MaxLength(255)
   @ApiProperty({

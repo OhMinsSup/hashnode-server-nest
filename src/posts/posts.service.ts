@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 
 // service
 import { PrismaService } from '../modules/database/prisma.service';
@@ -19,7 +23,14 @@ import {
 } from './dto/list.request.dto';
 
 // types
-import type { Post, PostsTags, Tag, User, UserProfile } from '@prisma/client';
+import type {
+  Post,
+  PostsTags,
+  Tag,
+  User,
+  UserProfile,
+  Prisma,
+} from '@prisma/client';
 import type { AuthUserSchema } from '../libs/get-user.decorator';
 
 interface UpdatePostLikesParams {
@@ -250,6 +261,53 @@ export class PostsService {
    * @param {any} input
    */
   async update(user: AuthUserSchema, input: any) {
+    return this.prisma.$transaction(async (tx) => {
+      const post = await tx.post.findFirst({
+        where: {
+          id: input.id,
+        },
+        include: {
+          user: {
+            include: {
+              profile: true,
+            },
+          },
+          postsTags: {
+            include: {
+              tag: true,
+            },
+          },
+          _count: {
+            select: {
+              postLike: true,
+            },
+          },
+        },
+      });
+
+      if (!post) {
+        throw new BadRequestException({
+          resultCode: EXCEPTION_CODE.NOT_EXIST,
+          message: '게시물을 찾을 수 없습니다.',
+          error: null,
+          result: null,
+        });
+      }
+
+      if (post.user.id !== user.id) {
+        throw new ForbiddenException({
+          resultCode: EXCEPTION_CODE.NO_PERMISSION,
+          message: '권한이 없습니다.',
+          error: null,
+          result: null,
+        });
+      }
+
+      const newData = {} as Prisma.XOR<
+        Prisma.PostUpdateInput,
+        Prisma.PostUncheckedUpdateInput
+      >;
+    });
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
@@ -1020,7 +1078,7 @@ export class PostsService {
           avatarUrl: item.user.profile.avatarUrl,
           availableText: item.user.profile.availableText,
           location: item.user.profile.location,
-          website: item.user.profile.website,
+          // website: item.user.profile.website,
         },
       },
       count: {

@@ -3,7 +3,7 @@ import { IsEmail, IsString, MaxLength } from 'class-validator';
 
 // body
 
-export class SigninRequestDto {
+export class SigninBody {
   @IsEmail()
   @MaxLength(255)
   @ApiProperty({

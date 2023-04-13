@@ -15,8 +15,9 @@ import { JwtService } from 'src/modules/jwt/jwt.service';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // dto
-import { CreateRequestDto } from './dto/create.request.dto';
-import { SigninRequestDto } from './dto/signin.request.dto';
+import { SignupBody } from './dto/signup';
+import { SigninBody } from './dto/signin';
+
 // types
 import type { UserAuthentication } from '@prisma/client';
 
@@ -28,6 +29,12 @@ export class AuthService {
     private readonly config: ConfigService,
   ) {}
 
+  /**
+   * @description 유저 로그인 및 회원가입시 인증 토큰을 발급하는 코드
+   * @param {number} userId  유저 아이디
+   * @param {UserAuthentication?} authentication 유저 인증 정보
+   * @returns {Promise<{ accessToken: string }>}
+   */
   private async _generateToken(
     userId: number,
     authentication?: UserAuthentication | null,
@@ -58,9 +65,10 @@ export class AuthService {
 
   /**
    * @description 로그인
-   * @param {SigninRequestDto} input
+   * @param {SigninBody} input 로그인 정보
+   * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: { userId: number; accessToken: string; }; }>}
    */
-  async signin(input: SigninRequestDto) {
+  async signin(input: SigninBody) {
     const user = await this.prisma.user.findFirst({
       where: {
         email: input.email,
@@ -103,9 +111,10 @@ export class AuthService {
 
   /**
    * @description 회원가입
-   * @param {CreateRequestDto} input
+   * @param {SignupBody} input 회원가입 정보
+   * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: { userId: number; accessToken: string; }; }>}
    */
-  async signup(input: CreateRequestDto) {
+  async signup(input: SignupBody) {
     const exists = await this.prisma.user.findFirst({
       where: {
         OR: [

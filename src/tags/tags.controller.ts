@@ -1,9 +1,11 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
-import { LoggedInGuard } from '../modules/auth/logged-in.guard';
-import { TagListRequestDto } from './dto/list.request.dto';
+
+// service
 import { TagsService } from './tags.service';
+
+// types
+import { TagListQuery } from './dto/list';
 
 @ApiTags('태그')
 @Controller('api/v1/tags')
@@ -14,11 +16,11 @@ export class TagsController {
   @ApiOperation({ summary: '태그 리스트' })
   @ApiQuery({
     name: 'query',
-    type: TagListRequestDto,
+    type: TagListQuery,
     required: false,
     description: '페이지네이션',
   })
-  list(@Query() query: TagListRequestDto) {
+  list(@Query() query: TagListQuery) {
     return this.service.list(query);
   }
 }

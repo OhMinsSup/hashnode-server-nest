@@ -9,7 +9,6 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-
 import {
   ApiBody,
   ApiConsumes,
@@ -18,13 +17,20 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
+// service
 import { FileService } from './file.service';
 
+// decorator
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
-import { SignedUrlUploadResponseDto } from './dto/upload.request.dto';
-import { AuthUser, type AuthUserSchema } from 'src/libs/get-user.decorator';
+import { AuthUser } from '../libs/get-user.decorator';
+
+// interceptor
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ListRequestDto } from 'src/libs/list.request.dto';
+
+// type
+import { SignedUrlUploadBody } from './dto/upload';
+import { ListRequestDto } from '../libs/list.request.dto';
+import type { AuthUserSchema } from '../libs/get-user.decorator';
 
 @ApiTags('파일')
 @Controller('api/v1/files')
@@ -41,7 +47,7 @@ export class FileController {
   })
   @UseGuards(LoggedInGuard)
   list(@AuthUser() user: AuthUserSchema, @Query() query: ListRequestDto) {
-    return this.service.list(query);
+    return this.service.list(user, query);
   }
 
   @Post('upload')
@@ -51,12 +57,12 @@ export class FileController {
   @ApiBody({
     required: true,
     description: '파일 업로드 URL API',
-    type: SignedUrlUploadResponseDto,
+    type: SignedUrlUploadBody,
   })
   @UseGuards(LoggedInGuard)
   upload(
     @AuthUser() user: AuthUserSchema,
-    @Body() body: SignedUrlUploadResponseDto,
+    @Body() body: SignedUrlUploadBody,
     @UploadedFile(
       new ParseFilePipeBuilder().build({
         fileIsRequired: true,

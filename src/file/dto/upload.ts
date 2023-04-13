@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { IsIn, IsString } from 'class-validator';
 
 const UPLOAD_TYPE = {
   PROFILE: 'PROFILE',
@@ -14,7 +15,8 @@ const MEDIA_TYPE = {
 
 export type MediaType = keyof typeof MEDIA_TYPE;
 
-export class UploadRequestDto {
+export class UploadBody {
+  @IsIn(Object.values(UPLOAD_TYPE))
   @ApiProperty({
     type: 'string',
     enum: UPLOAD_TYPE,
@@ -22,6 +24,7 @@ export class UploadRequestDto {
   })
   uploadType: UploadType;
 
+  @IsIn(Object.values(MEDIA_TYPE))
   @ApiProperty({
     type: 'string',
     enum: MEDIA_TYPE,
@@ -29,6 +32,7 @@ export class UploadRequestDto {
   })
   mediaType: MediaType;
 
+  @IsString()
   @ApiProperty({
     type: 'string',
     required: true,
@@ -36,7 +40,7 @@ export class UploadRequestDto {
   filename: string;
 }
 
-export class SignedUrlUploadResponseDto extends UploadRequestDto {
+export class SignedUrlUploadBody extends UploadBody {
   @ApiProperty({
     description: '업로드 파일',
     required: true,

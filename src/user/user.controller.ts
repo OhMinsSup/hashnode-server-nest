@@ -1,19 +1,26 @@
 import {
+  Body,
   Controller,
   Get,
   HttpStatus,
   Post,
+  Put,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { type Response } from 'express';
-import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+
+// decorator
+import { AuthUser } from '../libs/get-user.decorator';
 import { LoggedInGuard } from '../modules/auth/logged-in.guard';
-import { MeOkResponseDto } from './dto/me.dto';
 
 // service
 import { UserService } from './user.service';
+
+// types
+import type { AuthUserSchema } from '../libs/get-user.decorator';
+import type { Response } from 'express';
+import { UpdateBody } from './dto/update';
 
 @ApiTags('사용자')
 @Controller('api/v1/users')
@@ -22,13 +29,21 @@ export class UserController {
 
   @Get()
   @ApiOperation({ summary: '내 정보' })
-  @ApiOkResponse({
-    description: '내정보 성공',
-    type: MeOkResponseDto,
-  })
   @UseGuards(LoggedInGuard)
   me(@AuthUser() user: AuthUserSchema) {
     return this.service.getUserInfo(user);
+  }
+
+  @Put()
+  @ApiOperation({ summary: '내 정보 수정' })
+  @ApiBody({
+    required: true,
+    description: '내 정보 수정',
+    type: UpdateBody,
+  })
+  @UseGuards(LoggedInGuard)
+  update(@AuthUser() user: AuthUserSchema, @Body() input: UpdateBody) {
+    return this.service.update(user, input);
   }
 
   @Post('logout')

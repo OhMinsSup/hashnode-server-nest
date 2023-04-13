@@ -2,8 +2,7 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = []
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -20,25 +19,40 @@ model User {
   updatedAt       DateTime             @updatedAt // 업데이트일
   deletedAt       DateTime? // 삭제일 
   profile         UserProfile? // 프로필
+  socials         UserSocials? // 소셜
+  skills          UsersTags[] // 유저 스킬
   authentications UserAuthentication[] // 인증정보
   posts           Post[] // 포스트 정보
   tagFollowing    TagFollowing[] // 태그 팔로잉
 }
 
 model UserProfile {
-  id                  Int                   @id @default(autoincrement())
-  userId              Int                   @unique
-  name                String // max 255
-  bio                 String?
-  avatarUrl           String?
-  availableText       String? // max 140
-  location            String?
-  website             String? // string object array
-  createdAt           DateTime              @default(now()) // 생성일
-  updatedAt           DateTime              @updatedAt // 업데이트일
-  deletedAt           DateTime? // 삭제일 
-  user                User                  @relation(fields: [userId], references: [id])
-  profileOnTechStacks ProfileOnTechStacks[]
+  id            Int       @id @default(autoincrement())
+  userId        Int       @unique
+  name          String
+  tagline       String?
+  avatarUrl     String?
+  location      String?
+  bio           String?
+  availableText String? // max 140
+  createdAt     DateTime  @default(now()) // 생성일
+  updatedAt     DateTime  @updatedAt // 업데이트일
+  deletedAt     DateTime? // 삭제일 
+  user          User      @relation(fields: [userId], references: [id])
+}
+
+model UserSocials {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  github    String?
+  twitter   String?
+  facebook  String?
+  instagram String?
+  website   String?
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일
+  user      User      @relation(fields: [userId], references: [id])
 }
 
 model UserAuthentication {
@@ -52,21 +66,15 @@ model UserAuthentication {
   userId          Int
 }
 
-model ProfileOnTechStacks {
-  id          Int         @id @default(autoincrement())
-  profile     UserProfile @relation(fields: [profileId], references: [id]) // 스토리
-  techStack   TechStack   @relation(fields: [techStackId], references: [id]) // 태그
-  profileId   Int // 프로필 아이디
-  techStackId Int // 기술 스택 아이디
-}
+model UsersTags {
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+  tag    Tag  @relation(fields: [tagId], references: [id])
+  tagId  Int
 
-model TechStack {
-  id                  Int                   @id @default(autoincrement())
-  name                String                @unique // 기술스택 이름
-  createdAt           DateTime              @default(now()) // 생성일
-  updatedAt           DateTime              @updatedAt // 업데이트일
-  deletedAt           DateTime? // 삭제일 
-  profileOnTechStacks ProfileOnTechStacks[]
+  @@id([userId, tagId])
+  @@index(tagId)
+  @@index(userId)
 }
 
 model Post {
@@ -119,38 +127,6 @@ model PostStats {
   @@index([likes(sort: Desc), postId(sort: Desc)])
 }
 
-model PostDraft {
-  id Int @id @default(autoincrement())
-
-  title           String // max 255
-  subTitle        String? // max 255
-  content         String? // max 255 - json stringfiy array
-  description     String? // min 10 max 255
-  thumbnail       String?
-  disabledComment Boolean?
-  isPublic        Boolean?
-  publishingDate  DateTime? // 발행일
-  tags            String? // 태그 - json stringfiy array
-  isSubmitted     Boolean?  @default(false) // 제출 여부
-  draftUserId     Int // 초안 작성자 아이디
-  createdAt       DateTime  @default(now()) // 생성일
-  updatedAt       DateTime  @updatedAt // 업데이트일
-  deletedAt       DateTime? // 삭제일
-}
-
-model Tag {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-
-  createdAt DateTime  @default(now()) // 생성일
-  updatedAt DateTime  @updatedAt // 업데이트일
-  deletedAt DateTime? // 삭제일 
-
-  postsTags PostsTags[]
-  following TagFollowing[]
-  tagStats  TagStats?
-}
-
 model PostsTags {
   post   Post @relation(fields: [postId], references: [id])
   postId Int
@@ -183,6 +159,20 @@ model File {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @default(now()) @updatedAt
   deletedAt  DateTime? // 삭제일 
+}
+
+model Tag {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일 
+
+  usersTags UsersTags[]
+  postsTags PostsTags[]
+  following TagFollowing[]
+  tagStats  TagStats?
 }
 
 model TagStats {

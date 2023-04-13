@@ -1,12 +1,5 @@
 import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
-import {
-  ApiBadRequestResponse,
-  ApiBody,
-  ApiNotFoundResponse,
-  ApiOkResponse,
-  ApiOperation,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 // interceptor
 import { CookiInterceptor } from 'src/libs/cookie.interceptor';
@@ -15,14 +8,8 @@ import { CookiInterceptor } from 'src/libs/cookie.interceptor';
 import { AuthService } from './auth.service';
 
 // dto
-import { CreateRequestDto } from './dto/create.request.dto';
-import {
-  CreateOkResponseDto,
-  CreateBadRequestResponseDto,
-  SigninOkResponseDto,
-  SigninBadRequestResponseDto,
-} from './dto/common.response.dto';
-import { SigninRequestDto } from './dto/signin.request.dto';
+import { SignupBody } from './dto/signup';
+import { SigninBody } from './dto/signin';
 
 @ApiTags('인증')
 @Controller('api/v1/auth')
@@ -34,18 +21,10 @@ export class AuthController {
   @ApiBody({
     required: true,
     description: '회원가입 API',
-    type: CreateRequestDto,
-  })
-  @ApiOkResponse({
-    description: '회원가입 성공',
-    type: CreateOkResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: '회원가입 실패',
-    type: CreateBadRequestResponseDto,
+    type: SignupBody,
   })
   @UseInterceptors(CookiInterceptor)
-  signup(@Body() input: CreateRequestDto) {
+  signup(@Body() input: SignupBody) {
     return this.service.signup(input);
   }
 
@@ -54,22 +33,10 @@ export class AuthController {
   @ApiBody({
     required: true,
     description: '로그인 API',
-    type: SigninRequestDto,
-  })
-  @ApiOkResponse({
-    description: '로그인 성공',
-    type: SigninOkResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description: '회원가입 실패',
-    type: SigninBadRequestResponseDto,
-  })
-  @ApiNotFoundResponse({
-    description: '회원가입 실패',
-    type: SigninBadRequestResponseDto,
+    type: SigninBody,
   })
   @UseInterceptors(CookiInterceptor)
-  signin(@Body() input: SigninRequestDto) {
+  signin(@Body() input: SigninBody) {
     return this.service.signin(input);
   }
 }

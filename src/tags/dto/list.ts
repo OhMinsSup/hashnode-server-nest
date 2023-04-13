@@ -2,7 +2,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { paginationRequestDto } from '../../libs/pagination.request.dto';
 
-export class TagListRequestDto extends paginationRequestDto {
+export class TagListQuery extends paginationRequestDto {
   @IsString()
   @IsOptional()
   @ApiProperty({
