@@ -5,13 +5,18 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 
+// service
 import { JwtService } from '../jwt/jwt.service';
 import { PrismaService } from '../database/prisma.service';
 
+import { subMinutes } from 'date-fns';
+
+// constants
+import { EXCEPTION_CODE } from '../../constants/exception.code';
+import { DEFAULT_USER_SELECT } from '../database/select/user.select';
+
 // types
 import type { JwtPayload } from 'jsonwebtoken';
-import { EXCEPTION_CODE } from '../../constants/exception.code';
-import { subMinutes } from 'date-fns';
 
 interface Payload {
   authId: number;
@@ -85,31 +90,7 @@ export class AuthGuard implements CanActivate {
             where: {
               id: accessTokenData.userId,
             },
-            select: {
-              id: true,
-              email: true,
-              username: true,
-              profile: {
-                select: {
-                  name: true,
-                  bio: true,
-                  avatarUrl: true,
-                  availableText: true,
-                  location: true,
-                  website: true,
-                  profileOnTechStacks: {
-                    select: {
-                      techStack: {
-                        select: {
-                          id: true,
-                          name: true,
-                        },
-                      },
-                    },
-                  },
-                },
-              },
-            },
+            select: DEFAULT_USER_SELECT,
           });
 
           if (!user) {

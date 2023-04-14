@@ -1,9 +1,18 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AuthUser, AuthUserSchema } from 'src/libs/get-user.decorator';
-import { LoggedInGuard } from 'src/modules/auth/logged-in.guard';
-import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
+
+// decorator
+import { AuthUser } from '../libs/get-user.decorator';
+
+// guard
+import { LoggedInGuard } from '../modules/guard/logged-in.guard';
+
+// service
 import { WidgetService } from './widget.service';
+
+// dto
+import { GetArticleCirclesQuery } from './dto/article-circles';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('위젯')
 @Controller('api/v1/widget')
@@ -14,17 +23,17 @@ export class WidgetController {
   @ApiOperation({ summary: '회원 리스트' })
   @ApiQuery({
     name: 'query',
-    type: GetArticleCirclesRequestDto,
+    type: GetArticleCirclesQuery,
     required: false,
   })
-  getArticleCircles(@Query() query: GetArticleCirclesRequestDto) {
+  getArticleCircles(@Query() query: GetArticleCirclesQuery) {
     return this.service.getArticleCircles(query);
   }
 
   @Get('/bookmarks')
   @ApiOperation({ summary: '북마크 리스트' })
   @UseGuards(LoggedInGuard)
-  getWidgetBookmarks(@AuthUser() user: AuthUserSchema) {
+  getWidgetBookmarks(@AuthUser() user: UserWithInfo) {
     return this.service.getWidgetBookmarks(user);
   }
 }

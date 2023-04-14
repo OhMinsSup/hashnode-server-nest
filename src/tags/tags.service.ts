@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 
 // utils
 import { isString } from '../libs/assertion';
@@ -9,8 +9,11 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 // service
 import { PrismaService } from '../modules/database/prisma.service';
 
+// select
+import { TAGS_LIST_SELECT } from '../modules/database/select/tag.select';
+
 // types
-import { TagListQuery } from './dto/list';
+import { TagListQuery, TrendingTagsQuery } from './dto/list';
 import type { Tag, TagStats } from '@prisma/client';
 import type { AuthUserSchema } from '../libs/get-user.decorator';
 
@@ -128,6 +131,58 @@ export class TagsService {
   }
 
   /**
+   * @description 태그 상세 정보
+   * @param {string} name
+   * @returns {Promise<{resultCode: number; message: string; error: string; result: Tag}>}
+   */
+  async detail(name: string) {
+    const tagInfo = await this.prisma.tag.findUnique({
+      where: {
+        name,
+      },
+    });
+
+    if (!name) {
+      throw new NotFoundException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '태그를 찾을 수 없습니다.',
+        error: null,
+        result: null,
+      });
+    }
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: tagInfo,
+    };
+  }
+
+  /**
+   * @description 트랜딩 태그 리스트 (주간, all time)
+   * @param {TrendingTagsQuery} query 트랜딩 태그 리스트 쿼리
+   * @returns {Promise<{resultCode: number; message: string; error: string; result: {list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; pageInfo: {endCursor: string; hasNextPage: boolean}}}>}
+   */
+  async trending(query: TrendingTagsQuery) {
+    const result = undefined;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: [],
+        totalCount: 0,
+        pageInfo: {
+          endCursor: null,
+          hasNextPage: false,
+        },
+      },
+    };
+  }
+
+  /**
    * @description 태그 목록 리스트
    * @param {TagListQuery} query 태그 리스트 쿼리
    * @returns {Promise<{resultCode: number; message: string; error: string; result: {list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; pageInfo: {endCursor: string; hasNextPage: boolean}}}>}
@@ -158,6 +213,47 @@ export class TagsService {
         },
       },
     };
+  }
+
+  private async _getTrandingTimeItems({
+    cursor,
+    limit,
+    category,
+  }: TrendingTagsQuery) {
+    let time: Date | null;
+    switch (category) {
+      case 'week':
+        time = new Date();
+        time.setDate(time.getDate() - 7);
+        break;
+      case 'month':
+        time = new Date();
+        time.setMonth(time.getMonth() - 1);
+        break;
+      case 'year':
+        time = new Date();
+        time.setFullYear(time.getFullYear() - 1);
+        break;
+      default:
+        time = null;
+        break;
+    }
+
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const totalCount = await this.prisma.tagStats.count({
+      where: {
+        score: {
+          gte: 0.001,
+        },
+      },
+    });
   }
 
   /**
@@ -192,13 +288,7 @@ export class TagsService {
             : undefined,
           name: name ? { contains: name } : undefined,
         },
-        include: {
-          _count: {
-            select: {
-              postsTags: true,
-            },
-          },
-        },
+        select: TAGS_LIST_SELECT,
         take: limit,
       }),
     ]);
@@ -260,13 +350,7 @@ export class TagsService {
             : undefined,
           name: name ? { contains: name } : undefined,
         },
-        include: {
-          _count: {
-            select: {
-              postsTags: true,
-            },
-          },
-        },
+        select: TAGS_LIST_SELECT,
         take: limit,
       }),
     ]);
@@ -299,7 +383,7 @@ export class TagsService {
   /**
    * @description 태그 데이터를 필요한 값만 정리해서 가져온다.
    * @param {Tag[] & { _count: { postsTags: number; }; }[]} tags
-   * @returns {Promise<{id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]>}
+   * @returns {Promise<{id: number; name: string; postsCount: number}[]>}
    */
   private _serializeTag(
     tags: (Tag & {
@@ -311,8 +395,6 @@ export class TagsService {
     return tags.map((tag) => ({
       id: tag.id,
       name: tag.name,
-      createdAt: tag.createdAt,
-      updatedAt: tag.updatedAt,
       postsCount: tag._count.postsTags,
     }));
   }

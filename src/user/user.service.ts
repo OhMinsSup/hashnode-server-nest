@@ -5,9 +5,14 @@ import { ConfigService } from '@nestjs/config';
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
-import type { AuthUserSchema } from '../libs/get-user.decorator';
+// utils
+import { isEmpty } from 'src/libs/assertion';
+import { escapeForUrl } from 'src/libs/utils';
+
 import type { Response } from 'express';
 import type { UpdateBody } from './dto/update';
+import type { Prisma } from '@prisma/client';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class UserService {
@@ -18,33 +23,159 @@ export class UserService {
 
   /**
    * @description 유저 정보를 가져온다.
-   * @param {AuthUserSchema} user 유저 정보
+   * @param {UserWithInfo} user 유저 정보
    * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }>}
    */
-  getUserInfo(user: AuthUserSchema) {
+  getUserInfo(user: UserWithInfo) {
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {
-        ...user,
-      },
+      result: user,
     };
   }
 
   /**
    * @description 유저 정보를 업데이트한다.
-   * @param {AuthUserSchema} user 유저 정보
+   * @param {UserWithInfo} user 유저 정보
    * @param {UpdateBody} input 업데이트 정보
    * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: null; }>}
    */
-  update(user: AuthUserSchema, input: UpdateBody) {
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: null,
-    };
+  async update(user: UserWithInfo, input: UpdateBody) {
+    return this.prisma.$transaction(async (tx) => {
+      const newData = {} as Prisma.XOR<
+        Prisma.UserUpdateInput,
+        Prisma.UserUncheckedUpdateInput
+      >;
+
+      if (input.username && input.username !== user.username) {
+        newData.username = input.username;
+      }
+
+      if (input.email && input.email !== user.email) {
+        newData.email = input.email;
+      }
+
+      if (input.name && input.name !== user.profile.name) {
+        newData.profile.update.name = input.name;
+      }
+
+      if (input.tagline && input.tagline !== user.profile.tagline) {
+        newData.profile.update.tagline = input.tagline;
+      }
+
+      if (input.avatarUrl && input.avatarUrl !== user.profile.avatarUrl) {
+        newData.profile.update.avatarUrl = input.avatarUrl;
+      }
+
+      if (input.location && input.location !== user.profile.location) {
+        newData.profile.update.location = input.location;
+      }
+
+      if (input.bio && input.bio !== user.profile.bio) {
+        newData.profile.update.bio = input.bio;
+      }
+
+      if (
+        input.availableText &&
+        input.availableText !== user.profile.availableText
+      ) {
+        newData.profile.update.availableText = input.availableText;
+      }
+
+      if (!isEmpty(input.skills) && input.skills) {
+        const next_tags = input.skills ?? [];
+        const current_tags = user.skills?.map((skill) => skill.tag) ?? [];
+        // 기존 태그와 새로운 태그를 비교하여 삭제할 태그와 추가할 태그를 구분
+        const deleted_tags = current_tags.filter(
+          (tag) => !next_tags.includes(tag.name),
+        );
+        const added_tags = next_tags.filter(
+          (tag) => !current_tags.map((tag) => tag.name).includes(tag),
+        );
+
+        // 삭제할 태그가 존재하는 경우
+        if (deleted_tags.length > 0) {
+          await Promise.all(
+            deleted_tags.map((tag) =>
+              tx.usersTags.delete({
+                where: {
+                  userId_tagId: {
+                    userId: user.id,
+                    tagId: tag.id,
+                  },
+                },
+              }),
+            ),
+          );
+        }
+
+        // 추가할 태그가 존재하는 경우
+        if (added_tags.length > 0) {
+          const tags = await Promise.all(
+            added_tags.map(async (tag) => {
+              const newTag = escapeForUrl(tag);
+              // 태그 정보가 이미 존재하는지 체크
+              const tagData = await tx.tag.findFirst({
+                where: {
+                  name: newTag,
+                },
+              });
+              // 없으면 새롭게 생성하고 있으면 기존 데이터를 사용
+              if (!tagData) {
+                return tx.tag.create({
+                  data: {
+                    name: newTag,
+                  },
+                });
+              }
+              return tagData;
+            }),
+          );
+
+          await Promise.all(
+            tags.map((tag) =>
+              tx.usersTags.create({
+                data: {
+                  user: {
+                    connect: {
+                      id: user.id,
+                    },
+                  },
+                  tag: {
+                    connect: {
+                      id: tag.id,
+                    },
+                  },
+                },
+              }),
+            ),
+          );
+        }
+      }
+
+      if (input.socials && Object.keys(input.socials).length > 0) {
+        for (const [key, value] of Object.entries(input.socials)) {
+          if (value !== user.socials[key]) {
+            newData.socials.update[key] = value;
+          }
+        }
+      }
+
+      await tx.user.update({
+        where: {
+          id: user.id,
+        },
+        data: newData,
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: null,
+      };
+    });
   }
 
   /**

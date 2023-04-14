@@ -1,27 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { User, UserProfile } from '@prisma/client';
-import { AuthUserSchema } from 'src/libs/get-user.decorator';
-import { EXCEPTION_CODE } from '../constants/exception.code';
-import { PrismaService } from '../modules/database/prisma.service';
-import { GetArticleCirclesRequestDto } from './dto/article-circles.request.dto';
 
-export interface ArticleCirclesSchema {
-  id: User['id'];
-  username: User['username'];
-  email: User['email'];
-  name: UserProfile['name'];
-  bio: UserProfile['bio'];
-  avatarUrl: UserProfile['avatarUrl'];
-  location: UserProfile['location'];
-  website: UserProfile['website'];
-  availableText: UserProfile['availableText'];
-  post_count: number;
-  total_likes: number;
-  latest_post_id: number;
-  latest_post_title: string;
-  latest_post_date: Date;
-}
+// constants
+import { EXCEPTION_CODE } from '../constants/exception.code';
+
+// service
+import { ConfigService } from '@nestjs/config';
+import { PrismaService } from '../modules/database/prisma.service';
+
+// dto
+import { GetArticleCirclesQuery } from './dto/article-circles';
+
+// select
+import { USER_POSTS_BOOKMARKS_SELECT } from '../modules/database/select/post.select';
+import { WidgetArticleCirclesRawQuery } from '../modules/database/ts/widget';
+
+// types
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class WidgetService {
@@ -32,9 +26,10 @@ export class WidgetService {
 
   /**
    * @description 북마크 리스트
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
+   * @returns {Promise<{ resultCode: EXCEPTION_CODE; message: string; error: string; result: any; }>}
    */
-  async getWidgetBookmarks(user: AuthUserSchema) {
+  async getWidgetBookmarks(user: UserWithInfo) {
     const posts = await this.prisma.postLike.findMany({
       where: {
         userId: user.id,
@@ -45,20 +40,7 @@ export class WidgetService {
           },
         },
       },
-      select: {
-        post: {
-          select: {
-            id: true,
-            title: true,
-            user: {
-              select: {
-                id: true,
-                username: true,
-              },
-            },
-          },
-        },
-      },
+      select: USER_POSTS_BOOKMARKS_SELECT,
       orderBy: {
         createdAt: 'desc',
       },
@@ -69,19 +51,17 @@ export class WidgetService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: posts.map((post) => ({
-        ...post.post,
-      })),
+      result: posts.map((post) => post.post),
     };
   }
 
   /**
    * @description 회원 목록 리스트
-   * @param {GetArticleCirclesRequestDto} query
+   * @param {GetArticleCirclesQuery} query
    */
-  async getArticleCircles(_: GetArticleCirclesRequestDto) {
+  async getArticleCircles(_: GetArticleCirclesQuery) {
     // hows the user who created the most posts and received the most likes from among the users.
-    const users: ArticleCirclesSchema[] = await this.prisma.$queryRaw`
+    const users: WidgetArticleCirclesRawQuery[] = await this.prisma.$queryRaw`
         SELECT
     u.id,
     u.username,
@@ -90,7 +70,6 @@ export class WidgetService {
     up.bio,
     up.avatarUrl,
     up.location,
-    up.website,
     up.availableText,
     COUNT( p.id ) AS post_count,
     SUM( pl.likes ) AS total_likes,
@@ -147,9 +126,7 @@ export class WidgetService {
             name: user.name,
             bio: user.bio,
             avatarUrl: user.avatarUrl,
-            location: user.location,
-            website: user.website,
-            availableText: user.availableText,
+            tagline: user.tagline,
           },
           count: {
             postLike: user.post_count,

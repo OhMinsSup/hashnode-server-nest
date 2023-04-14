@@ -22,7 +22,7 @@ import {
 } from './dto/list.request.dto';
 
 // guard
-import { LoggedInGuard } from '../modules/auth/logged-in.guard';
+import { LoggedInGuard } from '../modules/guard/logged-in.guard';
 import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
 
 @ApiTags('게시물')

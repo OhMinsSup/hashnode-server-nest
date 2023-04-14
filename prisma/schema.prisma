@@ -192,8 +192,7 @@ model TagFollowing {
   id        Int      @id @default(autoincrement())
   tagId     Int
   userId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+
   tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

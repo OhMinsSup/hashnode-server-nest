@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsNumberString, IsOptional } from 'class-validator';
 
-export class GetArticleCirclesRequestDto {
-  @IsNumberString()
+export class GetArticleCirclesQuery {
   @IsOptional()
+  @IsNumberString()
   @ApiProperty({
     name: 'userId',
     type: 'string',

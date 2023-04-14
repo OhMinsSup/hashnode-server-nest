@@ -1,3 +1,3 @@
-import { paginationRequestDto } from './pagination.request.dto';
+import { PaginationQuery } from './pagination.request.dto';
 
-export class ListRequestDto extends paginationRequestDto {}
+export class ListRequestDto extends PaginationQuery {}

@@ -1,8 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { paginationRequestDto } from '../../libs/pagination.request.dto';
+import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { PaginationQuery } from '../../libs/pagination.request.dto';
 
-export class TagListQuery extends paginationRequestDto {
+export class TagListQuery extends PaginationQuery {
   @IsString()
   @IsOptional()
   @ApiProperty({
@@ -24,4 +24,16 @@ export class TagListQuery extends paginationRequestDto {
     description: '태그 리스트 타입',
   })
   type?: string;
+}
+
+export class TrendingTagsQuery extends PaginationQuery {
+  @IsIn(['week', 'all'])
+  @ApiProperty({
+    name: 'category',
+    type: 'string',
+    required: true,
+    enum: ['week', 'all', 'month', 'year'],
+    description: '주간, 전체',
+  })
+  category: 'week' | 'all' | 'month' | 'year';
 }
