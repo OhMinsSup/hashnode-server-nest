@@ -10,12 +10,15 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 import { PrismaService } from '../modules/database/prisma.service';
 
 // select
-import { TAGS_LIST_SELECT } from '../modules/database/select/tag.select';
+import {
+  TAGS_DETAIL_SELECT,
+  TAGS_LIST_SELECT,
+} from '../modules/database/select/tag.select';
 
 // types
 import { TagListQuery, TrendingTagsQuery } from './dto/list';
 import type { Tag, TagStats } from '@prisma/client';
-import type { AuthUserSchema } from '../libs/get-user.decorator';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class TagsService {
@@ -23,20 +26,37 @@ export class TagsService {
 
   /**
    * @description 태그 팔로우 생성
-   * @param {AuthUserSchema} user
-   * @param {number} tagId
+   * @param {UserWithInfo} user - 로그인한 유저
+   * @param {string} name - 태그 이름
    */
-  async following(user: AuthUserSchema, tagId: number) {
+  async following(user: UserWithInfo, name: string) {
+    const tagInfo = await this.prisma.tag.findUnique({
+      where: {
+        name,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!tagInfo) {
+      throw new NotFoundException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '태그를 찾을 수 없습니다.',
+        error: null,
+      });
+    }
+
     const following = await this.prisma.tagFollowing.create({
       data: {
-        tagId,
+        tagId: tagInfo.id,
         userId: user.id,
       },
     });
 
-    const count = await this.countFollowings(tagId);
+    const count = await this.countFollowings(tagInfo.id);
 
-    await this._updateTagStatsFollowings(tagId, count);
+    await this._updateTagStatsFollowings(tagInfo.id, count);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -51,22 +71,39 @@ export class TagsService {
 
   /**
    * @description 태그 팔로우 삭제
-   * @param {AuthUserSchema} user
-   * @param {number} tagId
+   * @param {UserWithInfo} user  - 로그인한 유저
+   * @param {string} name - 태그 이름
    */
-  async unfollowing(user: AuthUserSchema, tagId: number) {
+  async unfollowing(user: UserWithInfo, name: string) {
+    const tagInfo = await this.prisma.tag.findUnique({
+      where: {
+        name,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!tagInfo) {
+      throw new NotFoundException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '태그를 찾을 수 없습니다.',
+        error: null,
+      });
+    }
+
     const following = await this.prisma.tagFollowing.delete({
       where: {
         tagId_userId: {
-          tagId,
+          tagId: tagInfo.id,
           userId: user.id,
         },
       },
     });
 
-    const count = await this.countFollowings(tagId);
+    const count = await this.countFollowings(tagInfo.id);
 
-    await this._updateTagStatsFollowings(tagId, count);
+    await this._updateTagStatsFollowings(tagInfo.id, count);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -101,7 +138,7 @@ export class TagsService {
 
   /**
    * @description 태그에 대해서 following 한 카운터 값을 가져온다.
-   * @param {number} tagId
+   * @param {number} tagId 태그 아이디
    */
   async countFollowings(tagId: number) {
     const count = await this.prisma.tagFollowing.count({
@@ -132,17 +169,35 @@ export class TagsService {
 
   /**
    * @description 태그 상세 정보
-   * @param {string} name
+   * @param {string} name 태그 이름
+   * @param {UserWithInfo} user 유저 정보
    * @returns {Promise<{resultCode: number; message: string; error: string; result: Tag}>}
    */
-  async detail(name: string) {
+  async detail(name: string, user?: UserWithInfo) {
+    // 유저 정보가 존재하면 태그의 이름 및 팔로잉, 포스트 수를 가져오면서 유저가 팔로잉 했는지 여부를 가져온다.
+    // 그리고 유저가 없으면 태그의 이름 및 팔로잉, 포스트 수만 가져온다.
     const tagInfo = await this.prisma.tag.findUnique({
       where: {
         name,
       },
+      select: {
+        ...TAGS_DETAIL_SELECT,
+        ...(user
+          ? {
+              following: {
+                where: {
+                  userId: user.id,
+                },
+                select: {
+                  id: true,
+                },
+              },
+            }
+          : {}),
+      },
     });
 
-    if (!name) {
+    if (!tagInfo) {
       throw new NotFoundException({
         resultCode: EXCEPTION_CODE.NOT_EXIST,
         message: '태그를 찾을 수 없습니다.',
@@ -155,7 +210,13 @@ export class TagsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: tagInfo,
+      result: {
+        id: tagInfo.id,
+        name: tagInfo.name,
+        postCount: tagInfo._count.postsTags ?? 0,
+        followCount: tagInfo._count.following ?? 0,
+        isFollowing: !!tagInfo.following?.length,
+      },
     };
   }
 

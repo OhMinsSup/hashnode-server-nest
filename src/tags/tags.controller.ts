@@ -1,11 +1,24 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // service
 import { TagsService } from './tags.service';
 
+// decorator
+import { AuthUser } from '../libs/get-user.decorator';
+import { LoggedInGuard } from 'src/modules/guard/logged-in.guard';
+
 // types
 import { TagListQuery, TrendingTagsQuery } from './dto/list';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('태그')
 @Controller('api/v1/tags')
@@ -38,7 +51,21 @@ export class TagsController {
 
   @Get(':tag')
   @ApiOperation({ summary: '태그 상세' })
-  detail(@Param('tag') tag: string) {
-    return this.service.detail(tag);
+  detail(@Param('tag') tag: string, @AuthUser() user?: UserWithInfo) {
+    return this.service.detail(tag, user);
+  }
+
+  @Post(':tag/follow')
+  @ApiOperation({ summary: '태그 팔로우' })
+  @UseGuards(LoggedInGuard)
+  follow(@Param('tag') tag: string, @AuthUser() user: UserWithInfo) {
+    return this.service.following(user, tag);
+  }
+
+  @Delete(':tag/follow')
+  @ApiOperation({ summary: '태그 언팔로우' })
+  @UseGuards(LoggedInGuard)
+  unfollow(@Param('tag') tag: string, @AuthUser() user: UserWithInfo) {
+    return this.service.unfollowing(user, tag);
   }
 }
