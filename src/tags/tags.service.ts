@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 // utils
-import { isString } from '../libs/assertion';
+import { isEmpty, isString } from '../libs/assertion';
 
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';
@@ -176,9 +176,19 @@ export class TagsService {
   async detail(name: string, user?: UserWithInfo) {
     // 유저 정보가 존재하면 태그의 이름 및 팔로잉, 포스트 수를 가져오면서 유저가 팔로잉 했는지 여부를 가져온다.
     // 그리고 유저가 없으면 태그의 이름 및 팔로잉, 포스트 수만 가져온다.
-    const tagInfo = await this.prisma.tag.findUnique({
+    const tagInfo = await this.prisma.tag.findFirst({
       where: {
         name,
+        postsTags: {
+          every: {
+            post: {
+              isDeleted: false,
+              publishingDate: {
+                lte: new Date(),
+              },
+            },
+          },
+        },
       },
       select: {
         ...TAGS_DETAIL_SELECT,
@@ -206,6 +216,8 @@ export class TagsService {
       });
     }
 
+    const isFollowing = !isEmpty(tagInfo.following?.at(0));
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
@@ -215,7 +227,7 @@ export class TagsService {
         name: tagInfo.name,
         postCount: tagInfo._count.postsTags ?? 0,
         followCount: tagInfo._count.following ?? 0,
-        isFollowing: !!tagInfo.following?.length,
+        isFollowing,
       },
     };
   }
@@ -226,18 +238,18 @@ export class TagsService {
    * @returns {Promise<{resultCode: number; message: string; error: string; result: {list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; pageInfo: {endCursor: string; hasNextPage: boolean}}}>}
    */
   async trending(query: TrendingTagsQuery) {
-    const result = undefined;
-
+    const result = await this._getTrandingTimeItems(query);
+    const { list, totalCount, endCursor, hasNextPage } = result;
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
       result: {
-        list: [],
-        totalCount: 0,
+        list: list,
+        totalCount,
         pageInfo: {
-          endCursor: null,
-          hasNextPage: false,
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
         },
       },
     };
@@ -313,8 +325,115 @@ export class TagsService {
         score: {
           gte: 0.001,
         },
+        updatedAt: {
+          gte: time,
+        },
       },
     });
+
+    const cursorItem = cursor
+      ? await this.prisma.tag.findFirst({
+          where: {
+            id: cursor,
+            updatedAt: {
+              gte: time,
+            },
+          },
+          include: {
+            tagStats: true,
+          },
+        })
+      : null;
+
+    const list = await this.prisma.tag.findMany({
+      where: {
+        ...(cursor
+          ? {
+              id: {
+                lt: cursor,
+              },
+              updatedAt: {
+                gte: time,
+              },
+            }
+          : {
+              updatedAt: {
+                gte: time,
+              },
+            }),
+        tagStats: {
+          score: {
+            gte: 0.001,
+            ...(cursorItem
+              ? {
+                  lte: cursorItem.tagStats?.score,
+                }
+              : {}),
+          },
+        },
+      },
+      orderBy: [
+        {
+          tagStats: {
+            score: 'desc',
+          },
+        },
+        {
+          tagStats: {
+            tagId: 'desc',
+          },
+        },
+      ],
+      include: {
+        tagStats: true,
+        _count: {
+          select: {
+            postsTags: true,
+          },
+        },
+      },
+      take: limit,
+    });
+
+    const endCursor = list.at(-1)?.id ?? null;
+
+    const hasNextPage = endCursor
+      ? (await this.prisma.tag.count({
+          where: {
+            tagStats: {
+              tagId: {
+                lt: endCursor,
+              },
+              score: {
+                gte: 0.001,
+                lte: list.at(-1)?.tagStats?.score,
+              },
+            },
+            updatedAt: {
+              gte: time,
+            },
+          },
+          orderBy: [
+            {
+              tagStats: {
+                score: 'desc',
+              },
+            },
+            {
+              tagStats: {
+                tagId: 'desc',
+              },
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
+    };
   }
 
   /**

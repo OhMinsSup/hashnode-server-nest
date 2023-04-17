@@ -27,7 +27,7 @@ export class TagListQuery extends PaginationQuery {
 }
 
 export class TrendingTagsQuery extends PaginationQuery {
-  @IsIn(['week', 'all'])
+  @IsIn(['week', 'all', 'month', 'year'])
   @ApiProperty({
     name: 'category',
     type: 'string',

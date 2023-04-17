@@ -59,6 +59,7 @@ export class WidgetService {
    * @description 회원 목록 리스트
    * @param {GetArticleCirclesQuery} query
    */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getArticleCircles(_: GetArticleCirclesQuery) {
     // hows the user who created the most posts and received the most likes from among the users.
     const users: WidgetArticleCirclesRawQuery[] = await this.prisma.$queryRaw`
