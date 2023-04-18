@@ -78,25 +78,23 @@ model UsersTags {
 }
 
 model Post {
-  id              Int       @id @default(autoincrement())
+  id              Int         @id @default(autoincrement())
   title           String // max 255
   subTitle        String? // max 255
   content         String // max 255
   thumbnail       String?
-  disabledComment Boolean?  @default(false) // 댓글 비활성화
-  isDeleted       Boolean?  @default(false) // 삭제 여부
+  disabledComment Boolean?    @default(false) // 댓글 비활성화
+  isDeleted       Boolean?    @default(false) // 삭제 여부
   publishingDate  DateTime? // 발행일
-  createdAt       DateTime  @default(now()) // 생성일
-  updatedAt       DateTime  @updatedAt // 업데이트일
+  createdAt       DateTime    @default(now()) // 생성일
+  updatedAt       DateTime    @updatedAt // 업데이트일
   deletedAt       DateTime? // 삭제일 
-
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
-
-  postsTags PostsTags[]
-  postLike  PostLike[]
-  postStats PostStats?
-  seo       PostSeo?
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          Int
+  postsTags       PostsTags[]
+  postLike        PostLike[]
+  postStats       PostStats?
+  seo             PostSeo?
 
   @@index([createdAt(sort: Desc)])
 }
@@ -154,7 +152,7 @@ model File {
   id         Int       @id @default(autoincrement())
   name       String // 파일명
   url        String // url
-  uploadType String // PROFILE | IMAGE | POST_THUMBNAIL
+  uploadType String // PROFILE | IMAGE | POST_THUMBNAIL | TAG
   mediaType  String //  IMAGE
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @default(now()) @updatedAt
@@ -162,17 +160,17 @@ model File {
 }
 
 model Tag {
-  id   Int    @id @default(autoincrement())
-  name String @unique
-
-  createdAt DateTime  @default(now()) // 생성일
-  updatedAt DateTime  @updatedAt // 업데이트일
-  deletedAt DateTime? // 삭제일 
-
-  usersTags UsersTags[]
-  postsTags PostsTags[]
-  following TagFollowing[]
-  tagStats  TagStats?
+  id          Int            @id @default(autoincrement())
+  name        String         @unique
+  description String?
+  image       String?
+  createdAt   DateTime       @default(now()) // 생성일
+  updatedAt   DateTime       @updatedAt // 업데이트일
+  deletedAt   DateTime? // 삭제일 
+  usersTags   UsersTags[]
+  postsTags   PostsTags[]
+  following   TagFollowing[]
+  tagStats    TagStats?
 }
 
 model TagStats {
@@ -189,12 +187,11 @@ model TagStats {
 }
 
 model TagFollowing {
-  id        Int      @id @default(autoincrement())
-  tagId     Int
-  userId    Int
-
-  tag       Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     Int  @id @default(autoincrement())
+  tagId  Int
+  userId Int
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([tagId, userId])
   @@index(tagId)

@@ -24,6 +24,7 @@ import {
 // guard
 import { LoggedInGuard } from '../modules/guard/logged-in.guard';
 import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('게시물')
 @Controller('api/v1/posts')
@@ -78,7 +79,7 @@ export class PostsController {
     type: CreateRequestDto,
   })
   @UseGuards(LoggedInGuard)
-  create(@AuthUser() user: AuthUserSchema, @Body() input: CreateRequestDto) {
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreateRequestDto) {
     return this.service.create(user, input);
   }
 
@@ -92,7 +93,7 @@ export class PostsController {
   @ApiOperation({ summary: '게시물 삭제' })
   @UseGuards(LoggedInGuard)
   delete(
-    @AuthUser() user: AuthUserSchema,
+    @AuthUser() user: UserWithInfo,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.delete(user, id);
@@ -101,10 +102,7 @@ export class PostsController {
   @Post(':id/like')
   @ApiOperation({ summary: '게시글 좋아요' })
   @UseGuards(LoggedInGuard)
-  like(
-    @AuthUser() user: AuthUserSchema,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  like(@AuthUser() user: UserWithInfo, @Param('id', ParseIntPipe) id: number) {
     return this.service.like(user, id);
   }
 
@@ -112,7 +110,7 @@ export class PostsController {
   @ApiOperation({ summary: '게시글 싫어요' })
   @UseGuards(LoggedInGuard)
   unlike(
-    @AuthUser() user: AuthUserSchema,
+    @AuthUser() user: UserWithInfo,
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.unlike(user, id);

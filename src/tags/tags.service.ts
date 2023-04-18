@@ -15,15 +15,60 @@ import {
   TAGS_LIST_SELECT,
 } from '../modules/database/select/tag.select';
 
+// utils
+import { calculateRankingScore, escapeForUrl } from 'src/libs/utils';
+
 // types
 import { TagListQuery, TrendingTagsQuery } from './dto/list';
 import type { Tag, TagStats } from '@prisma/client';
 import type { UserWithInfo } from '../modules/database/select/user.select';
-import { calculateRankingScore } from 'src/libs/utils';
 
 @Injectable()
 export class TagsService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * @description 태그가 존재하면 태그 정보를 반환하고, 존재하지 않으면 태그를 생성한다.
+   * @param {string} text
+   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?}tx
+   */
+  async findOrCreate(
+    text: string,
+    tx?: Omit<
+      PrismaService,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+    >,
+  ) {
+    const name = escapeForUrl(text);
+    if (tx) {
+      const data = await tx.tag.findUnique({
+        where: {
+          name,
+        },
+      });
+      if (!data) {
+        return tx.tag.create({
+          data: {
+            name,
+          },
+        });
+      }
+    }
+
+    const data = await this.prisma.tag.findUnique({
+      where: {
+        name,
+      },
+    });
+
+    if (!data) {
+      return this.prisma.tag.create({
+        data: {
+          name,
+        },
+      });
+    }
+  }
 
   /**
    * @description 태그 팔로우 생성

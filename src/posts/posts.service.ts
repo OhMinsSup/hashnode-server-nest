@@ -10,7 +10,7 @@ import { TagsService } from '../tags/tags.service';
 
 // utils
 import { isEmpty, isString } from '../libs/assertion';
-import { calculateRankingScore, escapeForUrl } from '../libs/utils';
+import { calculateRankingScore } from '../libs/utils';
 
 // constants
 import { EXCEPTION_CODE } from 'src/constants/exception.code';
@@ -32,6 +32,7 @@ import type {
   Prisma,
 } from '@prisma/client';
 import type { AuthUserSchema } from '../libs/get-user.decorator';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 interface UpdatePostLikesParams {
   postId: number;
@@ -49,111 +50,13 @@ export class PostsService {
     private readonly tags: TagsService,
   ) {}
 
-  async recalculateRanking(postId: number, likesCount?: number) {
-    const item = await this.prisma.post.findUnique({ where: { id: postId } });
-    if (!item) return;
-    const likes = likesCount ?? (await this.countLikes(postId));
-    const age =
-      (Date.now() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60;
-    const score = calculateRankingScore(likes, age);
-    return this.prisma.postStats.update({
-      where: {
-        postId,
-      },
-      data: {
-        score,
-      },
-    });
-  }
-
-  /**
-   * @description  좋아요 카운트
-   * @param {number} postId
-   * @returns
-   */
-  async countLikes(postId: number) {
-    const count = await this.prisma.postLike.count({
-      where: {
-        postId,
-      },
-    });
-    return count;
-  }
-
-  /**
-   * @description 게시물의 좋아요 통계값 업데이트
-   * @param {UpdatePostLikesParams} param0
-   */
-  async updatePostLikes({ postId, likes }: UpdatePostLikesParams) {
-    return this.prisma.postStats.update({
-      data: {
-        likes,
-      },
-      where: {
-        postId,
-      },
-    });
-  }
-
   /**
    * @description 게시물 좋아요
-   * @param {PostActionParams} params``
-   */
-  async likeItem({ userId, postId }: PostActionParams) {
-    const alreadyLiked = await this.prisma.postLike.findUnique({
-      where: {
-        postId_userId: {
-          postId,
-          userId,
-        },
-      },
-    });
-
-    if (!alreadyLiked) {
-      try {
-        await this.prisma.postLike.create({
-          data: {
-            postId,
-            userId,
-          },
-        });
-      } catch (e) {}
-    }
-    const likes = await this.countLikes(postId);
-    const itemStats = await this.updatePostLikes({ postId, likes });
-    this.recalculateRanking(postId, likes).catch(console.error);
-    return itemStats;
-  }
-
-  /**
-   * @description 게시물 좋아요 취소
-   * @param {PostActionParams} params
-   */
-  async unlikeItem({ userId, postId }: PostActionParams) {
-    try {
-      await this.prisma.postLike.delete({
-        where: {
-          postId_userId: {
-            postId,
-            userId,
-          },
-        },
-      });
-    } catch (e) {}
-
-    const likes = await this.countLikes(postId);
-    const itemStats = await this.updatePostLikes({ postId, likes });
-    this.recalculateRanking(postId, likes).catch(console.error);
-    return itemStats;
-  }
-
-  /**
-   * @description 게시물 좋아요
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
    * @param {number} id
    */
-  async like(user: AuthUserSchema, id: number) {
-    const result = await this.likeItem({ userId: user.id, postId: id });
+  async like(user: UserWithInfo, id: number) {
+    const result = await this._likeItem({ userId: user.id, postId: id });
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
@@ -167,11 +70,11 @@ export class PostsService {
 
   /**
    * @description 게시물 안좋아요
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
    * @param {number} id
    */
-  async unlike(user: AuthUserSchema, id: number) {
-    const result = await this.unlikeItem({ userId: user.id, postId: id });
+  async unlike(user: UserWithInfo, id: number) {
+    const result = await this._unlikeItem({ userId: user.id, postId: id });
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
@@ -235,10 +138,10 @@ export class PostsService {
 
   /**
    * @description 게시물 삭제
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
    * @param {number} id
    */
-  async delete(user: AuthUserSchema, id: number) {
+  async delete(user: UserWithInfo, id: number) {
     await this.prisma.post.update({
       where: {
         id,
@@ -318,31 +221,16 @@ export class PostsService {
 
   /**
    * @description 게시글 생성
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
    * @param {CreateRequestDto} input
    */
-  async create(user: AuthUserSchema, input: CreateRequestDto) {
+  async create(user: UserWithInfo, input: CreateRequestDto) {
     return this.prisma.$transaction(async (tx) => {
       let createdTags: Tag[] = [];
       // 태크 체크
       if (!isEmpty(input.tags) && input.tags) {
         const tags = await Promise.all(
-          input.tags.map(async (tag) => {
-            const name = escapeForUrl(tag);
-            const tagData = await tx.tag.findFirst({
-              where: {
-                name,
-              },
-            });
-            if (!tagData) {
-              return tx.tag.create({
-                data: {
-                  name,
-                },
-              });
-            }
-            return tagData;
-          }),
+          input.tags.map((tag) => this.tags.findOrCreate(tag)),
         );
         createdTags = tags;
       }
@@ -370,24 +258,7 @@ export class PostsService {
         },
       });
 
-      await Promise.all(
-        createdTags.map((tag) =>
-          tx.postsTags.create({
-            data: {
-              post: {
-                connect: {
-                  id: post.id,
-                },
-              },
-              tag: {
-                connect: {
-                  id: tag.id,
-                },
-              },
-            },
-          }),
-        ),
-      );
+      await this._connectTagsToPost(post.id, createdTags, tx);
 
       // 태그 통계 생성
       this.tags
@@ -1078,7 +949,6 @@ export class PostsService {
           avatarUrl: item.user.profile.avatarUrl,
           availableText: item.user.profile.availableText,
           location: item.user.profile.location,
-          // website: item.user.profile.website,
         },
       },
       count: {
@@ -1086,5 +956,145 @@ export class PostsService {
       },
       ...(item.cursorId && { cursorId: item.cursorId }),
     };
+  }
+
+  /**
+   * @description 게시물 통계 - score 업데이트
+   * @param {number} postId 게시물 ID
+   * @param {number?} likesCount 좋아요 수
+   */
+  private async _recalculateRanking(postId: number, likesCount?: number) {
+    const item = await this.prisma.post.findUnique({ where: { id: postId } });
+    if (!item) return;
+    const likes = likesCount ?? (await this._countLikes(postId));
+    const age =
+      (Date.now() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60;
+    const score = calculateRankingScore(likes, age);
+    return this.prisma.postStats.update({
+      where: {
+        postId,
+      },
+      data: {
+        score,
+      },
+    });
+  }
+
+  /**
+   * @description  좋아요 카운트
+   * @param {number} postId
+   */
+  private async _countLikes(postId: number) {
+    const count = await this.prisma.postLike.count({
+      where: {
+        postId,
+      },
+    });
+    return count;
+  }
+
+  /**
+   * @description 게시물의 좋아요 통계값 업데이트
+   * @param {UpdatePostLikesParams} params
+   */
+  private async _updatePostLikes({ postId, likes }: UpdatePostLikesParams) {
+    return this.prisma.postStats.update({
+      data: {
+        likes,
+      },
+      where: {
+        postId,
+      },
+    });
+  }
+
+  /**
+   * @description 게시물 좋아요
+   * @param {PostActionParams} params``
+   */
+  private async _likeItem({ userId, postId }: PostActionParams) {
+    const alreadyLiked = await this.prisma.postLike.findUnique({
+      where: {
+        postId_userId: {
+          postId,
+          userId,
+        },
+      },
+    });
+
+    if (!alreadyLiked) {
+      try {
+        await this.prisma.postLike.create({
+          data: {
+            postId,
+            userId,
+          },
+        });
+      } catch (e) {}
+    }
+    const likes = await this._countLikes(postId);
+    const itemStats = await this._updatePostLikes({ postId, likes });
+    this._recalculateRanking(postId, likes).catch(console.error);
+    return itemStats;
+  }
+
+  /**
+   * @description 게시물 좋아요 취소
+   * @param {PostActionParams} params
+   */
+  private async _unlikeItem({ userId, postId }: PostActionParams) {
+    try {
+      await this.prisma.postLike.delete({
+        where: {
+          postId_userId: {
+            postId,
+            userId,
+          },
+        },
+      });
+    } catch (e) {}
+
+    const likes = await this._countLikes(postId);
+    const itemStats = await this._updatePostLikes({ postId, likes });
+    this._recalculateRanking(postId, likes).catch(console.error);
+    return itemStats;
+  }
+
+  /**
+   * @description 태그 연결
+   * @param {number} postId
+   * @param {Tag[]} tags
+   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?}tx
+   */
+  private async _connectTagsToPost(
+    postId: number,
+    tags: Tag[],
+    tx?: Omit<
+      PrismaService,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+    >,
+  ) {
+    const prisma = tx ?? this.prisma;
+    const tagIds = tags.map((tag) => tag.id);
+    for (const tagId of tagIds) {
+      try {
+        await prisma.postsTags.create({
+          data: {
+            post: {
+              connect: {
+                id: postId,
+              },
+            },
+            tag: {
+              connect: {
+                id: tagId,
+              },
+            },
+          },
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }
 }
