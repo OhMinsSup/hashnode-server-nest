@@ -19,6 +19,7 @@ import {
 import { TagListQuery, TrendingTagsQuery } from './dto/list';
 import type { Tag, TagStats } from '@prisma/client';
 import type { UserWithInfo } from '../modules/database/select/user.select';
+import { calculateRankingScore } from 'src/libs/utils';
 
 @Injectable()
 export class TagsService {
@@ -54,9 +55,9 @@ export class TagsService {
       },
     });
 
-    const count = await this.countFollowings(tagInfo.id);
-
+    const count = await this._countFollowings(tagInfo.id);
     await this._updateTagStatsFollowings(tagInfo.id, count);
+    this._recalculateRanking(tagInfo.id, count).catch(console.error);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -101,9 +102,9 @@ export class TagsService {
       },
     });
 
-    const count = await this.countFollowings(tagInfo.id);
-
+    const count = await this._countFollowings(tagInfo.id);
     await this._updateTagStatsFollowings(tagInfo.id, count);
+    this._recalculateRanking(tagInfo.id, count).catch(console.error);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -140,7 +141,7 @@ export class TagsService {
    * @description 태그에 대해서 following 한 카운터 값을 가져온다.
    * @param {number} tagId 태그 아이디
    */
-  async countFollowings(tagId: number) {
+  private async _countFollowings(tagId: number) {
     const count = await this.prisma.tagFollowing.count({
       where: {
         tagId,
@@ -152,8 +153,8 @@ export class TagsService {
 
   /**
    * @description 태그 통계 - following 카운트 업데이트
-   * @param {number} tagId
-   * @param {number} count
+   * @param {number} tagId 태그 아이디
+   * @param {number} count 팔로잉 카운트
    * @returns
    */
   private async _updateTagStatsFollowings(tagId: number, count: number) {
@@ -163,6 +164,29 @@ export class TagsService {
       },
       data: {
         followings: count,
+      },
+    });
+  }
+
+  /**
+   * @description 태그 통계 - score 업데이트
+   * @param {number} tagId 태그 아이디
+   * @param {number?} followCount 팔로잉 카운트
+   * @returns
+   */
+  private async _recalculateRanking(tagId: number, followCount?: number) {
+    const item = await this.prisma.tag.findUnique({ where: { id: tagId } });
+    if (!item) return;
+    const count = followCount ?? (await this._countFollowings(tagId));
+    const age =
+      (Date.now() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60;
+    const score = calculateRankingScore(count, age);
+    return this.prisma.tagStats.update({
+      where: {
+        tagId,
+      },
+      data: {
+        score,
       },
     });
   }
@@ -325,9 +349,11 @@ export class TagsService {
         score: {
           gte: 0.001,
         },
-        updatedAt: {
-          gte: time,
-        },
+        ...(time && {
+          updatedAt: {
+            gte: time,
+          },
+        }),
       },
     });
 
@@ -335,9 +361,11 @@ export class TagsService {
       ? await this.prisma.tag.findFirst({
           where: {
             id: cursor,
-            updatedAt: {
-              gte: time,
-            },
+            ...(time && {
+              updatedAt: {
+                gte: time,
+              },
+            }),
           },
           include: {
             tagStats: true,
@@ -352,14 +380,18 @@ export class TagsService {
               id: {
                 lt: cursor,
               },
-              updatedAt: {
-                gte: time,
-              },
+              ...(time && {
+                updatedAt: {
+                  gte: time,
+                },
+              }),
             }
           : {
-              updatedAt: {
-                gte: time,
-              },
+              ...(time && {
+                updatedAt: {
+                  gte: time,
+                },
+              }),
             }),
         tagStats: {
           score: {
@@ -409,9 +441,11 @@ export class TagsService {
                 lte: list.at(-1)?.tagStats?.score,
               },
             },
-            updatedAt: {
-              gte: time,
-            },
+            ...(time && {
+              updatedAt: {
+                gte: time,
+              },
+            }),
           },
           orderBy: [
             {
@@ -430,7 +464,7 @@ export class TagsService {
 
     return {
       totalCount,
-      list,
+      list: this._serializeTag(list),
       endCursor,
       hasNextPage,
     };
