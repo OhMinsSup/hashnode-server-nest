@@ -16,14 +16,11 @@ import { PostsService } from './posts.service';
 
 // dto
 import { CreateRequestDto } from './dto/create.request.dto';
-import {
-  PostListRequestDto,
-  GetTopPostsRequestDto,
-} from './dto/list.request.dto';
+import { PostListQuery, GetTopPostsQuery } from './dto/list';
 
 // guard
 import { LoggedInGuard } from '../modules/guard/logged-in.guard';
-import { AuthUser, type AuthUserSchema } from '../libs/get-user.decorator';
+import { AuthUser } from '../libs/get-user.decorator';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('게시물')
@@ -35,11 +32,11 @@ export class PostsController {
   @ApiOperation({ summary: '게시물 리스트' })
   @ApiQuery({
     name: 'query',
-    type: PostListRequestDto,
+    type: PostListQuery,
     required: false,
     description: '페이지네이션',
   })
-  list(@Query() query: PostListRequestDto, @AuthUser() user?: AuthUserSchema) {
+  list(@Query() query: PostListQuery, @AuthUser() user?: UserWithInfo) {
     return this.service.list(query, user);
   }
 
@@ -47,15 +44,12 @@ export class PostsController {
   @ApiOperation({ summary: '좋아요한 게시물 리스트' })
   @ApiQuery({
     name: 'query',
-    type: PostListRequestDto,
+    type: PostListQuery,
     required: false,
     description: '페이지네이션',
   })
   @UseGuards(LoggedInGuard)
-  getLikes(
-    @AuthUser() user: AuthUserSchema,
-    @Query() query: PostListRequestDto,
-  ) {
+  getLikes(@AuthUser() user: UserWithInfo, @Query() query: PostListQuery) {
     return this.service.getLikes(user, query);
   }
 
@@ -63,11 +57,11 @@ export class PostsController {
   @ApiOperation({ summary: '화면 위에 보이는 포스트 정보' })
   @ApiQuery({
     name: 'query',
-    type: GetTopPostsRequestDto,
+    type: GetTopPostsQuery,
     required: true,
     description: '조회 기간',
   })
-  getTopPosts(@Query() query: GetTopPostsRequestDto) {
+  getTopPosts(@Query() query: GetTopPostsQuery) {
     return this.service.getTopPosts(query);
   }
 

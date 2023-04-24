@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 
 // service
@@ -17,10 +18,7 @@ import { EXCEPTION_CODE } from 'src/constants/exception.code';
 
 // types
 import { CreateRequestDto } from './dto/create.request.dto';
-import {
-  GetTopPostsRequestDto,
-  PostListRequestDto,
-} from './dto/list.request.dto';
+import { GetTopPostsQuery, PostListQuery } from './dto/list';
 
 // types
 import type {
@@ -31,7 +29,6 @@ import type {
   UserProfile,
   Prisma,
 } from '@prisma/client';
-import type { AuthUserSchema } from '../libs/get-user.decorator';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 
 interface UpdatePostLikesParams {
@@ -160,10 +157,10 @@ export class PostsService {
 
   /**
    * @description 게시글 수정
-   * @param {AuthUserSchema} user
+   * @param {UserWithInfo} user
    * @param {any} input
    */
-  async update(user: AuthUserSchema, input: any) {
+  async update(user: UserWithInfo, input: any) {
     return this.prisma.$transaction(async (tx) => {
       const post = await tx.post.findFirst({
         where: {
@@ -293,10 +290,10 @@ export class PostsService {
 
   /**
    * @description 게시물 목록 리스트
-   * @param {PostListRequestDto} query
-   * @param {AuthUserSchema?} user
+   * @param {PostListQuery} query
+   * @param {UserWithInfo?} user
    */
-  async list(query: PostListRequestDto, user?: AuthUserSchema) {
+  async list(query: PostListQuery, user?: UserWithInfo) {
     let result = undefined;
     switch (query.type) {
       case 'past':
@@ -330,7 +327,7 @@ export class PostsService {
     };
   }
 
-  async getLikes(user: AuthUserSchema, query: PostListRequestDto) {
+  async getLikes(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getLikeItems(user, query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
@@ -352,10 +349,10 @@ export class PostsService {
 
   /**
    * @description 날짜 별 인기 게시물 목록
-   * @param {GetTopPostsRequestDto} query
+   * @param {GetTopPostsQuery} query
    * @returns
    */
-  async getTopPosts(query: GetTopPostsRequestDto) {
+  async getTopPosts(query: GetTopPostsQuery) {
     const { duration } = query;
 
     const now = new Date();
@@ -418,10 +415,10 @@ export class PostsService {
 
   /**
    * @description 게시물 리스트
-   * @param {PostListRequestDto} query
+   * @param {PostListQuery} query
    * @returns
    */
-  private async _getItems({ cursor, limit }: PostListRequestDto) {
+  private async _getItems({ cursor, limit, tag }: PostListQuery) {
     if (isString(cursor)) {
       cursor = Number(cursor);
     }
@@ -432,6 +429,23 @@ export class PostsService {
 
     const now = new Date();
 
+    let tagId: number | null = null;
+    if (tag) {
+      const data = await this.prisma.tag.findFirst({
+        where: {
+          name: tag,
+        },
+      });
+      if (!data) {
+        throw new NotFoundException({
+          resultCode: EXCEPTION_CODE.NOT_EXIST,
+          message: ['tag not found'],
+          error: 'tag',
+        });
+      }
+      tagId = data.id;
+    }
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -439,6 +453,13 @@ export class PostsService {
           publishingDate: {
             lte: now,
           },
+          ...(tagId && {
+            postsTags: {
+              some: {
+                tagId: tagId,
+              },
+            },
+          }),
         },
       }),
       this.prisma.post.findMany({
@@ -457,6 +478,13 @@ export class PostsService {
           publishingDate: {
             lte: now,
           },
+          ...(tagId && {
+            postsTags: {
+              some: {
+                tagId: tagId,
+              },
+            },
+          }),
         },
         include: {
           user: {
@@ -490,6 +518,13 @@ export class PostsService {
             publishingDate: {
               lte: now,
             },
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
           },
           orderBy: [
             {
@@ -509,13 +544,13 @@ export class PostsService {
 
   /**
    * @description 좋아요한 게시물 리스트
-   * @param {AuthUserSchema} user
-   * @param {PostListRequestDto} query
+   * @param {UserWithInfo} user
+   * @param {PostListQuery} query
    * @returns
    */
   private async _getLikeItems(
-    user: AuthUserSchema,
-    { cursor, limit }: PostListRequestDto,
+    user: UserWithInfo,
+    { cursor, limit }: PostListQuery,
   ) {
     if (isString(cursor)) {
       cursor = Number(cursor);
@@ -622,14 +657,14 @@ export class PostsService {
   /**
    * @private
    * @description 과거 게시물 리스트
-   * @param {PostListRequestDto} params
+   * @param {PostListQuery} params
    */
   private async _getPastItems({
     cursor,
     limit,
     endDate,
     startDate,
-  }: PostListRequestDto) {
+  }: PostListQuery) {
     if (isString(cursor)) {
       cursor = Number(cursor);
     }
@@ -738,12 +773,12 @@ export class PostsService {
 
   /**
    * @description 추천 게시물 리스트
-   * @param {PostListRequestDto} query
-   * @param {AuthUserSchema?} user
+   * @param {PostListQuery} query
+   * @param {UserWithInfo?} user
    */
   private async _getFeaturedItems(
-    { cursor, limit }: PostListRequestDto,
-    user?: AuthUserSchema,
+    { cursor, limit, tag }: PostListQuery,
+    user?: UserWithInfo,
   ) {
     if (isString(cursor)) {
       cursor = Number(cursor);
@@ -751,6 +786,23 @@ export class PostsService {
 
     if (isString(limit)) {
       limit = Number(limit);
+    }
+
+    let tagId: number | null = null;
+    if (tag) {
+      const data = await this.prisma.tag.findFirst({
+        where: {
+          name: tag,
+        },
+      });
+      if (!data) {
+        throw new NotFoundException({
+          resultCode: EXCEPTION_CODE.NOT_EXIST,
+          message: ['tag not found'],
+          error: 'tag',
+        });
+      }
+      tagId = data.id;
     }
 
     const now = new Date();
@@ -765,6 +817,13 @@ export class PostsService {
           publishingDate: {
             lte: now,
           },
+          ...(tagId && {
+            postsTags: {
+              some: {
+                tagId: tagId,
+              },
+            },
+          }),
         },
       },
     });
@@ -777,6 +836,13 @@ export class PostsService {
             publishingDate: {
               lte: now,
             },
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
           },
           include: {
             postStats: true,
@@ -812,6 +878,13 @@ export class PostsService {
               : {}),
           },
         },
+        ...(tagId && {
+          postsTags: {
+            some: {
+              tagId: tagId,
+            },
+          },
+        }),
       },
       orderBy: [
         {
@@ -865,6 +938,13 @@ export class PostsService {
             publishingDate: {
               lte: now,
             },
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
           },
           orderBy: [
             {

@@ -3,9 +3,9 @@ import { Type } from 'class-transformer';
 import { IsEnum, IsOptional, IsString, IsNumber } from 'class-validator';
 import { PaginationQuery } from '../../libs/pagination.request.dto';
 
-export class PostListRequestDto extends PaginationQuery {
-  @IsString()
+export class PostListQuery extends PaginationQuery {
   @IsOptional()
+  @IsString()
   @ApiProperty({
     name: 'name',
     type: 'string',
@@ -14,9 +14,8 @@ export class PostListRequestDto extends PaginationQuery {
   })
   keyword?: string;
 
-  @IsString()
-  @IsEnum(['recent', 'featured', 'past', 'personalized'])
   @IsOptional()
+  @IsEnum(['recent', 'featured', 'past', 'personalized'])
   @ApiProperty({
     name: 'type',
     type: 'string',
@@ -26,8 +25,8 @@ export class PostListRequestDto extends PaginationQuery {
   })
   type?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   @ApiProperty({
     name: 'startDate',
     type: 'string',
@@ -36,8 +35,8 @@ export class PostListRequestDto extends PaginationQuery {
   })
   startDate?: string;
 
-  @IsString()
   @IsOptional()
+  @IsString()
   @ApiProperty({
     name: 'endDate',
     type: 'string',
@@ -45,9 +44,19 @@ export class PostListRequestDto extends PaginationQuery {
     description: '종료일',
   })
   endDate?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    name: 'tag',
+    type: 'string',
+    required: false,
+    description: '태그',
+  })
+  tag?: string;
 }
 
-export class GetTopPostsRequestDto {
+export class GetTopPostsQuery {
   @Type(() => Number)
   @IsNumber()
   @ApiProperty({
