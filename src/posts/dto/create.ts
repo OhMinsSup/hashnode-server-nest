@@ -12,7 +12,7 @@ import {
 
 // body
 
-export class CreateSeoRequestDto {
+export class SeoBody {
   @IsOptional()
   @IsString()
   @MaxLength(50)
@@ -42,7 +42,7 @@ export class CreateSeoRequestDto {
   image?: string;
 }
 
-export class CreateThumbnailRequestDto {
+export class ThumbnailBody {
   @IsOptional()
   @IsNumber()
   @ApiProperty({
@@ -59,7 +59,7 @@ export class CreateThumbnailRequestDto {
   url: string;
 }
 
-export class CreateRequestDto {
+export class CreateBody {
   @IsString()
   @MaxLength(255)
   @ApiProperty({
@@ -93,11 +93,11 @@ export class CreateRequestDto {
   @IsOptional()
   @ApiProperty({
     description: '썸네일 이미지',
-    type: CreateThumbnailRequestDto,
+    type: ThumbnailBody,
     nullable: true,
     required: false,
   })
-  thumbnail?: CreateThumbnailRequestDto | null;
+  thumbnail?: ThumbnailBody | null;
 
   @IsArray()
   @IsOptional()
@@ -135,9 +135,9 @@ export class CreateRequestDto {
   @IsOptional()
   @ApiProperty({
     description: 'SEO',
-    type: CreateSeoRequestDto,
+    type: SeoBody,
     nullable: true,
     required: false,
   })
-  seo?: CreateSeoRequestDto | null;
+  seo?: SeoBody | null;
 }

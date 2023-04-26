@@ -7,6 +7,7 @@ import {
   Param,
   ParseIntPipe,
   Post,
+  Put,
   Query,
   UseGuards,
 } from '@nestjs/common';
@@ -15,7 +16,7 @@ import {
 import { PostsService } from './posts.service';
 
 // dto
-import { CreateRequestDto } from './dto/create.request.dto';
+import { CreateBody } from './dto/create';
 import { PostListQuery, GetTopPostsQuery } from './dto/list';
 
 // guard
@@ -70,11 +71,27 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 작성 API',
-    type: CreateRequestDto,
+    type: CreateBody,
   })
   @UseGuards(LoggedInGuard)
-  create(@AuthUser() user: UserWithInfo, @Body() input: CreateRequestDto) {
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreateBody) {
     return this.service.create(user, input);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '게시글 수정' })
+  @ApiBody({
+    required: true,
+    description: '게시글 수정 API',
+    type: CreateBody,
+  })
+  @UseGuards(LoggedInGuard)
+  update(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() input: CreateBody,
+  ) {
+    return this.service.update(user, id, input);
   }
 
   @Get(':id')

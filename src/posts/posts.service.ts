@@ -17,19 +17,19 @@ import { calculateRankingScore } from '../libs/utils';
 import { EXCEPTION_CODE } from 'src/constants/exception.code';
 
 // types
-import { CreateRequestDto } from './dto/create.request.dto';
+import { CreateBody } from './dto/create';
 import { GetTopPostsQuery, PostListQuery } from './dto/list';
 
+import { isEqual } from 'lodash';
+
 // types
-import type {
-  Post,
-  PostsTags,
-  Tag,
-  User,
-  UserProfile,
-  Prisma,
-} from '@prisma/client';
+import type { Tag, Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../modules/database/select/user.select';
+import {
+  DEFAULT_POSTS_SELECT,
+  POSTS_LIKES_SELECT,
+  POSTS_STATUS_SELECT,
+} from 'src/modules/database/select/post.select';
 
 interface UpdatePostLikesParams {
   postId: number;
@@ -97,23 +97,7 @@ export class PostsService {
           lte: now,
         },
       },
-      include: {
-        user: {
-          include: {
-            profile: true,
-          },
-        },
-        postsTags: {
-          include: {
-            tag: true,
-          },
-        },
-        _count: {
-          select: {
-            postLike: true,
-          },
-        },
-      },
+      select: DEFAULT_POSTS_SELECT,
     });
 
     if (!post) {
@@ -160,29 +144,13 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {any} input
    */
-  async update(user: UserWithInfo, input: any) {
+  async update(user: UserWithInfo, id: number, input: CreateBody) {
     return this.prisma.$transaction(async (tx) => {
       const post = await tx.post.findFirst({
         where: {
-          id: input.id,
+          id: id,
         },
-        include: {
-          user: {
-            include: {
-              profile: true,
-            },
-          },
-          postsTags: {
-            include: {
-              tag: true,
-            },
-          },
-          _count: {
-            select: {
-              postLike: true,
-            },
-          },
-        },
+        select: DEFAULT_POSTS_SELECT,
       });
 
       if (!post) {
@@ -207,13 +175,77 @@ export class PostsService {
         Prisma.PostUpdateInput,
         Prisma.PostUncheckedUpdateInput
       >;
+
+      if (input.title && !isEqual(post.title, input.title)) {
+        newData.title = input.title;
+      }
+
+      if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
+        newData.subTitle = input.subTitle;
+      }
+
+      if (input.content && !isEqual(post.content, input.content)) {
+        newData.content = input.content;
+      }
+
+      if (input.thumbnail && !isEqual(post.thumbnail, input.thumbnail.url)) {
+        newData.thumbnail = input.thumbnail.url;
+      }
+
+      if (
+        typeof input.disabledComment === 'boolean' &&
+        post.disabledComment !== input.disabledComment
+      ) {
+        newData.disabledComment = input.disabledComment;
+      }
+
+      if (
+        input.publishingDate &&
+        !isEqual(post.publishingDate, input.publishingDate)
+      ) {
+        newData.publishingDate = new Date(input.publishingDate);
+      }
+
+      if (input.seo) {
+        if (input.seo.title && !isEqual(post.seo.title, input.seo.title)) {
+          newData.seo.update.title = input.seo.title;
+        }
+        if (input.seo.desc && !isEqual(post.seo.desc, input.seo.desc)) {
+          newData.seo.update.desc = input.seo.desc;
+        }
+        if (input.seo.image && !isEqual(post.seo.image, input.seo.image)) {
+          newData.seo.update.image = input.seo.image;
+        }
+      }
+
+      if (input.tags) {
+        const tags = await Promise.all(
+          input.tags.map((tag) => this.tags.findOrCreate(tag)),
+        );
+        newData.postsTags = {
+          deleteMany: {
+            postId: post.id,
+          },
+          create: tags.map((tag) => ({
+            tagId: tag.id,
+          })),
+        };
+      }
+
+      await tx.post.update({
+        where: {
+          id: post.id,
+        },
+        data: newData,
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: null,
+      };
     });
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {},
-    };
   }
 
   /**
@@ -221,7 +253,7 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {CreateRequestDto} input
    */
-  async create(user: UserWithInfo, input: CreateRequestDto) {
+  async create(user: UserWithInfo, input: CreateBody) {
     return this.prisma.$transaction(async (tx) => {
       let createdTags: Tag[] = [];
       // 태크 체크
@@ -383,23 +415,7 @@ export class PostsService {
           },
         ],
       },
-      include: {
-        user: {
-          include: {
-            profile: true,
-          },
-        },
-        postsTags: {
-          include: {
-            tag: true,
-          },
-        },
-        _count: {
-          select: {
-            postLike: true,
-          },
-        },
-      },
+      select: DEFAULT_POSTS_SELECT,
       take: 6,
     });
 
@@ -486,23 +502,7 @@ export class PostsService {
             },
           }),
         },
-        include: {
-          user: {
-            include: {
-              profile: true,
-            },
-          },
-          postsTags: {
-            include: {
-              tag: true,
-            },
-          },
-          _count: {
-            select: {
-              postLike: true,
-            },
-          },
-        },
+        select: DEFAULT_POSTS_SELECT,
         take: limit,
       }),
     ]);
@@ -595,27 +595,7 @@ export class PostsService {
             },
           },
         },
-        include: {
-          post: {
-            include: {
-              user: {
-                include: {
-                  profile: true,
-                },
-              },
-              postsTags: {
-                include: {
-                  tag: true,
-                },
-              },
-              _count: {
-                select: {
-                  postLike: true,
-                },
-              },
-            },
-          },
-        },
+        select: POSTS_LIKES_SELECT,
         take: limit,
       }),
     ]);
@@ -718,23 +698,7 @@ export class PostsService {
             lte: now,
           },
         },
-        include: {
-          user: {
-            include: {
-              profile: true,
-            },
-          },
-          postsTags: {
-            include: {
-              tag: true,
-            },
-          },
-          _count: {
-            select: {
-              postLike: true,
-            },
-          },
-        },
+        select: DEFAULT_POSTS_SELECT,
         take: limit,
       }),
     ]);
@@ -898,25 +862,7 @@ export class PostsService {
           },
         },
       ],
-      include: {
-        postStats: true,
-        postLike: user ? { where: { userId: user.id } } : false,
-        user: {
-          include: {
-            profile: true,
-          },
-        },
-        postsTags: {
-          include: {
-            tag: true,
-          },
-        },
-        _count: {
-          select: {
-            postLike: true,
-          },
-        },
-      },
+      select: POSTS_STATUS_SELECT,
       take: limit,
     });
 
@@ -973,19 +919,7 @@ export class PostsService {
    * @description 리스트 데이터 serialize
    * @param list
    */
-  private _serializes(
-    list: (Post & {
-      user: User & {
-        profile: UserProfile;
-      };
-      postsTags: (PostsTags & {
-        tag: Tag;
-      })[];
-      _count: {
-        postLike: number;
-      };
-    })[],
-  ) {
+  private _serializes(list: any[]) {
     return list.map(this._serialize);
   }
 
@@ -993,44 +927,33 @@ export class PostsService {
    * @description 리스트 데이터 serialize
    * @param list
    */
-  private _serialize(
-    item: Post & {
-      user: User & {
-        profile: UserProfile;
-      };
-      postsTags: (PostsTags & {
-        tag: Tag;
-      })[];
-      _count: {
-        postLike: number;
-      };
-      cursorId?: number;
-    },
-  ) {
+  private _serialize(item: any) {
     return {
       id: item.id,
       title: item.title,
       subTitle: item.subTitle,
       content: item.content,
       thumbnail: item.thumbnail,
+      disabledComment: item.disabledComment,
+      publishingDate: item.publishingDate,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
-      tags: item.postsTags.flatMap((item) => ({
-        id: item.tag.id,
-        name: item.tag.name,
-      })),
       user: {
         id: item.user.id,
         username: item.user.username,
         email: item.user.email,
         profile: {
           name: item.user.profile.name,
-          bio: item.user.profile.bio,
           avatarUrl: item.user.profile.avatarUrl,
+          bio: item.user.profile.bio,
           availableText: item.user.profile.availableText,
-          location: item.user.profile.location,
         },
       },
+      tags: item.postsTags.flatMap((item) => ({
+        id: item.tag.id,
+        name: item.tag.name,
+      })),
+      seo: item.seo,
       count: {
         postLike: item._count.postLike,
       },

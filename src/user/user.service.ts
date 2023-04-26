@@ -6,8 +6,8 @@ import { ConfigService } from '@nestjs/config';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // utils
-import { isEmpty } from 'src/libs/assertion';
-import { escapeForUrl } from 'src/libs/utils';
+import { isEmpty } from '../libs/assertion';
+import { escapeForUrl } from '../libs/utils';
 
 import type { Response } from 'express';
 import type { UpdateBody } from './dto/update';
