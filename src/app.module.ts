@@ -14,6 +14,7 @@ import { FileModule } from './file/file.module';
 import { R2Module } from './modules/r2/r2.module';
 import { TagsModule } from './tags/tags.module';
 import { WidgetModule } from './widget/widget.module';
+import { CommentsModule } from './comments/comments.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -59,6 +60,7 @@ const isProd = process.env.NODE_ENV === 'production';
     FileModule,
     TagsModule,
     WidgetModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

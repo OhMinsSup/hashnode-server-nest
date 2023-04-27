@@ -46,7 +46,7 @@ export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
-  ) { }
+  ) {}
 
   /**
    * @description 게시물 좋아요
@@ -222,8 +222,12 @@ export class PostsService {
       if (input.tags) {
         const prevTags = post.postsTags.map((postTag) => postTag.tag);
 
-        const newTags = input.tags.filter((tag) => !prevTags.find((t) => t.name === tag));
-        const deleteTags = prevTags.filter((tag) => !input.tags.find((t) => t === tag.name));
+        const newTags = input.tags.filter(
+          (tag) => !prevTags.find((t) => t.name === tag),
+        );
+        const deleteTags = prevTags.filter(
+          (tag) => !input.tags.find((t) => t === tag.name),
+        );
 
         const tags = await Promise.all(
           newTags.map((tag) => this.tags.findOrCreate(tag)),
@@ -239,7 +243,7 @@ export class PostsService {
           create: tags.map((tag) => ({
             tagId: tag.id,
           })),
-        }
+        };
       }
 
       await tx.post.update({
@@ -497,8 +501,8 @@ export class PostsService {
         where: {
           id: cursor
             ? {
-              lt: cursor,
-            }
+                lt: cursor,
+              }
             : undefined,
           isDeleted: false,
           publishingDate: {
@@ -520,28 +524,28 @@ export class PostsService {
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
       ? (await this.prisma.post.count({
-        where: {
-          id: {
-            lt: endCursor,
-          },
-          isDeleted: false,
-          publishingDate: {
-            lte: now,
-          },
-          ...(tagId && {
-            postsTags: {
-              some: {
-                tagId: tagId,
-              },
+          where: {
+            id: {
+              lt: endCursor,
             },
-          }),
-        },
-        orderBy: [
-          {
-            id: 'desc',
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
           },
-        ],
-      })) > 0
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
       : false;
 
     return {
@@ -594,8 +598,8 @@ export class PostsService {
         where: {
           id: cursor
             ? {
-              lt: cursor,
-            }
+                lt: cursor,
+              }
             : undefined,
           userId: user.id,
           post: {
@@ -613,24 +617,24 @@ export class PostsService {
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
       ? (await this.prisma.postLike.count({
-        where: {
-          id: {
-            lt: endCursor,
-          },
-          userId: user.id,
-          post: {
-            isDeleted: false,
-            publishingDate: {
-              lte: now,
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            userId: user.id,
+            post: {
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
             },
           },
-        },
-        orderBy: [
-          {
-            id: 'desc',
-          },
-        ],
-      })) > 0
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
       : false;
 
     return {
@@ -716,25 +720,25 @@ export class PostsService {
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
       ? (await this.prisma.post.count({
-        where: {
-          id: {
-            lt: endCursor,
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            createdAt: {
+              gte: d1,
+              lte: d2,
+            },
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
           },
-          createdAt: {
-            gte: d1,
-            lte: d2,
-          },
-          isDeleted: false,
-          publishingDate: {
-            lte: now,
-          },
-        },
-        orderBy: [
-          {
-            id: 'desc',
-          },
-        ],
-      })) > 0
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
       : false;
 
     return {
@@ -804,51 +808,51 @@ export class PostsService {
 
     const cursorItem = cursor
       ? await this.prisma.post.findFirst({
-        where: {
-          id: cursor,
-          isDeleted: false,
-          publishingDate: {
-            lte: now,
-          },
-          ...(tagId && {
-            postsTags: {
-              some: {
-                tagId: tagId,
-              },
+          where: {
+            id: cursor,
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
             },
-          }),
-        },
-        include: {
-          postStats: true,
-        },
-      })
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
+          },
+          include: {
+            postStats: true,
+          },
+        })
       : null;
 
     const list = await this.prisma.post.findMany({
       where: {
         ...(cursor
           ? {
-            id: {
-              lt: cursor,
-            },
-            isDeleted: false,
-            publishingDate: {
-              lte: now,
-            },
-          }
+              id: {
+                lt: cursor,
+              },
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
+            }
           : {
-            isDeleted: false,
-            publishingDate: {
-              lte: now,
-            },
-          }),
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
+            }),
         postStats: {
           score: {
             gte: 0.001,
             ...(cursorItem
               ? {
-                lte: cursorItem.postStats?.score,
-              }
+                  lte: cursorItem.postStats?.score,
+                }
               : {}),
           },
         },
@@ -880,41 +884,41 @@ export class PostsService {
 
     const hasNextPage = endCursor
       ? (await this.prisma.post.count({
-        where: {
-          postStats: {
-            postId: {
-              lt: endCursor,
-            },
-            score: {
-              gte: 0.001,
-              lte: list.at(-1)?.postStats?.score,
-            },
-          },
-          isDeleted: false,
-          publishingDate: {
-            lte: now,
-          },
-          ...(tagId && {
-            postsTags: {
-              some: {
-                tagId: tagId,
+          where: {
+            postStats: {
+              postId: {
+                lt: endCursor,
+              },
+              score: {
+                gte: 0.001,
+                lte: list.at(-1)?.postStats?.score,
               },
             },
-          }),
-        },
-        orderBy: [
-          {
-            postStats: {
-              score: 'desc',
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
             },
+            ...(tagId && {
+              postsTags: {
+                some: {
+                  tagId: tagId,
+                },
+              },
+            }),
           },
-          {
-            postStats: {
-              postId: 'desc',
+          orderBy: [
+            {
+              postStats: {
+                score: 'desc',
+              },
             },
-          },
-        ],
-      })) > 0
+            {
+              postStats: {
+                postId: 'desc',
+              },
+            },
+          ],
+        })) > 0
       : false;
 
     return {
@@ -1043,7 +1047,7 @@ export class PostsService {
             userId,
           },
         });
-      } catch (e) { }
+      } catch (e) {}
     }
     const likes = await this._countLikes(postId);
     const itemStats = await this._updatePostLikes({ postId, likes });
@@ -1065,7 +1069,7 @@ export class PostsService {
           },
         },
       });
-    } catch (e) { }
+    } catch (e) {}
 
     const likes = await this._countLikes(postId);
     const itemStats = await this._updatePostLikes({ postId, likes });
