@@ -24,6 +24,8 @@ model User {
   authentications UserAuthentication[] // 인증정보
   posts           Post[] // 포스트 정보
   tagFollowing    TagFollowing[] // 태그 팔로잉
+  comments        Comment[]            @relation("user")
+  commentLike     CommentLike[]
 }
 
 model UserProfile {
@@ -91,6 +93,7 @@ model Post {
   deletedAt       DateTime? // 삭제일 
   user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
+  comments        Comment[]
   postsTags       PostsTags[]
   postLike        PostLike[]
   postStats       PostStats?
@@ -195,4 +198,37 @@ model TagFollowing {
 
   @@unique([tagId, userId])
   @@index(tagId)
+}
+
+model Comment {
+  id               Int           @id @default(autoincrement())
+  text             String
+  post             Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user             User          @relation("user", fields: [userId], references: [id], onDelete: Cascade)
+  commentLikes     CommentLike[]
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @default(now()) @updatedAt
+  deletedAt        DateTime?
+  postId           Int
+  userId           Int
+  parentCommentId  Int?
+  likes            Int           @default(0)
+  subcommentsCount Int           @default(0)
+
+  @@index(deletedAt)
+  @@index(createdAt)
+  @@index(parentCommentId)
+}
+
+model CommentLike {
+  id        Int      @id @default(autoincrement())
+  commentId Int
+  userId    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  comment   Comment  @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index(commentId)
 }
