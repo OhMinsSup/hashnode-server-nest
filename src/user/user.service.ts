@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // utils
-import { isEmpty } from '../libs/assertion';
+import { isEmpty, isString } from '../libs/assertion';
 import { escapeForUrl } from '../libs/utils';
 
 import type { Response } from 'express';
@@ -19,12 +19,12 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-  ) {}
+  ) { }
 
   /**
    * @description 유저 정보를 가져온다.
    * @param {UserWithInfo} user 유저 정보
-   * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }>}
+   * @returns {{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }}
    */
   getUserInfo(user: UserWithInfo) {
     return {

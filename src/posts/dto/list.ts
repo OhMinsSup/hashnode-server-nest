@@ -7,7 +7,7 @@ export class PostListQuery extends PaginationQuery {
   @IsOptional()
   @IsString()
   @ApiProperty({
-    name: 'name',
+    name: 'keyword',
     type: 'string',
     required: false,
     description: '검색어',

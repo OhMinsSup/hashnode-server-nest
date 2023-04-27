@@ -27,7 +27,7 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 @ApiTags('사용자')
 @Controller('api/v1/users')
 export class UserController {
-  constructor(private readonly service: UserService) {}
+  constructor(private readonly service: UserService) { }
 
   @Get()
   @ApiOperation({ summary: '내 정보' })

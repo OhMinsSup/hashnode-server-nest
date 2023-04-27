@@ -25,7 +25,7 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class TagsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService) { }
 
   /**
    * @description 태그가 존재하면 태그 정보를 반환하고, 존재하지 않으면 태그를 생성한다.
@@ -47,11 +47,12 @@ export class TagsService {
         },
       });
       if (!data) {
-        return tx.tag.create({
+        const tag = await tx.tag.create({
           data: {
             name,
           },
         });
+        return tag;
       }
     }
 
@@ -62,11 +63,12 @@ export class TagsService {
     });
 
     if (!data) {
-      return this.prisma.tag.create({
+      const tag = await this.prisma.tag.create({
         data: {
           name,
         },
       });
+      return tag
     }
   }
 
@@ -165,13 +167,20 @@ export class TagsService {
   /**
    * @description 태그 상태값 - (following, score, clicks) 에 대한 정보를 생성
    * @param {number} tagId
+   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?} tx
    */
-  async createTagStats(tagId: number | number[]) {
+  async createTagStats(
+    tagId: number | number[],
+    tx?: Omit<
+      PrismaService,
+      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+    >) {
     const tagIds = Array.isArray(tagId) ? tagId : [tagId];
+    const $prisma = tx ? tx : this.prisma;
 
     const tagStatsList: TagStats[] = [];
     for (const id of tagIds) {
-      const tagStats = await this.prisma.tagStats.create({
+      const tagStats = await $prisma.tagStats.create({
         data: {
           tagId: id,
         },
@@ -263,15 +272,15 @@ export class TagsService {
         ...TAGS_DETAIL_SELECT,
         ...(user
           ? {
-              following: {
-                where: {
-                  userId: user.id,
-                },
-                select: {
-                  id: true,
-                },
+            following: {
+              where: {
+                userId: user.id,
               },
-            }
+              select: {
+                id: true,
+              },
+            },
+          }
           : {}),
       },
     });
@@ -357,6 +366,11 @@ export class TagsService {
     };
   }
 
+  /**
+   * @description 인기 태그 리스트 - 시간별 (주간, 월간, 연간)
+   * @param {TrendingTagsQuery} params 태그 리스트 쿼리
+   * @returns {Promise<{list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; endCursor: string; hasNextPage: boolean}>}
+   */
   private async _getTrandingTimeItems({
     cursor,
     limit,
@@ -404,47 +418,47 @@ export class TagsService {
 
     const cursorItem = cursor
       ? await this.prisma.tag.findFirst({
-          where: {
-            id: cursor,
-            ...(time && {
-              updatedAt: {
-                gte: time,
-              },
-            }),
-          },
-          include: {
-            tagStats: true,
-          },
-        })
+        where: {
+          id: cursor,
+          ...(time && {
+            updatedAt: {
+              gte: time,
+            },
+          }),
+        },
+        include: {
+          tagStats: true,
+        },
+      })
       : null;
 
     const list = await this.prisma.tag.findMany({
       where: {
         ...(cursor
           ? {
-              id: {
-                lt: cursor,
+            id: {
+              lt: cursor,
+            },
+            ...(time && {
+              updatedAt: {
+                gte: time,
               },
-              ...(time && {
-                updatedAt: {
-                  gte: time,
-                },
-              }),
-            }
-          : {
-              ...(time && {
-                updatedAt: {
-                  gte: time,
-                },
-              }),
             }),
+          }
+          : {
+            ...(time && {
+              updatedAt: {
+                gte: time,
+              },
+            }),
+          }),
         tagStats: {
           score: {
             gte: 0.001,
             ...(cursorItem
               ? {
-                  lte: cursorItem.tagStats?.score,
-                }
+                lte: cursorItem.tagStats?.score,
+              }
               : {}),
           },
         },
@@ -476,35 +490,35 @@ export class TagsService {
 
     const hasNextPage = endCursor
       ? (await this.prisma.tag.count({
-          where: {
-            tagStats: {
-              tagId: {
-                lt: endCursor,
-              },
-              score: {
-                gte: 0.001,
-                lte: list.at(-1)?.tagStats?.score,
-              },
+        where: {
+          tagStats: {
+            tagId: {
+              lt: endCursor,
             },
-            ...(time && {
-              updatedAt: {
-                gte: time,
-              },
-            }),
+            score: {
+              gte: 0.001,
+              lte: list.at(-1)?.tagStats?.score,
+            },
           },
-          orderBy: [
-            {
-              tagStats: {
-                score: 'desc',
-              },
+          ...(time && {
+            updatedAt: {
+              gte: time,
             },
-            {
-              tagStats: {
-                tagId: 'desc',
-              },
+          }),
+        },
+        orderBy: [
+          {
+            tagStats: {
+              score: 'desc',
             },
-          ],
-        })) > 0
+          },
+          {
+            tagStats: {
+              tagId: 'desc',
+            },
+          },
+        ],
+      })) > 0
       : false;
 
     return {
@@ -542,8 +556,8 @@ export class TagsService {
         where: {
           id: cursor
             ? {
-                lt: cursor,
-              }
+              lt: cursor,
+            }
             : undefined,
           name: name ? { contains: name } : undefined,
         },
@@ -555,16 +569,16 @@ export class TagsService {
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
       ? (await this.prisma.tag.count({
-          where: {
-            id: {
-              lt: endCursor,
-            },
-            name: name ? { contains: name } : undefined,
+        where: {
+          id: {
+            lt: endCursor,
           },
-          orderBy: {
-            id: 'desc',
-          },
-        })) > 0
+          name: name ? { contains: name } : undefined,
+        },
+        orderBy: {
+          id: 'desc',
+        },
+      })) > 0
       : false;
 
     return { totalCount, list, endCursor, hasNextPage };
@@ -604,8 +618,8 @@ export class TagsService {
         where: {
           id: cursor
             ? {
-                lt: cursor,
-              }
+              lt: cursor,
+            }
             : undefined,
           name: name ? { contains: name } : undefined,
         },
@@ -617,23 +631,23 @@ export class TagsService {
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
       ? (await this.prisma.tag.count({
-          where: {
-            id: {
-              lt: endCursor,
-            },
-            name: name ? { contains: name } : undefined,
+        where: {
+          id: {
+            lt: endCursor,
           },
-          orderBy: [
-            {
-              postsTags: {
-                _count: 'desc',
-              },
+          name: name ? { contains: name } : undefined,
+        },
+        orderBy: [
+          {
+            postsTags: {
+              _count: 'desc',
             },
-            {
-              id: 'desc',
-            },
-          ],
-        })) > 0
+          },
+          {
+            id: 'desc',
+          },
+        ],
+      })) > 0
       : false;
 
     return { totalCount, list, endCursor, hasNextPage };
