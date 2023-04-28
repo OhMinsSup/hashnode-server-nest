@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // utils
-import { isEmpty, isString } from '../libs/assertion';
+import { isEmpty } from '../libs/assertion';
 import { escapeForUrl } from '../libs/utils';
 
 import type { Response } from 'express';
@@ -19,7 +19,7 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-  ) { }
+  ) {}
 
   /**
    * @description 유저 정보를 가져온다.
@@ -169,6 +169,27 @@ export class UserService {
         data: newData,
       });
 
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: null,
+      };
+    });
+  }
+
+  /**
+   * @description 유저를 삭제한다.
+   * @param {UserWithInfo} user 유저 정보
+   * @returns {{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }}
+   */
+  async delete(user: UserWithInfo) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user.delete({
+        where: {
+          id: user.id,
+        },
+      });
       return {
         resultCode: EXCEPTION_CODE.OK,
         message: null,

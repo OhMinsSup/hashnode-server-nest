@@ -40,7 +40,7 @@ model UserProfile {
   createdAt     DateTime  @default(now()) // 생성일
   updatedAt     DateTime  @updatedAt // 업데이트일
   deletedAt     DateTime? // 삭제일 
-  user          User      @relation(fields: [userId], references: [id])
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserSocials {
@@ -54,7 +54,7 @@ model UserSocials {
   createdAt DateTime  @default(now()) // 생성일
   updatedAt DateTime  @updatedAt // 업데이트일
   deletedAt DateTime? // 삭제일
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserAuthentication {
@@ -64,7 +64,7 @@ model UserAuthentication {
   createdAt       DateTime  @default(now()) // 생성일
   updatedAt       DateTime  @updatedAt // 업데이트일
   deletedAt       DateTime? // 삭제일
-  user            User      @relation(fields: [userId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
 }
 
@@ -129,9 +129,9 @@ model PostStats {
 }
 
 model PostsTags {
-  post   Post @relation(fields: [postId], references: [id])
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
   postId Int
-  tag    Tag  @relation(fields: [tagId], references: [id])
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
   tagId  Int
 
   @@id([postId, tagId])

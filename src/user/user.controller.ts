@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpStatus,
   Post,
@@ -27,7 +28,7 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 @ApiTags('사용자')
 @Controller('api/v1/users')
 export class UserController {
-  constructor(private readonly service: UserService) { }
+  constructor(private readonly service: UserService) {}
 
   @Get()
   @ApiOperation({ summary: '내 정보' })
@@ -46,6 +47,13 @@ export class UserController {
   @UseGuards(LoggedInGuard)
   update(@AuthUser() user: UserWithInfo, @Body() input: UpdateBody) {
     return this.service.update(user, input);
+  }
+
+  @Delete()
+  @ApiOperation({ summary: '회원 탈퇴' })
+  @UseGuards(LoggedInGuard)
+  delete(@AuthUser() user: UserWithInfo) {
+    return this.service.delete(user);
   }
 
   @Post('logout')
