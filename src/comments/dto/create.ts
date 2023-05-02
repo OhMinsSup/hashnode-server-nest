@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, MaxLength, IsNotEmpty } from 'class-validator';
+import {
+  IsString,
+  MaxLength,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+} from 'class-validator';
 
 export class CreateBody {
   @IsNotEmpty()
@@ -12,4 +18,13 @@ export class CreateBody {
     required: true,
   })
   text: string;
+
+  @IsOptional()
+  @IsNumber()
+  @ApiProperty({
+    description: '부모 댓글 ID',
+    type: 'number',
+    required: false,
+  })
+  parentCommentId?: number;
 }

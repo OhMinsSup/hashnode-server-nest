@@ -17,6 +17,9 @@ import { PostsService } from './posts.service';
 
 // dto
 import { CreateBody } from './dto/create';
+import { CreateBody as CreateCommentBody } from '../comments/dto/create';
+import { UpdateBody as UpdateCommentBody } from '../comments/dto/update';
+import { UpdateBody } from './dto/update';
 import { PostListQuery, GetTopPostsQuery } from './dto/list';
 
 // guard
@@ -83,13 +86,13 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 수정 API',
-    type: CreateBody,
+    type: UpdateBody,
   })
   @UseGuards(LoggedInGuard)
   update(
     @AuthUser() user: UserWithInfo,
     @Param('id', ParseIntPipe) id: number,
-    @Body() input: CreateBody,
+    @Body() input: UpdateBody,
   ) {
     return this.service.update(user, id, input);
   }
@@ -125,5 +128,39 @@ export class PostsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.unlike(user, id);
+  }
+
+  @Post(':id/comment')
+  @ApiOperation({ summary: '댓글 작성' })
+  @UseGuards(LoggedInGuard)
+  createComment(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+    @Body() input: CreateCommentBody,
+  ) {
+    return this.service.createComment(user, id, input);
+  }
+
+  @Put(':id/comment/:commentId')
+  @ApiOperation({ summary: '댓글 수정' })
+  @UseGuards(LoggedInGuard)
+  updateComment(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+    @Body() input: UpdateCommentBody,
+  ) {
+    return this.service.updateComment(user, commentId, input);
+  }
+
+  @Delete(':id/comment/:commentId')
+  @ApiOperation({ summary: '댓글 삭제' })
+  @UseGuards(LoggedInGuard)
+  deleteComment(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+    @Param('commentId', ParseIntPipe) commentId: number,
+  ) {
+    return this.service.deleteComment(user, id, commentId);
   }
 }

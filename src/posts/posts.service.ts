@@ -8,16 +8,20 @@ import {
 // service
 import { PrismaService } from '../modules/database/prisma.service';
 import { TagsService } from '../tags/tags.service';
+import { CommentsService } from '../comments/comments.service';
 
 // utils
 import { isEmpty, isString } from '../libs/assertion';
 import { calculateRankingScore } from '../libs/utils';
 
 // constants
-import { EXCEPTION_CODE } from 'src/constants/exception.code';
+import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // types
+import { CreateBody as CreateCommentBody } from '../comments/dto/create';
+import { UpdateBody as UpdateCommentBody } from '../comments/dto/update';
 import { CreateBody } from './dto/create';
+import { UpdateBody } from './dto/update';
 import { GetTopPostsQuery, PostListQuery } from './dto/list';
 
 import { isEqual } from 'lodash';
@@ -30,7 +34,7 @@ import {
   DEFAULT_POSTS_SELECT,
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
-} from 'src/modules/database/select/post.select';
+} from '../modules/database/select/post.select';
 
 interface UpdatePostLikesParams {
   postId: number;
@@ -46,7 +50,63 @@ export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
+    private readonly comments: CommentsService,
   ) {}
+
+  /**
+   * @description 댓글 작성
+   * @param {UserWithInfo} user
+   * @param {number} id
+   * @param {CreateCommentBody} body
+   */
+  async createComment(user: UserWithInfo, id: number, body: CreateCommentBody) {
+    const list = await this.comments.create(user, id, body);
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: list,
+    };
+  }
+
+  /**
+   * @description 댓글 수정
+   * @param {UserWithInfo} user
+   * @param {number} commentId
+   * @param {UpdateCommentBody} body
+   */
+  async updateComment(
+    user: UserWithInfo,
+    commentId: number,
+    body: UpdateCommentBody,
+  ) {
+    const list = await this.comments.update(user, commentId, body);
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: list,
+    };
+  }
+
+  /**
+   * @description 댓글 삭제
+   * @param {UserWithInfo} user
+   * @param {number} id
+   * @param {number} commentId
+   */
+  async deleteComment(user: UserWithInfo, id: number, commentId: number) {
+    await this.comments.delete({
+      userId: user.id,
+      commentId,
+    });
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
+  }
 
   /**
    * @description 게시물 좋아요
@@ -145,7 +205,7 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {any} input
    */
-  async update(user: UserWithInfo, id: number, input: CreateBody) {
+  async update(user: UserWithInfo, id: number, input: UpdateBody) {
     return this.prisma.$transaction(async (tx) => {
       const post = await tx.post.findFirst({
         where: {
@@ -189,7 +249,11 @@ export class PostsService {
         newData.content = input.content;
       }
 
-      if (input.thumbnail && !isEqual(post.thumbnail, input.thumbnail.url)) {
+      if (
+        input.thumbnail &&
+        input.thumbnail.url &&
+        !isEqual(post.thumbnail, input.thumbnail.url)
+      ) {
         newData.thumbnail = input.thumbnail.url;
       }
 
@@ -284,7 +348,7 @@ export class PostsService {
           title: input.title,
           subTitle: input.subTitle ?? null,
           content: input.content,
-          thumbnail: input.thumbnail ? input.thumbnail.url : null,
+          thumbnail: input.thumbnail ? input.thumbnail.url ?? null : null,
           disabledComment: input.disabledComment ?? true,
           publishingDate: input.publishingDate
             ? new Date(input.publishingDate)
@@ -970,6 +1034,7 @@ export class PostsService {
       seo: item.seo,
       count: {
         postLike: item._count.postLike,
+        comments: item._count.comments,
       },
       ...(item.cursorId && { cursorId: item.cursorId }),
     };

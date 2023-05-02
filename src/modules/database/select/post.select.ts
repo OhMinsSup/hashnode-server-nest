@@ -62,6 +62,7 @@ export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   _count: {
     select: {
       postLike: true,
+      comments: true,
     },
   },
 });
