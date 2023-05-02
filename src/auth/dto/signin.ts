@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MaxLength } from 'class-validator';
+import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator';
 
 // body
 
@@ -16,10 +16,10 @@ export class SigninBody {
   email: string;
 
   @IsString()
-  @MaxLength(10)
+  @MinLength(6)
   @ApiProperty({
     description: 'password',
-    maxLength: 10,
+    minLength: 6,
     type: 'string',
     required: true,
   })
