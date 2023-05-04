@@ -26,6 +26,7 @@ model User {
   tagFollowing    TagFollowing[] // 태그 팔로잉
   comments        Comment[]            @relation("user")
   commentLike     CommentLike[]
+  notifications   Notification[]
 }
 
 model UserProfile {
@@ -80,24 +81,25 @@ model UsersTags {
 }
 
 model Post {
-  id              Int         @id @default(autoincrement())
+  id              Int            @id @default(autoincrement())
   title           String // max 255
   subTitle        String? // max 255
   content         String // max 255
   thumbnail       String?
-  disabledComment Boolean?    @default(false) // 댓글 비활성화
-  isDeleted       Boolean?    @default(false) // 삭제 여부
+  disabledComment Boolean?       @default(false) // 댓글 비활성화
+  isDeleted       Boolean?       @default(false) // 삭제 여부
   publishingDate  DateTime? // 발행일
-  createdAt       DateTime    @default(now()) // 생성일
-  updatedAt       DateTime    @updatedAt // 업데이트일
+  createdAt       DateTime       @default(now()) // 생성일
+  updatedAt       DateTime       @updatedAt // 업데이트일
   deletedAt       DateTime? // 삭제일 
-  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId          Int
   comments        Comment[]
   postsTags       PostsTags[]
   postLike        PostLike[]
   postStats       PostStats?
   seo             PostSeo?
+  notifications   Notification[]
 
   @@index([createdAt(sort: Desc)])
 }
@@ -140,12 +142,13 @@ model PostsTags {
 }
 
 model PostLike {
-  id        Int      @id @default(autoincrement())
-  postId    Int
-  userId    Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id            Int            @id @default(autoincrement())
+  postId        Int
+  userId        Int
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @default(now()) @updatedAt
+  post          Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  notifications Notification[]
 
   @@unique([postId, userId])
   @@index(postId)
@@ -201,19 +204,20 @@ model TagFollowing {
 }
 
 model Comment {
-  id               Int           @id @default(autoincrement())
+  id               Int            @id @default(autoincrement())
   text             String
-  post             Post          @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user             User          @relation("user", fields: [userId], references: [id], onDelete: Cascade)
+  post             Post           @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user             User           @relation("user", fields: [userId], references: [id], onDelete: Cascade)
   commentLikes     CommentLike[]
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @default(now()) @updatedAt
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @default(now()) @updatedAt
   deletedAt        DateTime?
   postId           Int
   userId           Int
   parentCommentId  Int?
-  likes            Int           @default(0)
-  subcommentsCount Int           @default(0)
+  likes            Int            @default(0)
+  subcommentsCount Int            @default(0)
+  notifications    Notification[]
 
   @@index(deletedAt)
   @@index(createdAt)
@@ -231,4 +235,24 @@ model CommentLike {
 
   @@unique([commentId, userId])
   @@index(commentId)
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  type      String
+  title     String
+  content   String
+  read      Boolean   @default(false)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now()) @updatedAt
+  deletedAt DateTime?
+  postId    Int?
+  commentId Int?
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post?     @relation(fields: [postId], references: [id])
+  comment   Comment?  @relation(fields: [commentId], references: [id])
+  like      PostLike? @relation(fields: [postId], references: [id])
+
+  @@index([createdAt, read])
 }
