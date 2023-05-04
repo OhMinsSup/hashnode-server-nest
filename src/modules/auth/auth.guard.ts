@@ -32,10 +32,6 @@ export class AuthGuard implements CanActivate {
   ) {}
   async canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
-    if (['/api/v1/auth/logout'].includes(request.url)) {
-      return true;
-    }
-
     let accessToken: string | undefined = request.cookies?.access_token;
 
     const { authorization } = request.headers;
@@ -103,14 +99,18 @@ export class AuthGuard implements CanActivate {
 
           if (validated.lastValidatedAt > subMinutes(Date.now(), 5)) {
             // 마지막으로 확인할 때 db에 씁니다.
-            await this.prisma.userAuthentication.update({
-              where: {
-                id: accessTokenData.authId,
-              },
-              data: {
-                lastValidatedAt: new Date(),
-              },
-            });
+            try {
+              await this.prisma.userAuthentication.update({
+                where: {
+                  id: accessTokenData.authId,
+                },
+                data: {
+                  lastValidatedAt: new Date(),
+                },
+              });
+            } catch (error) {
+              console.log('error', error);
+            }
           }
 
           request.user = user;

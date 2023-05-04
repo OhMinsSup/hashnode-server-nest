@@ -24,7 +24,6 @@ export class UserService {
   /**
    * @description 유저 정보를 가져온다.
    * @param {UserWithInfo} user 유저 정보
-   * @returns {{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }}
    */
   getUserInfo(user: UserWithInfo) {
     return {
@@ -39,7 +38,6 @@ export class UserService {
    * @description 유저 정보를 업데이트한다.
    * @param {UserWithInfo} user 유저 정보
    * @param {UpdateBody} input 업데이트 정보
-   * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: null; }>}
    */
   async update(user: UserWithInfo, input: UpdateBody) {
     return this.prisma.$transaction(async (tx) => {
@@ -181,15 +179,17 @@ export class UserService {
   /**
    * @description 유저를 삭제한다.
    * @param {UserWithInfo} user 유저 정보
-   * @returns {{ resultCode: number; message: string[]; error: string; result: AuthUserSchema; }}
    */
-  async delete(user: UserWithInfo) {
+  async delete(user: UserWithInfo, res: Response) {
     return this.prisma.$transaction(async (tx) => {
       await tx.user.delete({
         where: {
           id: user.id,
         },
       });
+
+      this.clearCookies(res);
+
       return {
         resultCode: EXCEPTION_CODE.OK,
         message: null,
@@ -202,21 +202,23 @@ export class UserService {
   /**
    * @description 로그아웃
    * @param {Response} res 응답 객체
-   * @returns {Promise<{ resultCode: number; message: string[]; error: string; result: null; }>}
    */
   async logout(res: Response) {
-    res.clearCookie(this.config.get('COOKIE_TOKEN_NAME'), {
-      httpOnly: true,
-      domain: this.config.get('COOKIE_DOMAIN'),
-      path: this.config.get('COOKIE_PATH'),
-      sameSite: this.config.get('COOKIE_SAMESITE'),
-    });
-
+    this.clearCookies(res);
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
       result: null,
     };
+  }
+
+  private clearCookies(res: Response) {
+    res.clearCookie(this.config.get('COOKIE_TOKEN_NAME'), {
+      httpOnly: true,
+      domain: this.config.get('COOKIE_DOMAIN'),
+      path: this.config.get('COOKIE_PATH'),
+      sameSite: this.config.get('COOKIE_SAMESITE'),
+    });
   }
 }

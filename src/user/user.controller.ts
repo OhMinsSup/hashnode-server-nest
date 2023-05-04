@@ -52,13 +52,16 @@ export class UserController {
   @Delete()
   @ApiOperation({ summary: '회원 탈퇴' })
   @UseGuards(LoggedInGuard)
-  delete(@AuthUser() user: UserWithInfo) {
-    return this.service.delete(user);
+  delete(
+    @AuthUser() user: UserWithInfo,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.service.delete(user, res);
   }
 
   @Post('logout')
   @ApiOperation({ summary: '로그아웃' })
-  logout(@Res() res: Response) {
-    return res.status(HttpStatus.OK).json(this.service.logout(res));
+  logout(@Res({ passthrough: true }) res: Response) {
+    return this.service.logout(res);
   }
 }

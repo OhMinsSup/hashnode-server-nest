@@ -28,9 +28,8 @@ export class FileService {
   /**
    * @description 파일 r2 업로드 생성
    * @param {AuthUserSchema} user 사용자 정보
-   * @param {SignedUrlUploadBody} input 업로드 정보
+   * @param {SignedUrlUploadBody} body 업로드 정보
    * @param {Express.Multer.File} file 파일 정보
-   * @returns {Promise<{ resultCode: number; message: null; error: null; result: File; }>}
    */
   async upload(
     user: AuthUserSchema,
@@ -77,7 +76,6 @@ export class FileService {
    * @description 파일 목록 리스트
    * @param {AuthUserSchema} user 사용자 정보
    * @param {ListRequestDto} query 리스트 파라미터
-   * @returns {Promise<{ resultCode: number; message: null; error: null; result: { totalCount: number; list: File[]; endCursor: number | null; hasNextPage: boolean } }>}
    */
   async list(user: AuthUserSchema, query: ListRequestDto) {
     const result = await this._getRecentItems(user, query);
@@ -103,7 +101,6 @@ export class FileService {
    * @description 파일 고유한 키 생성
    * @param {AuthUserSchema} user 사용자 정보
    * @param {UploadBody} input 업로드 정보
-   * @returns {string}
    */
   private _generateKey(user: AuthUserSchema, input: UploadBody) {
     return `${
@@ -117,7 +114,6 @@ export class FileService {
    * @description 파일 리스트
    * @param {AuthUserSchema} user 사용자 정보
    * @param {ListRequestDto} input 리스트 파라미터
-   * @returns {Promise<{ totalCount: number; list: File[]; endCursor: number | null; hasNextPage: boolean }>}
    */
   private async _getRecentItems(
     user: AuthUserSchema,
