@@ -239,9 +239,8 @@ model CommentLike {
 
 model Notification {
   id        Int       @id @default(autoincrement())
-  type      String
-  title     String
-  content   String
+  type      String // LIKE | COMMENT | ARTICLE
+  message   String
   read      Boolean   @default(false)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @default(now()) @updatedAt

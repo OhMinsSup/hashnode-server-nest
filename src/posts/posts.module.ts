@@ -6,9 +6,16 @@ import { PostsService } from './posts.service';
 import { PrismaService } from '../modules/database/prisma.service';
 import { TagsService } from '../tags/tags.service';
 import { CommentsService } from '../comments/comments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Module({
   controllers: [PostsController],
-  providers: [PostsService, PrismaService, TagsService, CommentsService],
+  providers: [
+    PostsService,
+    PrismaService,
+    TagsService,
+    CommentsService,
+    NotificationsService,
+  ],
 })
 export class PostsModule {}

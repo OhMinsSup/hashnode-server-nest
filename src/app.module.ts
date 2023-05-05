@@ -15,6 +15,7 @@ import { R2Module } from './modules/r2/r2.module';
 import { TagsModule } from './tags/tags.module';
 import { WidgetModule } from './widget/widget.module';
 import { CommentsModule } from './comments/comments.module';
+import { NotificationsModule } from './notifications/notifications.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -61,6 +62,7 @@ const isProd = process.env.NODE_ENV === 'production';
     TagsModule,
     WidgetModule,
     CommentsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

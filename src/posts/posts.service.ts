@@ -9,6 +9,7 @@ import {
 import { PrismaService } from '../modules/database/prisma.service';
 import { TagsService } from '../tags/tags.service';
 import { CommentsService } from '../comments/comments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // utils
 import { isEmpty, isString } from '../libs/assertion';
@@ -51,6 +52,7 @@ export class PostsService {
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
     private readonly comments: CommentsService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -374,6 +376,9 @@ export class PostsService {
 
       // 포스트 통계 생성
       this.createPostStats(post.id).catch((e) => console.error(e));
+
+      // 알림 생성
+      this.notifications.createArticles(post.id).catch((e) => console.error(e));
 
       return {
         resultCode: EXCEPTION_CODE.OK,
