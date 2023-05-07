@@ -1,0 +1,25 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "audit.json",
+    "files": [
+        {
+            "date": 1683477008901,
+            "name": "/Volumes/project/logs/application-2023-05-08.log",
+            "hash": "d8e128596c0af0dfa522203f9cb7b85a55cd22d656e0e2e1152cf901271871b5"
+        },
+        {
+            "date": 1683477137167,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/application-2023-05-08.log",
+            "hash": "8dc09a9e39ce35a823db1dafbe877dfe6817ab59db2a575f0749de027cd176f0"
+        },
+        {
+            "date": 1683477220997,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/dev/application-2023-05-08.log",
+            "hash": "e58897696954211dae02a3841018a67ae58813b3d01c8a9a094c21f8f906c06f"
+        }
+    ],
+    "hashType": "sha256"
+}

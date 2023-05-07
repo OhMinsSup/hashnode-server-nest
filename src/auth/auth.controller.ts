@@ -2,7 +2,7 @@ import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 // interceptor
-import { CookiInterceptor } from 'src/libs/cookie.interceptor';
+import { CookiInterceptor } from 'src/interceptors/cookie.interceptor';
 
 // service
 import { AuthService } from './auth.service';

@@ -7,26 +7,37 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import {
+  utilities as nestWinstonModuleUtilities,
+  WinstonModule,
+} from 'nest-winston';
+import * as winston from 'winston';
 
 import { PrismaService } from './modules/database/prisma.service';
-
-import { HttpExceptionFilter } from './libs/http-exception.filter';
-import { HttpTransformInterceptor } from './libs/http-transform.interceptor';
 
 import { AppModule } from './app.module';
 
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    logger: WinstonModule.createLogger({
+      transports: [
+        new winston.transports.Console({
+          format: winston.format.combine(
+            winston.format.timestamp(),
+            nestWinstonModuleUtilities.format.nestLike(),
+          ),
+        }),
+      ],
+    }),
+  });
 
   const prisma = app.get(PrismaService);
   await prisma.enableShutdownHooks(app);
 
   const config = app.get(ConfigService);
 
-  app.useGlobalFilters(new HttpExceptionFilter(config));
-  app.useGlobalInterceptors(new HttpTransformInterceptor());
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
