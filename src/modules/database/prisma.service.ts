@@ -1,15 +1,23 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 import type { INestApplication } from '@nestjs/common';
 
+type QueryEvent = {
+  timestamp: Date;
+  query: string; // Query sent to the database
+  params: string; // Query parameters
+  duration: number; // Time elapsed (in milliseconds) between client issuing query and database responding - not only time taken to run query
+  target: string;
+};
+
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  constructor() {
+  constructor(private readonly logger: Logger) {
     super({
       log: [
-        { emit: 'stdout', level: 'query' },
-        { emit: 'stdout', level: 'error' },
+        { emit: 'event', level: 'query' },
+        { emit: 'event', level: 'error' },
       ],
       errorFormat: 'pretty',
     });
@@ -17,6 +25,20 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async onModuleInit() {
     await this.$connect();
+
+    // @ts-ignore
+    this.$on('query', (e: QueryEvent) => {
+      const { query, params, duration } = e;
+      this.logger.debug(
+        `Query: ${query} ${JSON.stringify(params)} ${duration}ms`,
+        'PrismaClient',
+      );
+    });
+
+    // @ts-ignore
+    this.$on('error', (e: any) => {
+      this.logger.error(`Error: ${e.message} ${e.stack}`, 'PrismaClient');
+    });
   }
 
   async enableShutdownHooks(app: INestApplication) {

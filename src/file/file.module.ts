@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { PrismaService } from '../modules/database/prisma.service';
 import { FileController } from './file.controller';
 import { FileService } from './file.service';
 
 @Module({
   controllers: [FileController],
-  providers: [FileService, PrismaService],
+  providers: [FileService],
 })
 export class FileModule {}

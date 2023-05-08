@@ -7,11 +7,6 @@ import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
-import {
-  utilities as nestWinstonModuleUtilities,
-  WinstonModule,
-} from 'nest-winston';
-import * as winston from 'winston';
 
 import { PrismaService } from './modules/database/prisma.service';
 
@@ -20,18 +15,7 @@ import { AppModule } from './app.module';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    logger: WinstonModule.createLogger({
-      transports: [
-        new winston.transports.Console({
-          format: winston.format.combine(
-            winston.format.timestamp(),
-            nestWinstonModuleUtilities.format.nestLike(),
-          ),
-        }),
-      ],
-    }),
-  });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   const prisma = app.get(PrismaService);
   await prisma.enableShutdownHooks(app);

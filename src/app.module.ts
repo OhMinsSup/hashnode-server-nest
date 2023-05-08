@@ -25,6 +25,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
+import { PrismaModule } from './modules/database/prisma.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -41,13 +42,6 @@ const dailyRotateFile = new winston.transports.DailyRotateFile({
       ? join(__dirname, '../logs/prod/')
       : join(__dirname, '../logs/dev/'), //path to where save lo
   level: 'error',
-});
-
-const errorStackTracerFormat = winston.format((info) => {
-  if (info.meta && info.meta instanceof Error) {
-    info.message = `${info.message} ${info.meta.stack}`;
-  }
-  return info;
 });
 
 @Module({
@@ -85,10 +79,10 @@ const errorStackTracerFormat = winston.format((info) => {
         winston.format.errors({ stack: true }),
         winston.format.timestamp(),
         winston.format.prettyPrint(),
-        errorStackTracerFormat(),
       ),
       transports: [dailyRotateFile, new winston.transports.Console()],
     }),
+    PrismaModule.forRoot(),
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
     }),
