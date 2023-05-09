@@ -31,6 +31,12 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 export class UserController {
   constructor(private readonly service: UserService) {}
 
+  @Get(':username')
+  @ApiOperation({ summary: '사용자 정보' })
+  getUserInfo(@Query('username') username: string) {
+    return this.service.getUserInfoByUsername(username);
+  }
+
   @Get()
   @ApiOperation({ summary: '내 정보' })
   @UseGuards(LoggedInGuard)

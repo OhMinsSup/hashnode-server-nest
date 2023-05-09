@@ -15,7 +15,10 @@ import { DEFAULT_POSTS_SELECT } from '../modules/database/select/post.select';
 import type { Response } from 'express';
 import type { UpdateBody } from './dto/update';
 import type { Prisma } from '@prisma/client';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import {
+  DEFAULT_USER_SELECT,
+  UserWithInfo,
+} from '../modules/database/select/user.select';
 
 @Injectable()
 export class UserService {
@@ -24,6 +27,22 @@ export class UserService {
     private readonly config: ConfigService,
     private readonly posts: PostsService,
   ) {}
+
+  async getUserInfoByUsername(username: string) {
+    const data = await this.prisma.user.findFirst({
+      where: {
+        username,
+      },
+      select: DEFAULT_USER_SELECT,
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: data,
+    };
+  }
 
   /**
    * @description 유저 정보를 가져온다.
