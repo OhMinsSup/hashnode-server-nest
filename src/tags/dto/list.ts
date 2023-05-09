@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
-import { PaginationQuery } from '../../libs/pagination.request.dto';
+import { PaginationQuery } from '../../libs/pagination';
 
 export class TagListQuery extends PaginationQuery {
   @IsString()

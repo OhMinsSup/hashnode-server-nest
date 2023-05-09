@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsBoolean, IsOptional, IsString } from 'class-validator';
-import { PaginationQuery } from '../../libs/pagination.request.dto';
+import { PaginationQuery } from '../../libs/pagination';
 
 export class MyPostListQuery extends PaginationQuery {
   @IsOptional()

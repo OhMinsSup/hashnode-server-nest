@@ -29,8 +29,8 @@ import { FileInterceptor } from '@nestjs/platform-express';
 
 // type
 import { SignedUrlUploadBody } from './dto/upload';
-import { ListRequestDto } from '../libs/list.request.dto';
-import type { AuthUserSchema } from '../libs/get-user.decorator';
+import { ListRequestDto } from '../libs/list.query';
+import { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('파일')
 @Controller('api/v1/files')
@@ -46,7 +46,7 @@ export class FileController {
     description: '페이지네이션',
   })
   @UseGuards(LoggedInGuard)
-  list(@AuthUser() user: AuthUserSchema, @Query() query: ListRequestDto) {
+  list(@AuthUser() user: UserWithInfo, @Query() query: ListRequestDto) {
     return this.service.list(user, query);
   }
 
@@ -61,7 +61,7 @@ export class FileController {
   })
   @UseGuards(LoggedInGuard)
   upload(
-    @AuthUser() user: AuthUserSchema,
+    @AuthUser() user: UserWithInfo,
     @Body() body: SignedUrlUploadBody,
     @UploadedFile(
       new ParseFilePipeBuilder().build({

@@ -13,9 +13,9 @@ import { R2Service } from '../modules/r2/r2.service';
 import { isString } from '../libs/assertion';
 
 // types
-import type { AuthUserSchema } from '../libs/get-user.decorator';
-import { ListRequestDto } from '../libs/list.request.dto';
+import { ListRequestDto } from '../libs/list.query';
 import { UploadBody, SignedUrlUploadBody } from './dto/upload';
+import { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class FileService {
@@ -27,12 +27,12 @@ export class FileService {
 
   /**
    * @description 파일 r2 업로드 생성
-   * @param {AuthUserSchema} user 사용자 정보
+   * @param {UserWithInfo} user 사용자 정보
    * @param {SignedUrlUploadBody} body 업로드 정보
    * @param {Express.Multer.File} file 파일 정보
    */
   async upload(
-    user: AuthUserSchema,
+    user: UserWithInfo,
     body: SignedUrlUploadBody,
     file: Express.Multer.File,
   ) {
@@ -74,10 +74,10 @@ export class FileService {
 
   /**
    * @description 파일 목록 리스트
-   * @param {AuthUserSchema} user 사용자 정보
+   * @param {UserWithInfo} user 사용자 정보
    * @param {ListRequestDto} query 리스트 파라미터
    */
-  async list(user: AuthUserSchema, query: ListRequestDto) {
+  async list(user: UserWithInfo, query: ListRequestDto) {
     const result = await this._getRecentItems(user, query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
@@ -99,10 +99,10 @@ export class FileService {
 
   /**
    * @description 파일 고유한 키 생성
-   * @param {AuthUserSchema} user 사용자 정보
+   * @param {UserWithInfo} user 사용자 정보
    * @param {UploadBody} input 업로드 정보
    */
-  private _generateKey(user: AuthUserSchema, input: UploadBody) {
+  private _generateKey(user: UserWithInfo, input: UploadBody) {
     return `${
       user.id
     }/${input.uploadType.toLowerCase()}/${input.mediaType.toLowerCase()}/${
@@ -112,11 +112,11 @@ export class FileService {
 
   /**
    * @description 파일 리스트
-   * @param {AuthUserSchema} user 사용자 정보
+   * @param {UserWithInfo} user 사용자 정보
    * @param {ListRequestDto} input 리스트 파라미터
    */
   private async _getRecentItems(
-    user: AuthUserSchema,
+    user: UserWithInfo,
     { cursor, limit }: ListRequestDto,
   ) {
     if (isString(cursor)) {
