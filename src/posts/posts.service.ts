@@ -1002,7 +1002,7 @@ export class PostsService {
    * @description 리스트 데이터 serialize
    * @param list
    */
-  private _serializes(list: any[]) {
+  _serializes(list: any[]) {
     return list.map(this._serialize);
   }
 
@@ -1010,7 +1010,7 @@ export class PostsService {
    * @description 리스트 데이터 serialize
    * @param list
    */
-  private _serialize(item: any) {
+  _serialize(item: any) {
     return {
       id: item.id,
       title: item.title,
@@ -1022,24 +1022,25 @@ export class PostsService {
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,
       user: {
-        id: item.user.id,
-        username: item.user.username,
-        email: item.user.email,
+        id: item.user?.id,
+        username: item.user?.username,
+        email: item.user?.email,
         profile: {
-          name: item.user.profile.name,
-          avatarUrl: item.user.profile.avatarUrl,
-          bio: item.user.profile.bio,
-          availableText: item.user.profile.availableText,
+          name: item.user?.profile?.name,
+          avatarUrl: item.user?.profile?.avatarUrl,
+          bio: item.user?.profile?.bio,
+          availableText: item.user?.profile?.availableText,
         },
       },
-      tags: item.postsTags.flatMap((item) => ({
-        id: item.tag.id,
-        name: item.tag.name,
-      })),
+      tags:
+        item.postsTags?.flatMap((item) => ({
+          id: item.tag.id,
+          name: item.tag.name,
+        })) ?? [],
       seo: item.seo,
       count: {
-        postLike: item._count.postLike,
-        comments: item._count.comments,
+        postLike: item._count?.postLike ?? 0,
+        comments: item._count?.comments ?? 0,
       },
       ...(item.cursorId && { cursorId: item.cursorId }),
     };

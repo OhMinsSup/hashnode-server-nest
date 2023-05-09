@@ -8,6 +8,7 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // service
 import { PrismaService } from '../modules/database/prisma.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // select
 import {
@@ -25,7 +26,10 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class TagsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notifications: NotificationsService,
+  ) {}
 
   /**
    * @description 태그가 존재하면 태그 정보를 반환하고, 존재하지 않으면 태그를 생성한다.
@@ -105,6 +109,9 @@ export class TagsService {
     const count = await this._countFollowings(tagInfo.id);
     await this._updateTagStatsFollowings(tagInfo.id, count);
     this._recalculateRanking(tagInfo.id, count).catch(console.error);
+
+    // 알림 생성
+    this.notifications.createTags(tagInfo.id).catch((e) => console.error(e));
 
     return {
       resultCode: EXCEPTION_CODE.OK,

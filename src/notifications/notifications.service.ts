@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../constants/exception.code';
+import { isEmpty } from '../libs/assertion';
 
 @Injectable()
 export class NotificationsService {
@@ -98,5 +99,70 @@ export class NotificationsService {
       error: null,
       result: false,
     };
+  }
+
+  async createTags(tagId: number) {
+    const tag = await this.prisma.tag.findUnique({
+      where: {
+        id: tagId,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    if (!tag) {
+      return {
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '태그를 찾을 수 없습니다.',
+        error: null,
+        result: false,
+      };
+    }
+
+    // 태그를 사용한 사용자들을 가져온다.
+    const usingTagUsers = await this.prisma.user.findMany({
+      where: {
+        tagFollowing: {
+          some: {
+            tagId,
+          },
+        },
+      },
+    });
+
+    if (!usingTagUsers || isEmpty(usingTagUsers)) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: true,
+      };
+    }
+
+    for (const user of usingTagUsers) {
+      // 이미 생성된 알림이 있는지 확인한다.
+      const notification = await this.prisma.notification.findFirst({
+        where: {
+          tagId,
+          userId: user.id,
+          type: 'TAG',
+        },
+      });
+
+      if (notification) {
+        continue;
+      }
+
+      await this.prisma.notification.create({
+        data: {
+          tagId,
+          userId: user.id,
+          type: 'TAG',
+          message: `${user.username}님이 ${tag.name} 태그를 팔로우 하고 있습니다.`,
+        },
+      });
+    }
   }
 }

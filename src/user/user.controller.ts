@@ -3,13 +3,13 @@ import {
   Controller,
   Delete,
   Get,
-  HttpStatus,
   Post,
   Put,
+  Query,
   Res,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // decorator
 import { AuthUser } from '../libs/get-user.decorator';
@@ -20,6 +20,7 @@ import { UserService } from './user.service';
 
 // dto
 import { UpdateBody } from './dto/update';
+import { MyPostListQuery } from './dto/list';
 
 // types
 import type { Response } from 'express';
@@ -63,5 +64,18 @@ export class UserController {
   @ApiOperation({ summary: '로그아웃' })
   logout(@Res({ passthrough: true }) res: Response) {
     return this.service.logout(res);
+  }
+
+  @Get('my-posts')
+  @ApiOperation({ summary: '내가 쓴 글' })
+  @ApiQuery({
+    name: 'query',
+    type: MyPostListQuery,
+    required: true,
+    description: '페이지네이션',
+  })
+  @UseGuards(LoggedInGuard)
+  myPosts(@AuthUser() user: UserWithInfo, @Query() query: MyPostListQuery) {
+    return this.service.myPosts(user, query);
   }
 }

@@ -1,13 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../modules/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
+import { PostsService } from '../posts/posts.service';
 
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // utils
-import { isEmpty } from '../libs/assertion';
+import { isEmpty, isString } from '../libs/assertion';
 import { escapeForUrl } from '../libs/utils';
+import { MyPostListQuery } from './dto/list';
+import { DEFAULT_POSTS_SELECT } from '../modules/database/select/post.select';
 
 import type { Response } from 'express';
 import type { UpdateBody } from './dto/update';
@@ -19,6 +22,7 @@ export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly posts: PostsService,
   ) {}
 
   /**
@@ -197,6 +201,96 @@ export class UserService {
         result: null,
       };
     });
+  }
+
+  async myPosts(
+    user: UserWithInfo,
+    { cursor, limit, keyword, isDeleted }: MyPostListQuery,
+  ) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          isDeleted: isDeleted ?? undefined,
+          userId: user.id,
+          ...(keyword &&
+            !isEmpty(keyword) && {
+              title: {
+                contains: keyword,
+              },
+            }),
+        },
+      }),
+      this.prisma.post.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          isDeleted: isDeleted ?? undefined,
+          userId: user.id,
+          ...(keyword &&
+            !isEmpty(keyword) && {
+              title: {
+                contains: keyword,
+              },
+            }),
+        },
+        select: DEFAULT_POSTS_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.post.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            isDeleted: isDeleted ?? undefined,
+            userId: user.id,
+            ...(keyword &&
+              !isEmpty(keyword) && {
+                title: {
+                  contains: keyword,
+                },
+              }),
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this.posts._serializes(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
   }
 
   /**

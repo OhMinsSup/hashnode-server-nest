@@ -166,17 +166,18 @@ model File {
 }
 
 model Tag {
-  id          Int            @id @default(autoincrement())
-  name        String         @unique
-  description String?
-  image       String?
-  createdAt   DateTime       @default(now()) // 생성일
-  updatedAt   DateTime       @updatedAt // 업데이트일
-  deletedAt   DateTime? // 삭제일 
-  usersTags   UsersTags[]
-  postsTags   PostsTags[]
-  following   TagFollowing[]
-  tagStats    TagStats?
+  id            Int            @id @default(autoincrement())
+  name          String         @unique
+  description   String?
+  image         String?
+  createdAt     DateTime       @default(now()) // 생성일
+  updatedAt     DateTime       @updatedAt // 업데이트일
+  deletedAt     DateTime? // 삭제일 
+  usersTags     UsersTags[]
+  postsTags     PostsTags[]
+  following     TagFollowing[]
+  tagStats      TagStats?
+  notifications Notification[]
 }
 
 model TagStats {
@@ -247,11 +248,14 @@ model Notification {
   deletedAt DateTime?
   postId    Int?
   commentId Int?
+  tagId     Int?
   userId    Int
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  post      Post?     @relation(fields: [postId], references: [id])
-  comment   Comment?  @relation(fields: [commentId], references: [id])
-  like      PostLike? @relation(fields: [postId], references: [id])
+
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post    Post?     @relation(fields: [postId], references: [id])
+  comment Comment?  @relation(fields: [commentId], references: [id])
+  like    PostLike? @relation(fields: [postId], references: [id])
+  tag     Tag?      @relation(fields: [tagId], references: [id])
 
   @@index([createdAt, read])
 }

@@ -20,9 +20,7 @@ export class LoggingInterceptor implements NestInterceptor {
     return next.handle().pipe(
       tap((value) => {
         const res = ctx.getResponse();
-        const message = `${req.method} : ${req.url} - ${
-          res.statusCode
-        } ${JSON.stringify(value)}`;
+        const message = `${req.method} : ${req.url} - ${res.statusCode}`;
         return this.logger.log(`After... ${Date.now() - now}ms`, message);
       }),
     );
