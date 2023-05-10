@@ -28,6 +28,11 @@ export class UserService {
     private readonly posts: PostsService,
   ) {}
 
+  async getUserPosts(username: string, { cursor, limit }: MyPostListQuery) {
+    const { result } = await this.getUserInfoByUsername(username);
+    return this.myPosts(result, { cursor, limit });
+  }
+
   async getUserInfoByUsername(username: string) {
     const data = await this.prisma.user.findFirst({
       where: {

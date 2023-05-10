@@ -31,12 +31,6 @@ import type { UserWithInfo } from '../modules/database/select/user.select';
 export class UserController {
   constructor(private readonly service: UserService) {}
 
-  @Get(':username')
-  @ApiOperation({ summary: '사용자 정보' })
-  getUserInfo(@Query('username') username: string) {
-    return this.service.getUserInfoByUsername(username);
-  }
-
   @Get()
   @ApiOperation({ summary: '내 정보' })
   @UseGuards(LoggedInGuard)
@@ -83,5 +77,26 @@ export class UserController {
   @UseGuards(LoggedInGuard)
   myPosts(@AuthUser() user: UserWithInfo, @Query() query: MyPostListQuery) {
     return this.service.myPosts(user, query);
+  }
+
+  @Get(':username')
+  @ApiOperation({ summary: '사용자 정보' })
+  getUserInfo(@Query('username') username: string) {
+    return this.service.getUserInfoByUsername(username);
+  }
+
+  @Get(':username/posts')
+  @ApiOperation({ summary: '사용자가 쓴 글' })
+  @ApiQuery({
+    name: 'query',
+    type: MyPostListQuery,
+    required: true,
+    description: '페이지네이션',
+  })
+  getUserPosts(
+    @Query('username') username: string,
+    @Query() query: MyPostListQuery,
+  ) {
+    return this.service.getUserPosts(username, query);
   }
 }

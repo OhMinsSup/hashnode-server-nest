@@ -5,6 +5,7 @@ export const DEFAULT_USER_SELECT = Prisma.validator<Prisma.UserSelect>()({
   id: true,
   email: true,
   username: true,
+  createdAt: true,
   profile: {
     select: {
       name: true,
