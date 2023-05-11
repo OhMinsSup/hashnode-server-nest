@@ -1,7 +1,5 @@
-import { Module, Logger } from '@nestjs/common';
+import { Module, Logger, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import 'winston-daily-rotate-file';
-import { join } from 'path';
 
 import joi from '@hapi/joi';
 
@@ -19,30 +17,15 @@ import { WidgetModule } from './widget/widget.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 
-import { WinstonModule } from 'nest-winston';
-import * as winston from 'winston';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
 import { PrismaModule } from './modules/database/prisma.module';
+import { LoggerMiddleware } from './middlewares/logger.middleware';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
-
-const dailyRotateFile = new winston.transports.DailyRotateFile({
-  filename: 'application-%DATE%.log',
-  datePattern: 'YYYY-MM-DD',
-  zippedArchive: false,
-  maxSize: '20m',
-  maxFiles: '14d',
-  auditFile: 'audit.json',
-  dirname:
-    process.env.NODE_ENV === 'production'
-      ? join(__dirname, '../logs/prod/')
-      : join(__dirname, '../logs/dev/'), //path to where save lo
-  level: 'error',
-});
 
 @Module({
   imports: [
@@ -74,14 +57,6 @@ const dailyRotateFile = new winston.transports.DailyRotateFile({
         CF_R2_PUBLIC_URL: joi.string().required(),
       }),
     }),
-    WinstonModule.forRoot({
-      format: winston.format.combine(
-        winston.format.errors({ stack: true }),
-        winston.format.timestamp(),
-        winston.format.prettyPrint(),
-      ),
-      transports: [dailyRotateFile, new winston.transports.Console()],
-    }),
     PrismaModule.forRoot(),
     JwtModule.forRoot({
       privateKey: process.env.PRIVATE_KEY,
@@ -106,4 +81,8 @@ const dailyRotateFile = new winston.transports.DailyRotateFile({
     { provide: APP_INTERCEPTOR, useClass: ExceptionInterceptor },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

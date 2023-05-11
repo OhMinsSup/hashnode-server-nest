@@ -1,4 +1,4 @@
-import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 // interceptor
@@ -38,5 +38,17 @@ export class AuthController {
   @UseInterceptors(CookiInterceptor)
   signin(@Body() input: SigninBody) {
     return this.service.signin(input);
+  }
+
+  @Get('social/callback/github')
+  @ApiOperation({ summary: '깃허브 로그인 콜백' })
+  githubCallback() {
+    return null;
+  }
+
+  @Get('social/callback/google')
+  @ApiOperation({ summary: '구글 로그인 콜백' })
+  googleCallback() {
+    return null;
   }
 }

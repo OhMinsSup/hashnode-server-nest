@@ -18,7 +18,7 @@ export class LoggingInterceptor implements NestInterceptor {
     const message = `${req.method} : ${req.url}`;
     this.logger.log('Before...', message);
     return next.handle().pipe(
-      tap((value) => {
+      tap(() => {
         const res = ctx.getResponse();
         const message = `${req.method} : ${req.url} - ${res.statusCode}`;
         return this.logger.log(`After... ${Date.now() - now}ms`, message);

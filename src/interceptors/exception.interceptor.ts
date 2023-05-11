@@ -4,6 +4,7 @@ import {
   HttpException,
   HttpStatus,
   Injectable,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -14,11 +15,11 @@ import { catchError } from 'rxjs/operators';
 export class ExceptionInterceptor implements NestInterceptor {
   constructor(
     private readonly config: ConfigService, // private readonly logger: Logger,
+    private readonly logger: Logger,
   ) {}
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError((error) => {
-        console.log('error', error);
         if (error instanceof HttpException) {
           const statusCode = error.getStatus();
           const resp = error.getResponse() as string | Record<string, any>;
@@ -33,13 +34,43 @@ export class ExceptionInterceptor implements NestInterceptor {
                 sameSite: this.config.get('COOKIE_SAMESITE'),
               });
           }
-          return throwError(() => new HttpException(resp, statusCode));
+          return throwError(() => {
+            const exception = new HttpException(resp, statusCode);
+            this.logger.error(
+              exception.message,
+              exception.stack,
+              'ExceptionInterceptor',
+            );
+            return exception;
+          });
+        } else if (error instanceof Error) {
+          return throwError(() => {
+            const exception = new HttpException(
+              {
+                message: error.message,
+                error: error.name,
+              },
+              HttpStatus.INTERNAL_SERVER_ERROR,
+            );
+            this.logger.error(
+              exception.message,
+              exception.stack,
+              'ExceptionInterceptor',
+            );
+            return exception;
+          });
         }
         return throwError(() => {
-          return new HttpException(
+          const exception = new HttpException(
             'Exception interceptor message',
             HttpStatus.BAD_GATEWAY,
           );
+          this.logger.error(
+            exception.message,
+            exception.stack,
+            'ExceptionInterceptor',
+          );
+          return exception;
         });
       }),
     );

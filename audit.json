@@ -6,29 +6,14 @@
     "auditLog": "audit.json",
     "files": [
         {
-            "date": 1683477008901,
-            "name": "/Volumes/project/logs/application-2023-05-08.log",
-            "hash": "d8e128596c0af0dfa522203f9cb7b85a55cd22d656e0e2e1152cf901271871b5"
+            "date": 1683769206271,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/warn/dev/application-2023-05-11.log",
+            "hash": "fda4f4a74c4dae4e91c928dfe8e175be5cdc5106f83e683b03a609b4d146b750"
         },
         {
-            "date": 1683477137167,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/application-2023-05-08.log",
-            "hash": "8dc09a9e39ce35a823db1dafbe877dfe6817ab59db2a575f0749de027cd176f0"
-        },
-        {
-            "date": 1683477220997,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/dev/application-2023-05-08.log",
-            "hash": "e58897696954211dae02a3841018a67ae58813b3d01c8a9a094c21f8f906c06f"
-        },
-        {
-            "date": 1683561443690,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/dev/application-2023-05-09.log",
-            "hash": "8cfb829940b65c861401601f023422bb0ff49b60853ef8de7e039144f8a56e1a"
-        },
-        {
-            "date": 1683650104255,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/dev/application-2023-05-10.log",
-            "hash": "5bc01a5d13fc96cda2f7430c28516aa84b5efe9045009d2998f357f58714a982"
+            "date": 1683769206278,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-11.log",
+            "hash": "ab15eb18f61edba0d89b99f84901cb15daa022940fdaa0901e293e581eda7e89"
         }
     ],
     "hashType": "sha256"

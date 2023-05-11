@@ -3,20 +3,20 @@ import { PrismaClient } from '@prisma/client';
 
 import type { INestApplication } from '@nestjs/common';
 
-type QueryEvent = {
-  timestamp: Date;
-  query: string; // Query sent to the database
-  params: string; // Query parameters
-  duration: number; // Time elapsed (in milliseconds) between client issuing query and database responding - not only time taken to run query
-  target: string;
-};
+// type QueryEvent = {
+//   timestamp: Date;
+//   query: string; // Query sent to the database
+//   params: string; // Query parameters
+//   duration: number; // Time elapsed (in milliseconds) between client issuing query and database responding - not only time taken to run query
+//   target: string;
+// };
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor(private readonly logger: Logger) {
     super({
       log: [
-        { emit: 'event', level: 'query' },
+        { emit: 'stdout', level: 'query' },
         { emit: 'event', level: 'error' },
       ],
       errorFormat: 'pretty',
@@ -27,17 +27,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
     await this.$connect();
 
     // @ts-ignore
-    this.$on('query', (e: QueryEvent) => {
-      const { query, params, duration } = e;
-      this.logger.debug(
-        `Query: ${query} ${JSON.stringify(params)} ${duration}ms`,
-        'PrismaClient',
-      );
-    });
-
-    // @ts-ignore
     this.$on('error', (e: any) => {
-      this.logger.error(`Error: ${e.message} ${e.stack}`, 'PrismaClient');
+      this.logger.error(e.message, e.stack, 'PrismaService');
     });
   }
 
