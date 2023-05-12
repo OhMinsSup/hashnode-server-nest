@@ -20,6 +20,8 @@ import { SigninBody } from './dto/signin';
 
 // types
 import type { UserAuthentication } from '@prisma/client';
+import { SocialQuery } from './dto/social';
+import { getGithubAccessToken, getGithubProfile } from 'src/libs/social/github';
 
 @Injectable()
 export class AuthService {
@@ -170,6 +172,33 @@ export class AuthService {
       error: null,
       result: {
         userId: user.id,
+        accessToken,
+      },
+    };
+  }
+
+  /**
+   * @description 깃허브 로그인 콜백
+   * @param {SocialQuery} query 깃허브 로그인 콜백 쿼리
+   * @param {Response} res 응답 객체
+   */
+  async githubCallback(query: SocialQuery, res: Response) {
+    const clientId = this.config.get('GITHUB_CLIENT_ID');
+    const clientSecret = this.config.get('GITHUB_CLIENT_SECRET');
+
+    const accessToken = await getGithubAccessToken({
+      code: query.code,
+      clientId,
+      clientSecret,
+    });
+    const profile = await getGithubProfile(accessToken);
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        profile,
         accessToken,
       },
     };

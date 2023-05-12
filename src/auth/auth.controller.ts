@@ -1,5 +1,13 @@
-import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+  UseInterceptors,
+} from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // interceptor
 import { CookiInterceptor } from 'src/interceptors/cookie.interceptor';
@@ -10,6 +18,7 @@ import { AuthService } from './auth.service';
 // dto
 import { SignupBody } from './dto/signup';
 import { SigninBody } from './dto/signin';
+import { SocialQuery } from './dto/social';
 
 @ApiTags('인증')
 @Controller('api/v1/auth')
@@ -42,8 +51,17 @@ export class AuthController {
 
   @Get('social/callback/github')
   @ApiOperation({ summary: '깃허브 로그인 콜백' })
-  githubCallback() {
-    return null;
+  @ApiQuery({
+    name: 'query',
+    type: SocialQuery,
+    required: true,
+    description: '깃허브 로그인 콜백 쿼리',
+  })
+  githubCallback(
+    @Query() query: SocialQuery,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.service.githubCallback(query, res);
   }
 
   @Get('social/callback/google')
