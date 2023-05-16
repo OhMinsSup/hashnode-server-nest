@@ -37,6 +37,23 @@ export const DEFAULT_USER_SELECT = Prisma.validator<Prisma.UserSelect>()({
   },
 });
 
+export const USER_FOLLOW_TAGS_SELECT =
+  Prisma.validator<Prisma.TagFollowingSelect>()({
+    tag: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        image: true,
+        _count: {
+          select: {
+            postsTags: true,
+          },
+        },
+      },
+    },
+  });
+
 export type UserWithInfo = Pick<User, 'id' | 'email' | 'username'> & {
   profile: Omit<
     UserProfile,

@@ -18,6 +18,7 @@ import type { Prisma } from '@prisma/client';
 import {
   DEFAULT_USER_SELECT,
   UserWithInfo,
+  USER_FOLLOW_TAGS_SELECT,
 } from '../modules/database/select/user.select';
 
 @Injectable()
@@ -227,6 +228,11 @@ export class UserService {
     });
   }
 
+  /**
+   * @description 유저의 포스트 리스트를 가져온다.
+   * @param {UserWithInfo} user 유저 정보
+   * @param {MyPostListQuery} params 쿼리 파라미터
+   */
   async myPosts(
     user: UserWithInfo,
     { cursor, limit, keyword, isDeleted }: MyPostListQuery,
@@ -317,6 +323,21 @@ export class UserService {
     };
   }
 
+  async getFollowTags(user: UserWithInfo) {
+    const tags = await this.prisma.tagFollowing.findMany({
+      where: {
+        userId: user.id,
+      },
+      select: USER_FOLLOW_TAGS_SELECT,
+    });
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: tags.map(this._serializeFollowTag),
+    };
+  }
+
   /**
    * @description 로그아웃
    * @param {Response} res 응답 객체
@@ -331,6 +352,10 @@ export class UserService {
     };
   }
 
+  /**
+   * @description 쿠키 제거
+   * @param {Response} res 응답 객체
+   */
   private clearCookies(res: Response) {
     res.clearCookie(this.config.get('COOKIE_TOKEN_NAME'), {
       httpOnly: true,
@@ -338,5 +363,18 @@ export class UserService {
       path: this.config.get('COOKIE_PATH'),
       sameSite: this.config.get('COOKIE_SAMESITE'),
     });
+  }
+
+  private _serializeFollowTag(data: any) {
+    return {
+      id: data?.tag?.id,
+      name: data?.tag?.name,
+      description: data?.tag?.description,
+      image: data?.tag?.image,
+      count: {
+        posts: data?.tag?._count?.postsTags ?? 0,
+      },
+      createdAt: data?.tag?.createdAt,
+    };
   }
 }

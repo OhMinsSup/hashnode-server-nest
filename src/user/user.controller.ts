@@ -79,6 +79,13 @@ export class UserController {
     return this.service.myPosts(user, query);
   }
 
+  @Get('follow-tags')
+  @ApiOperation({ summary: '내가 팔로우한 태그' })
+  @UseGuards(LoggedInGuard)
+  getFollowTags(@AuthUser() user: UserWithInfo) {
+    return this.service.getFollowTags(user);
+  }
+
   @Get(':username')
   @ApiOperation({ summary: '사용자 정보' })
   getUserInfo(@Query('username') username: string) {

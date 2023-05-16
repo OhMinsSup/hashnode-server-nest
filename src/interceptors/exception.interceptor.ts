@@ -36,11 +36,15 @@ export class ExceptionInterceptor implements NestInterceptor {
           }
           return throwError(() => {
             const exception = new HttpException(resp, statusCode);
-            this.logger.error(
-              exception.message,
-              exception.stack,
-              'ExceptionInterceptor',
-            );
+            if ([401, 403, 404].includes(statusCode)) {
+              // somting...
+            } else {
+              this.logger.error(
+                exception.message,
+                exception.stack,
+                'ExceptionInterceptor',
+              );
+            }
             return exception;
           });
         } else if (error instanceof Error) {

@@ -13,9 +13,13 @@ export class LoggerMiddleware implements NestMiddleware {
       const { statusCode } = res;
 
       if (statusCode >= 400 && statusCode < 500) {
-        this.logger.warn(
-          `[${method}]${originalUrl}(${statusCode}) ${ip} ${userAgent}`,
-        );
+        if ([403, 404, 401].includes(statusCode)) {
+          // somting...
+        } else {
+          this.logger.warn(
+            `[${method}]${originalUrl}(${statusCode}) ${ip} ${userAgent}`,
+          );
+        }
       } else if (statusCode >= 500) {
         this.logger.error(
           `[${method}]${originalUrl}(${statusCode}) ${ip} ${userAgent}`,
