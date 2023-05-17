@@ -86,6 +86,12 @@ export class UserController {
     return this.service.getFollowTags(user);
   }
 
+  @Get('treanding-users')
+  @ApiOperation({ summary: '트렌딩 사용자' })
+  getTrendingUsers() {
+    return this.service.getTrendingUsers();
+  }
+
   @Get(':username')
   @ApiOperation({ summary: '사용자 정보' })
   getUserInfo(@Query('username') username: string) {

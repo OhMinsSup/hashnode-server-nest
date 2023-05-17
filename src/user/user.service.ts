@@ -29,11 +29,20 @@ export class UserService {
     private readonly posts: PostsService,
   ) {}
 
+  /**
+   * @description 유저가 작성한 포스트 리스트
+   * @param {UserWithInfo} user 유저 정보
+   * @param {MyPostListQuery} param 쿼리
+   */
   async getUserPosts(username: string, { cursor, limit }: MyPostListQuery) {
     const { result } = await this.getUserInfoByUsername(username);
     return this.myPosts(result, { cursor, limit });
   }
 
+  /**
+   * @description 유저명으로 유저 정보를 가져온다.
+   * @param {string} username 유저명
+   */
   async getUserInfoByUsername(username: string) {
     const data = await this.prisma.user.findFirst({
       where: {
@@ -323,6 +332,10 @@ export class UserService {
     };
   }
 
+  /**
+   * @description 유저가 팔로우한 태그 리스트를 가져온다.
+   * @param {UserWithInfo} user 유저 정보
+   */
   async getFollowTags(user: UserWithInfo) {
     const tags = await this.prisma.tagFollowing.findMany({
       where: {
@@ -335,6 +348,16 @@ export class UserService {
       message: null,
       error: null,
       result: tags.map(this._serializeFollowTag),
+    };
+  }
+
+  async getTrendingUsers() {
+    // 작성한 포스트의 ranking이 높은 유저 50명에 대한 정보를 가져온다.
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
     };
   }
 
