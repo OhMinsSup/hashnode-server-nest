@@ -14,12 +14,12 @@ export class TagListQuery extends PaginationQuery {
   name?: string;
 
   @IsString()
-  @IsEnum(['recent', 'popular'])
+  @IsEnum(['recent', 'popular', 'new'])
   @IsOptional()
   @ApiProperty({
     name: 'type',
     type: 'string',
-    enum: ['recent', 'popular'],
+    enum: ['recent', 'popular', 'new'],
     required: false,
     description: '태그 리스트 타입',
   })

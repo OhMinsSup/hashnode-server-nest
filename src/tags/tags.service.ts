@@ -352,6 +352,8 @@ export class TagsService {
       case 'popular':
         result = await this._getTrandingItems(query);
         break;
+      case 'new':
+        result = await this._getNewItems(query);
       default:
         result = await this._getRecentItems(query);
         break;
@@ -580,6 +582,69 @@ export class TagsService {
           where: {
             id: {
               lt: endCursor,
+            },
+            name: name ? { contains: name } : undefined,
+          },
+          orderBy: {
+            id: 'desc',
+          },
+        })) > 0
+      : false;
+
+    return { totalCount, list, endCursor, hasNextPage };
+  }
+
+  /**
+   * @description 최근 일주일 사이에 생성된 태그 리스트
+   * @param params
+   */
+  private async _getNewItems({ cursor, limit, name }: TagListQuery) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.tag.count({
+        where: {
+          createdAt: {
+            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+          },
+          name: name ? { contains: name } : undefined,
+        },
+      }),
+      this.prisma.tag.findMany({
+        orderBy: {
+          id: 'desc',
+        },
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          createdAt: {
+            gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+          },
+          name: name ? { contains: name } : undefined,
+        },
+        select: TAGS_LIST_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.tag.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            createdAt: {
+              gte: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
             },
             name: name ? { contains: name } : undefined,
           },

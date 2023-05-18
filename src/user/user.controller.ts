@@ -20,7 +20,7 @@ import { UserService } from './user.service';
 
 // dto
 import { UpdateBody } from './dto/update';
-import { MyPostListQuery } from './dto/list';
+import { MyPostListQuery, TrendingUsersQuery } from './dto/list';
 
 // types
 import type { Response } from 'express';
@@ -79,17 +79,23 @@ export class UserController {
     return this.service.myPosts(user, query);
   }
 
+  @Get('treanding-users')
+  @ApiOperation({ summary: '트렌딩 사용자' })
+  @ApiQuery({
+    name: 'query',
+    type: TrendingUsersQuery,
+    required: true,
+    description: '주간, 전체',
+  })
+  getUserTrendings(@Query() query: TrendingUsersQuery) {
+    return this.service.getUserTrendings(query);
+  }
+
   @Get('follow-tags')
   @ApiOperation({ summary: '내가 팔로우한 태그' })
   @UseGuards(LoggedInGuard)
   getFollowTags(@AuthUser() user: UserWithInfo) {
     return this.service.getFollowTags(user);
-  }
-
-  @Get('treanding-users')
-  @ApiOperation({ summary: '트렌딩 사용자' })
-  getTrendingUsers() {
-    return this.service.getTrendingUsers();
   }
 
   @Get(':username')

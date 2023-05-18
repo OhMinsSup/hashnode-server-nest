@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
 import { PaginationQuery } from '../../libs/pagination';
 
 export class MyPostListQuery extends PaginationQuery {
@@ -22,4 +22,16 @@ export class MyPostListQuery extends PaginationQuery {
     description: '삭제된 게시물 포함 여부',
   })
   isDeleted?: boolean;
+}
+
+export class TrendingUsersQuery {
+  @IsIn(['week', 'all', 'month', 'year'])
+  @ApiProperty({
+    name: 'category',
+    type: 'string',
+    required: true,
+    enum: ['week', 'all', 'month', 'year'],
+    description: '주간, 전체',
+  })
+  category: 'week' | 'all' | 'month' | 'year';
 }

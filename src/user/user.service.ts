@@ -9,17 +9,29 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 // utils
 import { isEmpty, isString } from '../libs/assertion';
 import { escapeForUrl } from '../libs/utils';
-import { MyPostListQuery } from './dto/list';
+import { MyPostListQuery, TrendingUsersQuery } from './dto/list';
 import { DEFAULT_POSTS_SELECT } from '../modules/database/select/post.select';
 
 import type { Response } from 'express';
 import type { UpdateBody } from './dto/update';
-import type { Prisma } from '@prisma/client';
+import type { Post, Prisma } from '@prisma/client';
 import {
   DEFAULT_USER_SELECT,
   UserWithInfo,
   USER_FOLLOW_TAGS_SELECT,
 } from '../modules/database/select/user.select';
+
+type RawTrendingUsers = {
+  id: number;
+  email: string;
+  username: string;
+  avatarUrl: string | null;
+  posts: string;
+};
+
+type TransformedTrendingUsers = Omit<RawTrendingUsers, 'posts'> & {
+  posts: Array<Pick<Post, 'id' | 'title'> & { createdAt: number }>;
+};
 
 @Injectable()
 export class UserService {
@@ -351,13 +363,78 @@ export class UserService {
     };
   }
 
-  async getTrendingUsers() {
+  /**
+   * @description 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
+   */
+  async getUserTrendings({ category }: TrendingUsersQuery) {
+    let time: Date | null;
+    switch (category) {
+      case 'week':
+        time = new Date();
+        time.setDate(time.getDate() - 7);
+        break;
+      case 'month':
+        time = new Date();
+        time.setMonth(time.getMonth() - 1);
+        break;
+      case 'year':
+        time = new Date();
+        time.setFullYear(time.getFullYear() - 1);
+        break;
+      default:
+        time = null;
+        break;
+    }
+
+    const rawData: Awaited<RawTrendingUsers[]> = await this.prisma.$queryRaw`
+    SELECT u.id, u.email, u.username, up.createdAt, up.avatarUrl, GROUP_CONCAT(p.id || '|' || p.title || '|' || p.createdAt) AS posts
+    FROM User u
+    INNER JOIN (
+      SELECT p1.userId, p1.id AS postId
+      FROM (
+        SELECT p.userId, p.id, ps.score,
+          ROW_NUMBER() OVER (PARTITION BY p.userId ORDER BY ps.score DESC) AS rank
+        FROM Post p
+        INNER JOIN PostStats ps ON p.id = ps.postId
+        WHERE ps.score >= 0 -- 원하는 랭킹 점수로 변경해주세요
+      ) p1
+      WHERE p1.rank <= 3 -- 원하는 상위 랭킹 개수로 변경해주세요
+    ) topPosts ON u.id = topPosts.userId
+    INNER JOIN Post p ON p.id = topPosts.postId
+    LEFT JOIN UserProfile up ON up.userId = u.id
+    WHERE u.createdAt >= ${time ? time.getTime() : 0}
+    GROUP BY u.id, up.id
+    ORDER BY u.createdAt DESC -- 원하는 정렬 기준으로 변경해주세요
+    LIMIT 50;
+    `;
+
+    const users: TransformedTrendingUsers[] = [];
+    for (const user of rawData) {
+      const posts = user.posts.split(',');
+      const serializedPosts: TransformedTrendingUsers['posts'][0][] = [];
+      for (const post of posts) {
+        const [id, title, createdAt] = post.split('|');
+        serializedPosts.push({
+          id: Number(id),
+          title,
+          createdAt: Number(createdAt),
+        });
+      }
+      users.push({
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        avatarUrl: user.avatarUrl,
+        posts: serializedPosts,
+      });
+    }
+
     // 작성한 포스트의 ranking이 높은 유저 50명에 대한 정보를 가져온다.
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: null,
+      result: users,
     };
   }
 
