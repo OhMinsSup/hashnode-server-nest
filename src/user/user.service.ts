@@ -90,6 +90,7 @@ export class UserService {
    * @param {UpdateBody} input 업데이트 정보
    */
   async update(user: UserWithInfo, input: UpdateBody) {
+    console.log('update', user, input);
     return this.prisma.$transaction(async (tx) => {
       const newData = {} as Prisma.XOR<
         Prisma.UserUpdateInput,

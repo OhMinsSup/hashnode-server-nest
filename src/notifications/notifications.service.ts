@@ -2,11 +2,17 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../constants/exception.code';
 import { isEmpty } from '../libs/assertion';
+import { NotificationListQuery } from './dto/list';
+import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @Injectable()
 export class NotificationsService {
   constructor(private readonly prisma: PrismaService) {}
 
+  /**
+   * @description 게시글이 생성되었을 때 알림을 생성하는 코드
+   * @param {number} postId 게시글 아이디
+   */
   async createArticles(postId: number) {
     const post = await this.prisma.post.findUnique({
       where: {
@@ -101,6 +107,10 @@ export class NotificationsService {
     };
   }
 
+  /**
+   * @description 태그를 사용한 사용자들에게 알림을 생성한다.
+   * @param {number} tagId
+   */
   async createTags(tagId: number) {
     const tag = await this.prisma.tag.findUnique({
       where: {
@@ -164,5 +174,59 @@ export class NotificationsService {
         },
       });
     }
+  }
+
+  /**
+   * @description 사용자가 가입하면 환영 메시지를 생성한다.
+   * @param {number} userId
+   */
+  async createWelcome(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        username: true,
+      },
+    });
+
+    if (!user) {
+      return {
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '사용자를 찾을 수 없습니다.',
+        error: null,
+        result: false,
+      };
+    }
+
+    await this.prisma.notification.create({
+      data: {
+        userId,
+        type: 'WELCOME',
+        message: `${user.username}님 환영합니다.`,
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
+  }
+
+  /**
+   * @description 알림 리스트
+   * @param {UserWithInfo} user
+   * @param {NotificationListQuery} query
+   */
+  async list(user: UserWithInfo, query: NotificationListQuery) {
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
   }
 }

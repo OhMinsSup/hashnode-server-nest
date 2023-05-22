@@ -15,7 +15,12 @@ export class LoggingInterceptor implements NestInterceptor {
     const ctx = context.switchToHttp();
     const req = ctx.getRequest();
     const now = Date.now();
-    const message = `${req.method} : ${req.url}`;
+    const message = `${req.method} : ${req.url} - ${req.ip} - ${req.headers['user-agent']}`;
+    if (req.method === 'PUT') {
+      // content-type: application/json
+      console.log(req.headers);
+      console.log(typeof req.body, req.body);
+    }
     this.logger.log('Before...', message);
     return next.handle().pipe(
       tap(() => {

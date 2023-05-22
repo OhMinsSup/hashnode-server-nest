@@ -23,6 +23,7 @@ export class ExceptionInterceptor implements NestInterceptor {
         if (error instanceof HttpException) {
           const statusCode = error.getStatus();
           const resp = error.getResponse() as string | Record<string, any>;
+          console.log('error', error);
           if (statusCode === HttpStatus.UNAUTHORIZED) {
             context
               .switchToHttp()

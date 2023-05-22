@@ -20,7 +20,7 @@ import {
 import { calculateRankingScore, escapeForUrl } from 'src/libs/utils';
 
 // types
-import { TagListQuery, TrendingTagsQuery } from './dto/list';
+import { TagListQuery } from './dto/list';
 import type { Tag, TagStats } from '@prisma/client';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 
@@ -319,32 +319,8 @@ export class TagsService {
   }
 
   /**
-   * @description 트랜딩 태그 리스트 (주간, all time)
-   * @param {TrendingTagsQuery} query 트랜딩 태그 리스트 쿼리
-   * @returns {Promise<{resultCode: number; message: string; error: string; result: {list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; pageInfo: {endCursor: string; hasNextPage: boolean}}}>}
-   */
-  async trending(query: TrendingTagsQuery) {
-    const result = await this._getTrandingTimeItems(query);
-    const { list, totalCount, endCursor, hasNextPage } = result;
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        list: list,
-        totalCount,
-        pageInfo: {
-          endCursor: hasNextPage ? endCursor : null,
-          hasNextPage,
-        },
-      },
-    };
-  }
-
-  /**
    * @description 태그 목록 리스트
    * @param {TagListQuery} query 태그 리스트 쿼리
-   * @returns {Promise<{resultCode: number; message: string; error: string; result: {list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; pageInfo: {endCursor: string; hasNextPage: boolean}}}>}
    */
   async list(query: TagListQuery) {
     let result = undefined;
@@ -354,6 +330,10 @@ export class TagsService {
         break;
       case 'new':
         result = await this._getNewItems(query);
+        break;
+      case 'trending':
+        result = await this._getTrandingTimeItems(query);
+        break;
       default:
         result = await this._getRecentItems(query);
         break;
@@ -378,14 +358,13 @@ export class TagsService {
 
   /**
    * @description 인기 태그 리스트 - 시간별 (주간, 월간, 연간)
-   * @param {TrendingTagsQuery} params 태그 리스트 쿼리
-   * @returns {Promise<{list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; endCursor: string; hasNextPage: boolean}>}
+   * @param {TagListQuery} params 태그 리스트 쿼리
    */
   private async _getTrandingTimeItems({
     cursor,
     limit,
     category,
-  }: TrendingTagsQuery) {
+  }: TagListQuery) {
     let time: Date | null;
     switch (category) {
       case 'week':
@@ -542,7 +521,6 @@ export class TagsService {
   /**
    * @description 태그 리스트
    * @param {TagListQuery} params 태그 리스트 쿼리
-   * @returns {Promise<{list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; endCursor: string; hasNextPage: boolean}>}
    */
   private async _getRecentItems({ cursor, limit, name }: TagListQuery) {
     if (isString(cursor)) {
@@ -596,7 +574,7 @@ export class TagsService {
 
   /**
    * @description 최근 일주일 사이에 생성된 태그 리스트
-   * @param params
+   * @param {TagListQuery} params 태그 리스트 쿼리
    */
   private async _getNewItems({ cursor, limit, name }: TagListQuery) {
     if (isString(cursor)) {
@@ -660,7 +638,6 @@ export class TagsService {
   /**
    * @description 인기 태그 리스트
    * @param {TagListQuery} params 태그 리스트 쿼리
-   * @returns {Promise<{list: {id: number; name: string; createdAt: Date; updatedAt: Date; postsCount: number}[]; totalCount: number; endCursor: string; hasNextPage: boolean}>}
    */
   private async _getTrandingItems({ cursor, limit, name }: TagListQuery) {
     if (isString(cursor)) {
@@ -729,7 +706,6 @@ export class TagsService {
   /**
    * @description 태그 데이터를 필요한 값만 정리해서 가져온다.
    * @param {Tag[] & { _count: { postsTags: number; }; }[]} tags
-   * @returns {Promise<{id: number; name: string; postsCount: number}[]>}
    */
   private _serializeTag(
     tags: (Tag & {

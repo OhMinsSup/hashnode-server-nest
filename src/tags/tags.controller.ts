@@ -17,7 +17,7 @@ import { AuthUser } from '../libs/get-user.decorator';
 import { LoggedInGuard } from 'src/modules/guard/logged-in.guard';
 
 // types
-import { TagListQuery, TrendingTagsQuery } from './dto/list';
+import { TagListQuery } from './dto/list';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 
 @ApiTags('태그')
@@ -31,22 +31,10 @@ export class TagsController {
     name: 'query',
     type: TagListQuery,
     required: false,
-    description: '페이지네이션',
+    description: '쿼리',
   })
   list(@Query() query: TagListQuery) {
     return this.service.list(query);
-  }
-
-  @Get('trending')
-  @ApiOperation({ summary: '트렌딩 태그 리스트' })
-  @ApiQuery({
-    name: 'query',
-    type: TrendingTagsQuery,
-    required: false,
-    description: '페이지네이션',
-  })
-  trending(@Query() query: TrendingTagsQuery) {
-    return this.service.trending(query);
   }
 
   @Get(':tag')

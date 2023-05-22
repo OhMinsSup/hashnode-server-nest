@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 // service
 import { PrismaService } from '../modules/database/prisma.service';
 import { JwtService } from 'src/modules/jwt/jwt.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';
@@ -29,6 +31,8 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
     private readonly config: ConfigService,
+    private readonly notifications: NotificationsService,
+    private readonly logger: Logger,
   ) {}
 
   /**
@@ -157,14 +161,25 @@ export class AuthService {
     });
 
     // add user profile to database
-    await this.prisma.userProfile.create({
-      data: {
-        userId: user.id,
-        name: input.name,
-      },
-    });
+    await Promise.all([
+      this.prisma.userProfile.create({
+        data: {
+          userId: user.id,
+          name: input.name || input.username,
+        },
+      }),
+      this.prisma.userSocials.create({
+        data: {
+          userId: user.id,
+        },
+      }),
+    ]);
 
     const { accessToken } = await this._generateToken(user.id);
+
+    this.notifications.createWelcome(user.id).catch((e) => {
+      this.logger.error(e.message, e.stack, 'NotificationsService');
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,

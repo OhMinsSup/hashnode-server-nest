@@ -14,7 +14,7 @@ export class TagListQuery extends PaginationQuery {
   name?: string;
 
   @IsString()
-  @IsEnum(['recent', 'popular', 'new'])
+  @IsEnum(['recent', 'popular', 'new', 'trending'])
   @IsOptional()
   @ApiProperty({
     name: 'type',
@@ -24,9 +24,8 @@ export class TagListQuery extends PaginationQuery {
     description: '태그 리스트 타입',
   })
   type?: string;
-}
 
-export class TrendingTagsQuery extends PaginationQuery {
+  @IsOptional()
   @IsIn(['week', 'all', 'month', 'year'])
   @ApiProperty({
     name: 'category',
@@ -35,5 +34,5 @@ export class TrendingTagsQuery extends PaginationQuery {
     enum: ['week', 'all', 'month', 'year'],
     description: '주간, 전체',
   })
-  category: 'week' | 'all' | 'month' | 'year';
+  category?: 'week' | 'all' | 'month' | 'year';
 }
