@@ -90,11 +90,20 @@ export class UserService {
    * @param {UpdateBody} input 업데이트 정보
    */
   async update(user: UserWithInfo, input: UpdateBody) {
-    console.log('update', user, input);
     return this.prisma.$transaction(async (tx) => {
       const newData = {} as Prisma.XOR<
         Prisma.UserUpdateInput,
         Prisma.UserUncheckedUpdateInput
+      >;
+
+      const newProfileData = {} as Prisma.XOR<
+        Prisma.UserProfileUpdateInput,
+        Prisma.UserProfileUncheckedUpdateInput
+      >;
+
+      const newSocialData = {} as Prisma.XOR<
+        Prisma.UserSocialsUpdateInput,
+        Prisma.UserSocialsUncheckedUpdateInput
       >;
 
       if (input.username && input.username !== user.username) {
@@ -106,30 +115,30 @@ export class UserService {
       }
 
       if (input.name && input.name !== user.profile.name) {
-        newData.profile.update.name = input.name;
+        newProfileData.name = input.name;
       }
 
       if (input.tagline && input.tagline !== user.profile.tagline) {
-        newData.profile.update.tagline = input.tagline;
+        newProfileData.tagline = input.tagline;
       }
 
       if (input.avatarUrl && input.avatarUrl !== user.profile.avatarUrl) {
-        newData.profile.update.avatarUrl = input.avatarUrl;
+        newProfileData.avatarUrl = input.avatarUrl;
       }
 
       if (input.location && input.location !== user.profile.location) {
-        newData.profile.update.location = input.location;
+        newProfileData.location = input.location;
       }
 
       if (input.bio && input.bio !== user.profile.bio) {
-        newData.profile.update.bio = input.bio;
+        newProfileData.bio = input.bio;
       }
 
       if (
         input.availableText &&
         input.availableText !== user.profile.availableText
       ) {
-        newData.profile.update.availableText = input.availableText;
+        newProfileData.availableText = input.availableText;
       }
 
       if (!isEmpty(input.skills) && input.skills) {
@@ -206,17 +215,37 @@ export class UserService {
       if (input.socials && Object.keys(input.socials).length > 0) {
         for (const [key, value] of Object.entries(input.socials)) {
           if (value !== user.socials[key]) {
-            newData.socials.update[key] = value;
+            newSocialData[key] = value;
           }
         }
       }
 
-      await tx.user.update({
-        where: {
-          id: user.id,
-        },
-        data: newData,
-      });
+      if (!isEmpty(newData)) {
+        await tx.user.update({
+          where: {
+            id: user.id,
+          },
+          data: newData,
+        });
+      }
+
+      if (!isEmpty(newProfileData)) {
+        await tx.userProfile.update({
+          where: {
+            userId: user.id,
+          },
+          data: newProfileData,
+        });
+      }
+
+      if (!isEmpty(newSocialData)) {
+        await tx.userSocials.update({
+          where: {
+            userId: user.id,
+          },
+          data: newSocialData,
+        });
+      }
 
       return {
         resultCode: EXCEPTION_CODE.OK,
@@ -233,9 +262,12 @@ export class UserService {
    */
   async delete(user: UserWithInfo, res: Response) {
     return this.prisma.$transaction(async (tx) => {
-      await tx.user.delete({
+      await tx.user.update({
         where: {
           id: user.id,
+        },
+        data: {
+          deletedAt: new Date(),
         },
       });
 
