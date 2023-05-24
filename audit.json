@@ -24,6 +24,16 @@
             "date": 1684804824062,
             "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-23.log",
             "hash": "f599bc630c04cadb550145d2e6e60a1738590db922d1da0ed24217a34858c977"
+        },
+        {
+            "date": 1684855835484,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-24.log",
+            "hash": "61e39c87a00bdfc3a49d1051d745dbe180e7fa21fce76dad5881bc27d2271110"
+        },
+        {
+            "date": 1684891952204,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/warn/dev/application-2023-05-24.log",
+            "hash": "e23a3c8341017e2e00aab44765590571415a7aaa463e1e02769edc1622bf6921"
         }
     ],
     "hashType": "sha256"
