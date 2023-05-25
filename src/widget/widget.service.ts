@@ -26,10 +26,18 @@ export class WidgetService {
 
   /**
    * @description 북마크 리스트
-   * @param {UserWithInfo} user
-   * @returns {Promise<{ resultCode: EXCEPTION_CODE; message: string; error: string; result: any; }>}
+   * @param {UserWithInfo?} user
    */
-  async getWidgetBookmarks(user: UserWithInfo) {
+  async getWidgetBookmarks(user?: UserWithInfo) {
+    if (!user) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: [],
+      };
+    }
+
     const posts = await this.prisma.postLike.findMany({
       where: {
         userId: user.id,
@@ -60,7 +68,7 @@ export class WidgetService {
    * @param {GetArticleCirclesQuery} query
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getArticleCircles(_: GetArticleCirclesQuery) {
+  async getArticleCircles(query: GetArticleCirclesQuery) {
     // hows the user who created the most posts and received the most likes from among the users.
     const users: WidgetArticleCirclesRawQuery[] = await this.prisma.$queryRaw`
         SELECT

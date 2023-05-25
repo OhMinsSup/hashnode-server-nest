@@ -1,11 +1,8 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // decorator
 import { AuthUser } from '../libs/get-user.decorator';
-
-// guard
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
 
 // service
 import { WidgetService } from './widget.service';
@@ -32,8 +29,7 @@ export class WidgetController {
 
   @Get('/bookmarks')
   @ApiOperation({ summary: '북마크 리스트' })
-  @UseGuards(LoggedInGuard)
-  getWidgetBookmarks(@AuthUser() user: UserWithInfo) {
+  getWidgetBookmarks(@AuthUser() user?: UserWithInfo) {
     return this.service.getWidgetBookmarks(user);
   }
 }
