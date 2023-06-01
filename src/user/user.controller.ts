@@ -79,7 +79,7 @@ export class UserController {
     return this.service.myPosts(user, query);
   }
 
-  @Get('treanding-users')
+  @Get('treanding')
   @ApiOperation({ summary: '트렌딩 사용자' })
   @ApiQuery({
     name: 'query',

@@ -257,7 +257,6 @@ export class TagsService {
    * @description 태그 상세 정보
    * @param {string} name 태그 이름
    * @param {UserWithInfo} user 유저 정보
-   * @returns {Promise<{resultCode: number; message: string; error: string; result: Tag}>}
    */
   async detail(name: string, user?: UserWithInfo) {
     // 유저 정보가 존재하면 태그의 이름 및 팔로잉, 포스트 수를 가져오면서 유저가 팔로잉 했는지 여부를 가져온다.
