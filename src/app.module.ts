@@ -23,7 +23,7 @@ import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
 import { PrismaModule } from './modules/database/prisma.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { ExploreModule } from './explore/explore.module';
+import { DraftModule } from './draft/draft.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -72,7 +72,7 @@ const isProd = process.env.NODE_ENV === 'production';
     WidgetModule,
     CommentsModule,
     NotificationsModule,
-    ExploreModule,
+    DraftModule,
   ],
   controllers: [AppController],
   providers: [

@@ -28,6 +28,7 @@ model User {
   commentLike     CommentLike[]
   notifications   Notification[]
   socialAccount   SocialAccount[]
+  drafts          PostDraft[]
 }
 
 model UserProfile {
@@ -79,6 +80,19 @@ model UsersTags {
   @@id([userId, tagId])
   @@index(tagId)
   @@index(userId)
+}
+
+model PostDraft {
+  id        Int       @id @default(autoincrement())
+  title     String? // max 255
+  json      String? // max 255
+  createdAt DateTime  @default(now()) // 생성일
+  updatedAt DateTime  @updatedAt // 업데이트일
+  deletedAt DateTime? // 삭제일 
+  User      User?     @relation(fields: [userId], references: [id])
+  userId    Int?
+
+  @@index([createdAt(sort: Desc)])
 }
 
 model Post {
