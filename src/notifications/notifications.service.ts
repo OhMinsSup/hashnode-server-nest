@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../constants/exception.code';
-import { isEmpty } from '../libs/assertion';
+import { isEmpty, isString } from '../libs/assertion';
 import { NotificationListQuery } from './dto/list';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 
@@ -222,11 +222,86 @@ export class NotificationsService {
    * @param {NotificationListQuery} query
    */
   async list(user: UserWithInfo, query: NotificationListQuery) {
+    const { list, totalCount, hasNextPage, endCursor } = await this._getItems(
+      user,
+      query,
+    );
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: true,
+      result: {
+        list,
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  async _getItems(
+    user: UserWithInfo,
+    { cursor, limit, type }: NotificationListQuery,
+  ) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.notification.count({
+        where: {
+          type,
+          userId: user.id,
+        },
+      }),
+      this.prisma.notification.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          type,
+          userId: user.id,
+        },
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.notification.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            type,
+            userId: user.id,
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
     };
   }
 }

@@ -3,9 +3,9 @@ import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PaginationQuery } from '../../libs/pagination';
 
 export class NotificationListQuery extends PaginationQuery {
+  @IsOptional()
   @IsString()
   @IsEnum(['comments', 'likes', 'articles'])
-  @IsOptional()
   @ApiProperty({
     name: 'type',
     type: 'string',
