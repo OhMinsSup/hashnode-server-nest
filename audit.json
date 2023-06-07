@@ -6,26 +6,6 @@
     "auditLog": "audit.json",
     "files": [
         {
-            "date": 1684719114801,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/warn/dev/application-2023-05-22.log",
-            "hash": "bfea006fc06c5886c57f588344a24585283a1eece50f1ce461498d8df9ee7971"
-        },
-        {
-            "date": 1684719114805,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-22.log",
-            "hash": "7723e28a3f42ce0ad9241655bf1eb891f8e233756178e440efd15baac0d0e3a4"
-        },
-        {
-            "date": 1684804824058,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/warn/dev/application-2023-05-23.log",
-            "hash": "794c47c7eaa7d949b5a37132729f47bf5d02f3dab1449ead2406b5ae6dd85d66"
-        },
-        {
-            "date": 1684804824062,
-            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-23.log",
-            "hash": "f599bc630c04cadb550145d2e6e60a1738590db922d1da0ed24217a34858c977"
-        },
-        {
             "date": 1684855835484,
             "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-05-24.log",
             "hash": "61e39c87a00bdfc3a49d1051d745dbe180e7fa21fce76dad5881bc27d2271110"
@@ -94,6 +74,16 @@
             "date": 1685927767793,
             "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-06-05.log",
             "hash": "dd10ae1f0b177d792ca6df3d358e9b87188a5f9ffb5452ff96415eef71d27795"
+        },
+        {
+            "date": 1686043183859,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/warn/dev/application-2023-06-06.log",
+            "hash": "1c283f9f8bad695611e44bc1c0d5d161fc82b7460e492dd87af3931750440428"
+        },
+        {
+            "date": 1686043183869,
+            "name": "/Volumes/project/ohminseop/solid-server-nest/logs/error/dev/application-2023-06-06.log",
+            "hash": "c94ca2016b7ec4fa0123df50c2725c6d6a4e3981fabc1d6cb66582212f2f8716"
         }
     ],
     "hashType": "sha256"

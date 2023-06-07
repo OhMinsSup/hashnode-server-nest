@@ -1,5 +1,6 @@
 import { Module, Logger, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 
 import joi from '@hapi/joi';
 
@@ -16,14 +17,15 @@ import { TagsModule } from './tags/tags.module';
 import { WidgetModule } from './widget/widget.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { DraftModule } from './draft/draft.module';
+import { TasksModule } from './modules/jobs/tasks.module';
+import { PrismaModule } from './modules/database/prisma.module';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
-import { PrismaModule } from './modules/database/prisma.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
-import { DraftModule } from './draft/draft.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -63,6 +65,8 @@ const isProd = process.env.NODE_ENV === 'production';
       privateKey: process.env.PRIVATE_KEY,
     }),
     R2Module.forRoot(),
+    ScheduleModule.forRoot(),
+    TasksModule,
     AuthGuardModule,
     AuthModule,
     UserModule,
