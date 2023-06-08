@@ -20,6 +20,7 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { DraftModule } from './draft/draft.module';
 import { TasksModule } from './modules/jobs/tasks.module';
 import { PrismaModule } from './modules/database/prisma.module';
+import { CacheModule } from '@nestjs/cache-manager';
 
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './interceptors/logging.interceptor';
@@ -66,6 +67,7 @@ const isProd = process.env.NODE_ENV === 'production';
     }),
     R2Module.forRoot(),
     ScheduleModule.forRoot(),
+    CacheModule.register(),
     TasksModule,
     AuthGuardModule,
     AuthModule,

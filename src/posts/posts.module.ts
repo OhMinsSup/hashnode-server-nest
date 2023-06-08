@@ -8,6 +8,7 @@ import { CommentsService } from '../comments/comments.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Module({
+  imports: [],
   controllers: [PostsController],
   providers: [PostsService, TagsService, CommentsService, NotificationsService],
 })
