@@ -335,7 +335,7 @@ export class PostsService {
    * @param {CreateRequestDto} input
    */
   async create(user: UserWithInfo, input: CreateBody) {
-    return this.prisma.$transaction(async (tx) => {
+    const response = await this.prisma.$transaction(async (tx) => {
       let createdTags: Tag[] = [];
       // 태크 체크
       if (!isEmpty(input.tags) && input.tags) {
@@ -378,9 +378,6 @@ export class PostsService {
       // 포스트 통계 생성
       this.createPostStats(post.id).catch((e) => console.error(e));
 
-      // 알림 생성
-      this.notifications.createArticles(post.id).catch((e) => console.error(e));
-
       return {
         resultCode: EXCEPTION_CODE.OK,
         message: null,
@@ -390,6 +387,13 @@ export class PostsService {
         },
       };
     });
+
+    // 알림 생성
+    this.notifications
+      .createArticles(response.result.dataId)
+      .catch((e) => console.error(e));
+
+    return response;
   }
 
   /**

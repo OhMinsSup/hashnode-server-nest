@@ -49,7 +49,6 @@ export class R2Service {
     const command = new PutObjectCommand({
       Bucket: bucket,
       Key: key,
-      ContentType: 'application/octet-stream',
     });
 
     const signedUrl = await getSignedUrl(this._r2Client, command, {

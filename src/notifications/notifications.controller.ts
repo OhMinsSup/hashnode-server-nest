@@ -1,6 +1,5 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { query } from 'express';
 import { AuthUser } from '../libs/get-user.decorator';
 import { UserWithInfo } from '../modules/database/select/user.select';
 import { LoggedInGuard } from '../modules/guard/logged-in.guard';
