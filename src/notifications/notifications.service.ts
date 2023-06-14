@@ -4,6 +4,7 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 import { isEmpty, isString } from '../libs/assertion';
 import { NotificationListQuery } from './dto/list';
 import type { UserWithInfo } from '../modules/database/select/user.select';
+import { NotificationReadAllQuery } from './dto/read.all';
 
 @Injectable()
 export class NotificationsService {
@@ -241,6 +242,55 @@ export class NotificationsService {
     };
   }
 
+  /**
+   * @description 알림 읽기
+   * @param {UserWithInfo} user
+   * @param {NotificationListQuery} query
+   */
+  async read(user: UserWithInfo, id: number) {
+    await this.prisma.notification.updateMany({
+      where: {
+        userId: user.id,
+        id,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
+  }
+
+  /**
+   * @description 알림 모두 읽기
+   * @param {UserWithInfo} user
+   * @param {NotificationReadAllQuery} query
+   */
+  async readAll(user: UserWithInfo, query: NotificationReadAllQuery) {
+    const { type } = query;
+    await this.prisma.notification.updateMany({
+      where: {
+        userId: user.id,
+        type,
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
+  }
+
   async _getItems(
     user: UserWithInfo,
     { cursor, limit, type }: NotificationListQuery,
@@ -276,6 +326,26 @@ export class NotificationsService {
           userId: user.id,
         },
         take: limit,
+        select: {
+          id: true,
+          type: true,
+          message: true,
+          read: true,
+          createdAt: true,
+          ...(type === 'comments' && {
+            comment: true,
+          }),
+          ...(type === 'likes' && {
+            like: {
+              select: {
+                post: true,
+              },
+            },
+          }),
+          ...(type === 'articles' && {
+            post: true,
+          }),
+        },
       }),
     ]);
 
