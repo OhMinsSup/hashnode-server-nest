@@ -4,6 +4,6 @@ import { DraftService } from './draft.service';
 
 @Module({
   controllers: [DraftController],
-  providers: [DraftService]
+  providers: [DraftService],
 })
 export class DraftModule {}

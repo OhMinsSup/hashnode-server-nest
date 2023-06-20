@@ -37,6 +37,7 @@
     "@nestjs/swagger": "^7.0.1",
     "@octokit/rest": "^19.0.13",
     "@prisma/client": "^4.15.0",
+    "@sentry/node": "^7.56.0",
     "axios": "^1.4.0",
     "bcrypt": "^5.1.0",
     "cache-manager": "^5.2.3",
