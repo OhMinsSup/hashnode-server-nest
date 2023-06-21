@@ -10,7 +10,7 @@ import {
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // interceptor
-import { CookiInterceptor } from 'src/interceptors/cookie.interceptor';
+import { CookiInterceptor } from '../interceptors/cookie.interceptor';
 
 // service
 import { AuthService } from './auth.service';

@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
 
 // service
 import { PrismaService } from '../modules/database/prisma.service';
-import { JwtService } from 'src/modules/jwt/jwt.service';
+import { JwtService } from '../modules/jwt/jwt.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 // constants
@@ -23,7 +23,7 @@ import { SigninBody } from './dto/signin';
 // types
 import type { UserAuthentication } from '@prisma/client';
 import { SocialQuery } from './dto/social';
-import { getGithubAccessToken, getGithubProfile } from 'src/libs/social/github';
+import { getGithubAccessToken, getGithubProfile } from '../libs/social/github';
 
 @Injectable()
 export class AuthService {

@@ -17,7 +17,7 @@ import {
 } from '../modules/database/select/tag.select';
 
 // utils
-import { calculateRankingScore, escapeForUrl } from 'src/libs/utils';
+import { calculateRankingScore, escapeForUrl } from '../libs/utils';
 
 // types
 import { TagListQuery } from './dto/list';

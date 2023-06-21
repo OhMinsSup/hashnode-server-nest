@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
-import { CommentsService } from 'src/comments/comments.service';
-import { NotificationsService } from 'src/notifications/notifications.service';
+import { CommentsService } from '../comments/comments.service';
+import { NotificationsService } from '../notifications/notifications.service';
 import { TagsService } from '../tags/tags.service';
 import { PostsService } from '../posts/posts.service';
 import { UserController } from './user.controller';
