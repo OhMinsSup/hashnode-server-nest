@@ -209,124 +209,122 @@ export class PostsService {
    * @param {any} input
    */
   async update(user: UserWithInfo, id: number, input: UpdateBody) {
-    return this.prisma.$transaction(async (tx) => {
-      const post = await tx.post.findFirst({
-        where: {
-          id: id,
-        },
-        select: DEFAULT_POSTS_SELECT,
-      });
+    const post = await this.prisma.post.findFirst({
+      where: {
+        id: id,
+      },
+      select: DEFAULT_POSTS_SELECT,
+    });
 
-      if (!post) {
-        throw new BadRequestException({
-          resultCode: EXCEPTION_CODE.NOT_EXIST,
-          message: '게시물을 찾을 수 없습니다.',
-          error: null,
-          result: null,
-        });
-      }
-
-      if (post.user.id !== user.id) {
-        throw new ForbiddenException({
-          resultCode: EXCEPTION_CODE.NO_PERMISSION,
-          message: '권한이 없습니다.',
-          error: null,
-          result: null,
-        });
-      }
-
-      const newData = {} as Prisma.XOR<
-        Prisma.PostUpdateInput,
-        Prisma.PostUncheckedUpdateInput
-      >;
-
-      if (input.title && !isEqual(post.title, input.title)) {
-        newData.title = input.title;
-      }
-
-      if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
-        newData.subTitle = input.subTitle;
-      }
-
-      if (input.content && !isEqual(post.content, input.content)) {
-        newData.content = input.content;
-      }
-
-      if (
-        input.thumbnail &&
-        input.thumbnail.url &&
-        !isEqual(post.thumbnail, input.thumbnail.url)
-      ) {
-        newData.thumbnail = input.thumbnail.url;
-      }
-
-      if (
-        typeof input.disabledComment === 'boolean' &&
-        post.disabledComment !== input.disabledComment
-      ) {
-        newData.disabledComment = input.disabledComment;
-      }
-
-      if (
-        input.publishingDate &&
-        !isEqual(post.publishingDate, input.publishingDate)
-      ) {
-        newData.publishingDate = new Date(input.publishingDate);
-      }
-
-      if (input.seo) {
-        if (input.seo.title && !isEqual(post.seo.title, input.seo.title)) {
-          newData.seo.update.title = input.seo.title;
-        }
-        if (input.seo.desc && !isEqual(post.seo.desc, input.seo.desc)) {
-          newData.seo.update.desc = input.seo.desc;
-        }
-        if (input.seo.image && !isEqual(post.seo.image, input.seo.image)) {
-          newData.seo.update.image = input.seo.image;
-        }
-      }
-
-      if (input.tags) {
-        const prevTags = post.postsTags.map((postTag) => postTag.tag);
-
-        const newTags = input.tags.filter(
-          (tag) => !prevTags.find((t) => t.name === tag),
-        );
-        const deleteTags = prevTags.filter(
-          (tag) => !input.tags.find((t) => t === tag.name),
-        );
-
-        const tags = await Promise.all(
-          newTags.map((tag) => this.tags.findOrCreate(tag)),
-        );
-
-        newData.postsTags = {
-          deleteMany: {
-            postId: post.id,
-            tagId: {
-              in: deleteTags.map((tag) => tag.id),
-            },
-          },
-          create: tags.map((tag) => ({
-            tagId: tag.id,
-          })),
-        };
-      }
-
-      await tx.post.update({
-        where: {
-          id: post.id,
-        },
-        data: newData,
-      });
-
-      return {
-        resultCode: EXCEPTION_CODE.OK,
-        message: null,
+    if (!post) {
+      throw new BadRequestException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '게시물을 찾을 수 없습니다.',
         error: null,
         result: null,
+      });
+    }
+
+    if (post.user.id !== user.id) {
+      throw new ForbiddenException({
+        resultCode: EXCEPTION_CODE.NO_PERMISSION,
+        message: '권한이 없습니다.',
+        error: null,
+        result: null,
+      });
+    }
+
+    const newData = {} as Prisma.XOR<
+      Prisma.PostUpdateInput,
+      Prisma.PostUncheckedUpdateInput
+    >;
+
+    if (input.title && !isEqual(post.title, input.title)) {
+      newData.title = input.title;
+    }
+
+    if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
+      newData.subTitle = input.subTitle;
+    }
+
+    if (input.content && !isEqual(post.content, input.content)) {
+      newData.content = input.content;
+    }
+
+    if (
+      input.thumbnail &&
+      input.thumbnail.url &&
+      !isEqual(post.thumbnail, input.thumbnail.url)
+    ) {
+      newData.thumbnail = input.thumbnail.url;
+    }
+
+    if (
+      typeof input.disabledComment === 'boolean' &&
+      post.disabledComment !== input.disabledComment
+    ) {
+      newData.disabledComment = input.disabledComment;
+    }
+
+    if (
+      input.publishingDate &&
+      !isEqual(post.publishingDate, input.publishingDate)
+    ) {
+      newData.publishingDate = new Date(input.publishingDate);
+    }
+
+    if (input.seo) {
+      if (input.seo.title && !isEqual(post.seo.title, input.seo.title)) {
+        newData.seo.update.title = input.seo.title;
+      }
+      if (input.seo.desc && !isEqual(post.seo.desc, input.seo.desc)) {
+        newData.seo.update.desc = input.seo.desc;
+      }
+      if (input.seo.image && !isEqual(post.seo.image, input.seo.image)) {
+        newData.seo.update.image = input.seo.image;
+      }
+    }
+
+    if (input.tags) {
+      const prevTags = post.postsTags.map((postTag) => postTag.tag);
+
+      const newTags = input.tags.filter(
+        (tag) => !prevTags.find((t) => t.name === tag),
+      );
+      const deleteTags = prevTags.filter(
+        (tag) => !input.tags.find((t) => t === tag.name),
+      );
+
+      const tags = await Promise.all(
+        newTags.map((tag) => this.tags.findOrCreate(tag)),
+      );
+
+      newData.postsTags = {
+        deleteMany: {
+          postId: post.id,
+          tagId: {
+            in: deleteTags.map((tag) => tag.id),
+          },
+        },
+        create: tags.map((tag) => ({
+          tagId: tag.id,
+        })),
       };
+    }
+
+    await this.prisma.post.update({
+      where: {
+        id: post.id,
+      },
+      data: newData,
     });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
   }
 
   /**
@@ -335,65 +333,59 @@ export class PostsService {
    * @param {CreateRequestDto} input
    */
   async create(user: UserWithInfo, input: CreateBody) {
-    const response = await this.prisma.$transaction(async (tx) => {
-      let createdTags: Tag[] = [];
-      // 태크 체크
-      if (!isEmpty(input.tags) && input.tags) {
-        const tags = await Promise.all(
-          input.tags.map((tag) => this.tags.findOrCreate(tag)),
-        );
-        createdTags = tags;
-      }
+    let createdTags: Tag[] = [];
+    // 태크 체크
+    if (!isEmpty(input.tags) && input.tags) {
+      const tags = await Promise.all(
+        input.tags.map((tag) => this.tags.findOrCreate(tag)),
+      );
+      createdTags = tags;
+    }
 
-      const post = await tx.post.create({
-        data: {
-          userId: user.id,
-          title: input.title,
-          subTitle: input.subTitle ?? null,
-          content: input.content,
-          thumbnail: input.thumbnail ? input.thumbnail.url ?? null : null,
-          disabledComment: input.disabledComment ?? true,
-          publishingDate: input.publishingDate
-            ? new Date(input.publishingDate)
-            : null,
-        },
-      });
-
-      await tx.postSeo.create({
-        data: {
-          postId: post.id,
-          title: input.seo?.title ?? null,
-          desc: input.seo?.desc ?? null,
-          image: input.seo?.image ?? null,
-        },
-      });
-
-      await this._connectTagsToPost(post.id, createdTags, tx);
-
-      // 태그 통계 생성
-      this.tags
-        .createTagStats(createdTags.map((tag) => tag.id))
-        .catch((e) => console.error(e));
-
-      // 포스트 통계 생성
-      this.createPostStats(post.id).catch((e) => console.error(e));
-
-      return {
-        resultCode: EXCEPTION_CODE.OK,
-        message: null,
-        error: null,
-        result: {
-          dataId: post.id,
-        },
-      };
+    const post = await this.prisma.post.create({
+      data: {
+        userId: user.id,
+        title: input.title,
+        subTitle: input.subTitle ?? null,
+        content: input.content,
+        thumbnail: input.thumbnail ? input.thumbnail.url ?? null : null,
+        disabledComment: input.disabledComment ?? true,
+        publishingDate: input.publishingDate
+          ? new Date(input.publishingDate)
+          : null,
+      },
     });
 
-    // 알림 생성
-    this.notifications
-      .createArticles(response.result.dataId)
+    await this.prisma.postSeo.create({
+      data: {
+        postId: post.id,
+        title: input.seo?.title ?? null,
+        desc: input.seo?.desc ?? null,
+        image: input.seo?.image ?? null,
+      },
+    });
+
+    await this._connectTagsToPost(post.id, createdTags);
+
+    // 태그 통계 생성
+    this.tags
+      .createTagStats(createdTags.map((tag) => tag.id))
       .catch((e) => console.error(e));
 
-    return response;
+    // 포스트 통계 생성
+    this.createPostStats(post.id).catch((e) => console.error(e));
+
+    // 알림 생성
+    this.notifications.createArticles(post.id).catch((e) => console.error(e));
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        dataId: post.id,
+      },
+    };
   }
 
   /**
@@ -1157,21 +1149,12 @@ export class PostsService {
    * @description 태그 연결
    * @param {number} postId
    * @param {Tag[]} tags
-   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?}tx
    */
-  private async _connectTagsToPost(
-    postId: number,
-    tags: Tag[],
-    tx?: Omit<
-      PrismaService,
-      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
-    >,
-  ) {
-    const prisma = tx ?? this.prisma;
+  private async _connectTagsToPost(postId: number, tags: Tag[]) {
     const tagIds = tags.map((tag) => tag.id);
     for (const tagId of tagIds) {
       try {
-        await prisma.postsTags.create({
+        await this.prisma.postsTags.create({
           data: {
             post: {
               connect: {

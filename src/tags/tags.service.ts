@@ -34,32 +34,9 @@ export class TagsService {
   /**
    * @description 태그가 존재하면 태그 정보를 반환하고, 존재하지 않으면 태그를 생성한다.
    * @param {string} text
-   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?}tx
    */
-  async findOrCreate(
-    text: string,
-    tx?: Omit<
-      PrismaService,
-      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
-    >,
-  ) {
+  async findOrCreate(text: string) {
     const name = escapeForUrl(text);
-    if (tx) {
-      const data = await tx.tag.findUnique({
-        where: {
-          name,
-        },
-      });
-      if (!data) {
-        const tag = await tx.tag.create({
-          data: {
-            name,
-          },
-        });
-        return tag;
-      }
-    }
-
     const data = await this.prisma.tag.findUnique({
       where: {
         name,
@@ -174,21 +151,14 @@ export class TagsService {
   /**
    * @description 태그 상태값 - (following, score, clicks) 에 대한 정보를 생성
    * @param {number} tagId
-   * @param {Omit<PrismaService, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>?} tx
+   
    */
-  async createTagStats(
-    tagId: number | number[],
-    tx?: Omit<
-      PrismaService,
-      '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
-    >,
-  ) {
+  async createTagStats(tagId: number | number[]) {
     const tagIds = Array.isArray(tagId) ? tagId : [tagId];
-    const $prisma = tx ? tx : this.prisma;
 
     const tagStatsList: TagStats[] = [];
     for (const id of tagIds) {
-      const tagStats = await $prisma.tagStats.create({
+      const tagStats = await this.prisma.tagStats.create({
         data: {
           tagId: id,
         },
