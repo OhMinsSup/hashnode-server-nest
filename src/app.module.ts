@@ -27,6 +27,7 @@ import { LoggingInterceptor } from './interceptors/logging.interceptor';
 import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { HealthModule } from './health/health.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -79,6 +80,7 @@ const isProd = process.env.NODE_ENV === 'production';
     CommentsModule,
     NotificationsModule,
     DraftModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [

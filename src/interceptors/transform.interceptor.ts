@@ -24,6 +24,7 @@ export class TransformInterceptor<T>
   ): Observable<Response<T>> {
     return next.handle().pipe(
       map((data) => {
+        if (!('result' in data) && !('result' in data)) return data;
         return {
           result: data.result,
           resultCode: data.resultCode,
