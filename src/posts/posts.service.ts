@@ -1,7 +1,6 @@
 import {
   BadRequestException,
   ForbiddenException,
-  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -824,6 +823,7 @@ export class PostsService {
     { cursor, limit, tag }: PostListQuery,
     user?: UserWithInfo,
   ) {
+    console.log(user);
     if (isString(cursor)) {
       cursor = Number(cursor);
     }
