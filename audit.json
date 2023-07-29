@@ -6,16 +6,6 @@
     "auditLog": "audit.json",
     "files": [
         {
-            "date": 1689167796202,
-            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-07-12.log",
-            "hash": "92717dd543fd6b29311cac7c3b0925898d0465209561a685c8cc0607c331fbd0"
-        },
-        {
-            "date": 1689167796209,
-            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-07-12.log",
-            "hash": "0bcb771aadb562c04fd81814df31e1eff8ae15bafb2df26393ee86562e1416f7"
-        },
-        {
             "date": 1690204879116,
             "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-07-24.log",
             "hash": "4b7d0b223d036ca42862d23473a26db2340f66f94793567f914b8ba6cdbf77ca"
@@ -44,6 +34,16 @@
             "date": 1690374033007,
             "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-07-26.log",
             "hash": "a1bd5995984cb4ec65866ff562ed82283ee13e320f9851fed4ce0783f21a93af"
+        },
+        {
+            "date": 1690611275805,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-07-29.log",
+            "hash": "83d686c292fcbb671a1ef3803055c59dda01514210e4d0c8a37364ffa1907ebb"
+        },
+        {
+            "date": 1690611275808,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-07-29.log",
+            "hash": "d35bdd86c78cd6bdd24a9e5c55c220e6f0be79217920f568d59bd228691734be"
         }
     ],
     "hashType": "sha256"
