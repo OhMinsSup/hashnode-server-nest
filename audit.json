@@ -6,16 +6,6 @@
     "auditLog": "audit.json",
     "files": [
         {
-            "date": 1690374033005,
-            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-07-26.log",
-            "hash": "00309d8e6c8bb57abde66d502f82fc1e273f2dd79711be785969245856c2083a"
-        },
-        {
-            "date": 1690374033007,
-            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-07-26.log",
-            "hash": "a1bd5995984cb4ec65866ff562ed82283ee13e320f9851fed4ce0783f21a93af"
-        },
-        {
             "date": 1690611275805,
             "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-07-29.log",
             "hash": "83d686c292fcbb671a1ef3803055c59dda01514210e4d0c8a37364ffa1907ebb"
@@ -34,6 +24,26 @@
             "date": 1691458843696,
             "name": "/Users/pc/Project/my/hashnode-server-nest/logs/error/dev/application-2023-08-08.log",
             "hash": "7169d02fcb43257c11728e10e00c7fe6f6a69b14a246fd1967988bfa8f3a1c15"
+        },
+        {
+            "date": 1691544415202,
+            "name": "/Users/pc/Project/my/hashnode-server-nest/logs/warn/dev/application-2023-08-09.log",
+            "hash": "0fafbf9b978629fa4a2d5ad768a476ad1cffd0b7aabbdcbacd4b468cef5ce629"
+        },
+        {
+            "date": 1691544415204,
+            "name": "/Users/pc/Project/my/hashnode-server-nest/logs/error/dev/application-2023-08-09.log",
+            "hash": "720797d3b081209b35378037f27796b61d16a4df0b7098ff0965fc304d9e19fe"
+        },
+        {
+            "date": 1691630275697,
+            "name": "/Users/pc/Project/my/hashnode-server-nest/logs/warn/dev/application-2023-08-10.log",
+            "hash": "a55e54b591b0ab31b755dc4629e335ec22134fdf0afb9a76a1b990e77c7bc8bf"
+        },
+        {
+            "date": 1691630275699,
+            "name": "/Users/pc/Project/my/hashnode-server-nest/logs/error/dev/application-2023-08-10.log",
+            "hash": "caed5c5e431a2b7e549c18691f55b87d15dd4818fdf92f37b086d9aff8be59ed"
         }
     ],
     "hashType": "sha256"

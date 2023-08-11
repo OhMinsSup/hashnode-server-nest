@@ -17,18 +17,19 @@ export class WidgetController {
   constructor(private readonly service: WidgetService) {}
 
   @Get('/article-circles')
-  @ApiOperation({ summary: '회원 리스트' })
+  @ApiOperation({ summary: '회원 리스트', deprecated: true })
   @ApiQuery({
     name: 'query',
     type: GetArticleCirclesQuery,
     required: false,
   })
   getArticleCircles(@Query() query: GetArticleCirclesQuery) {
-    return this.service.getArticleCircles(query);
+    console.log(query);
+    return this.service.getArticleCircles();
   }
 
   @Get('/bookmarks')
-  @ApiOperation({ summary: '북마크 리스트' })
+  @ApiOperation({ summary: '북마크 리스트', deprecated: true })
   getWidgetBookmarks(@AuthUser() user?: UserWithInfo) {
     return this.service.getWidgetBookmarks(user);
   }

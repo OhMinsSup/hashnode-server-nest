@@ -7,9 +7,6 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../modules/database/prisma.service';
 
-// dto
-import { GetArticleCirclesQuery } from './dto/article-circles';
-
 // select
 import { USER_POSTS_BOOKMARKS_SELECT } from '../modules/database/select/post.select';
 import { WidgetArticleCirclesRawQuery } from '../modules/database/ts/widget';
@@ -25,6 +22,7 @@ export class WidgetService {
   ) {}
 
   /**
+   * @deprecated
    * @description 북마크 리스트
    * @param {UserWithInfo?} user
    */
@@ -64,11 +62,10 @@ export class WidgetService {
   }
 
   /**
+   * @deprecated
    * @description 회원 목록 리스트
-   * @param {GetArticleCirclesQuery} query
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async getArticleCircles(query: GetArticleCirclesQuery) {
+  async getArticleCircles() {
     // hows the user who created the most posts and received the most likes from among the users.
     const users: WidgetArticleCirclesRawQuery[] = await this.prisma.$queryRaw`
         SELECT
@@ -149,4 +146,10 @@ export class WidgetService {
       },
     };
   }
+
+  /**
+   * @deprecated
+   * @description 유저 추천 리스트
+   */
+  async getRecommendedUsers() {}
 }
