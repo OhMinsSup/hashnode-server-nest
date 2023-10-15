@@ -38,7 +38,7 @@ export class FileController {
   constructor(private readonly service: FileService) {}
 
   @Get()
-  @ApiOperation({ summary: '파일 목록 API' })
+  @ApiOperation({ summary: '파일 목록 API', deprecated: true })
   @ApiQuery({
     name: 'query',
     type: ListRequestDto,
@@ -51,7 +51,7 @@ export class FileController {
   }
 
   @Post('upload')
-  @ApiOperation({ summary: '파일 업로드 URL API' })
+  @ApiOperation({ summary: '파일 업로드 URL API', deprecated: true })
   @ApiConsumes('multipart/form-data')
   @UseInterceptors(FileInterceptor('file'))
   @ApiBody({
