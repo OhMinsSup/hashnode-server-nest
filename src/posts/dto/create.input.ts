@@ -83,12 +83,14 @@ export class CreateBody {
   subTitle?: string | null;
 
   @IsString()
+  @IsOptional()
   @ApiProperty({
     description: 'html content',
     type: 'string',
-    required: true,
+    nullable: true,
+    required: false,
   })
-  content: string;
+  content?: string;
 
   @IsObject()
   @IsOptional()
@@ -141,4 +143,13 @@ export class CreateBody {
     required: false,
   })
   seo?: SeoBody | null;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: '초안작성 여부',
+    type: 'boolean',
+    required: false,
+  })
+  isDraft?: boolean;
 }

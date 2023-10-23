@@ -13,19 +13,19 @@ import {
 } from '@nestjs/common';
 
 // service
-import { PostsService } from './posts.service';
+import { PostsService } from '../services/posts.service';
 
 // dto
-import { CreateBody } from './dto/create';
-import { CreateBody as CreateCommentBody } from '../comments/dto/create';
-import { UpdateBody as UpdateCommentBody } from '../comments/dto/update';
-import { UpdateBody } from './dto/update';
-import { PostListQuery, GetTopPostsQuery } from './dto/list';
+import { CreateBody } from '../dto/create.input';
+import { CreateBody as CreateCommentBody } from '../../comments/dto/create';
+import { UpdateBody as UpdateCommentBody } from '../../comments/dto/update';
+import { UpdateBody } from '../dto/update.input';
+import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
 
 // guard
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
-import { AuthUser } from '../libs/get-user.decorator';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
+import { AuthUser } from '../../libs/get-user.decorator';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 @ApiTags('게시물')
 @Controller('api/v1/posts')
@@ -67,6 +67,19 @@ export class PostsController {
   })
   getTopPosts(@Query() query: GetTopPostsQuery) {
     return this.service.getTopPosts(query);
+  }
+
+  @Get('get-draft-posts')
+  @ApiOperation({ summary: '작성중인 게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: PostListQuery,
+    required: false,
+    description: '페이지네이션',
+  })
+  @UseGuards(LoggedInGuard)
+  getDraftPosts(@AuthUser() user: UserWithInfo, @Query() query: PostListQuery) {
+    return this.service.getDraftPosts(user, query);
   }
 
   @Post()

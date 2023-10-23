@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../modules/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { PostsService } from '../posts/posts.service';
+import { PostsService } from '../posts/services/posts.service';
 
 // constants
 import { EXCEPTION_CODE } from '../constants/exception.code';

@@ -10,15 +10,15 @@ import {
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // interceptor
-import { CookiInterceptor } from '../interceptors/cookie.interceptor';
+import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
 
 // service
-import { AuthService } from './auth.service';
+import { AuthService } from '../services/auth.service';
 
 // dto
-import { SignupBody } from './dto/signup';
-import { SigninBody } from './dto/signin';
-import { SocialQuery } from './dto/social';
+import { SignupBody } from '../dto/signup.input';
+import { SigninBody } from '../dto/signin.input';
+import { SocialQuery } from '../dto/social.query';
 
 @ApiTags('인증')
 @Controller('api/v1/auth')

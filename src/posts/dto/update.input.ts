@@ -7,7 +7,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { SeoBody, ThumbnailBody } from './create';
+import { SeoBody, ThumbnailBody } from './create.input';
 
 export class UpdateBody {
   @IsOptional()

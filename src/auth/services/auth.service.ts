@@ -9,21 +9,24 @@ import { addDays } from 'date-fns';
 import * as bcrypt from 'bcrypt';
 
 // service
-import { PrismaService } from '../modules/database/prisma.service';
-import { JwtService } from '../modules/jwt/jwt.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../../modules/database/prisma.service';
+import { JwtService } from '../../modules/jwt/jwt.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // constants
-import { EXCEPTION_CODE } from '../constants/exception.code';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // dto
-import { SignupBody } from './dto/signup';
-import { SigninBody } from './dto/signin';
+import { SignupBody } from '../dto/signup.input';
+import { SigninBody } from '../dto/signin.input';
 
 // types
 import type { UserAuthentication } from '@prisma/client';
-import { SocialQuery } from './dto/social';
-import { getGithubAccessToken, getGithubProfile } from '../libs/social/github';
+import { SocialQuery } from '../dto/social.query';
+import {
+  getGithubAccessToken,
+  getGithubProfile,
+} from '../../libs/social/github';
 
 @Injectable()
 export class AuthService {
@@ -195,6 +198,7 @@ export class AuthService {
    * @param {Response} res 응답 객체
    */
   async githubCallback(query: SocialQuery, res: Response) {
+    console.log(res);
     const clientId = this.config.get('GITHUB_CLIENT_ID');
     const clientSecret = this.config.get('GITHUB_CLIENT_SECRET');
 

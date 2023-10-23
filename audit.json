@@ -44,6 +44,26 @@
             "date": 1697364353071,
             "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-10-15.log",
             "hash": "c022a8cc20034f15969a9e13f49f983c13c117b41ee4ac9631b69369c3747817"
+        },
+        {
+            "date": 1698070692055,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-10-23.log",
+            "hash": "0498035f0d283cbd80f871d85e94e7ff5dd9a098a89b3d23bb46960bdfc3c98e"
+        },
+        {
+            "date": 1698070692060,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-10-23.log",
+            "hash": "17d98dab4df34e28611e7ccb10b22ca99f18244834af71005a2d64c8648023af"
+        },
+        {
+            "date": 1698073233734,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/warn/dev/application-2023-10-24.log",
+            "hash": "4b3ff8a8f11f053b7d1e61c762cea4709cb532471928450744092152e22b3b65"
+        },
+        {
+            "date": 1698073233739,
+            "name": "/Users/ominseob/Project/web/hashnode-server-nest/logs/error/dev/application-2023-10-24.log",
+            "hash": "920d4a4da103258a6ccda4d5e29830651bb3dec59a66042c3b368f51ebf9be6d"
         }
     ],
     "hashType": "sha256"

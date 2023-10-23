@@ -6,36 +6,36 @@ import {
 } from '@nestjs/common';
 
 // service
-import { PrismaService } from '../modules/database/prisma.service';
-import { TagsService } from '../tags/tags.service';
-import { CommentsService } from '../comments/comments.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { PrismaService } from '../../modules/database/prisma.service';
+import { TagsService } from '../../tags/tags.service';
+import { CommentsService } from '../../comments/comments.service';
+import { NotificationsService } from '../../notifications/notifications.service';
 
 // utils
-import { isEmpty, isString } from '../libs/assertion';
-import { calculateRankingScore } from '../libs/utils';
+import { isEmpty, isString } from '../../libs/assertion';
+import { calculateRankingScore } from '../../libs/utils';
 
 // constants
-import { EXCEPTION_CODE } from '../constants/exception.code';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // types
-import { CreateBody as CreateCommentBody } from '../comments/dto/create';
-import { UpdateBody as UpdateCommentBody } from '../comments/dto/update';
-import { CreateBody } from './dto/create';
-import { UpdateBody } from './dto/update';
-import { GetTopPostsQuery, PostListQuery } from './dto/list';
+import { CreateBody as CreateCommentBody } from '../../comments/dto/create';
+import { UpdateBody as UpdateCommentBody } from '../../comments/dto/update';
+import { CreateBody } from '../dto/create.input';
+import { UpdateBody } from '../dto/update.input';
+import { GetTopPostsQuery, PostListQuery } from '../dto/list.query';
 
 import { isEqual } from 'lodash';
 
 // types
 import type { Tag, Prisma } from '@prisma/client';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 import {
   DEFAULT_POSTS_SELECT,
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
-} from '../modules/database/select/post.select';
+} from '../../modules/database/select/post.select';
 
 interface UpdatePostLikesParams {
   postId: number;
@@ -151,14 +151,9 @@ export class PostsService {
    * @param {number} id
    */
   async detail(id: number) {
-    const now = new Date();
     const post = await this.prisma.post.findFirst({
       where: {
         id,
-        isDeleted: false,
-        publishingDate: {
-          lte: now,
-        },
       },
       select: DEFAULT_POSTS_SELECT,
     });
@@ -346,9 +341,10 @@ export class PostsService {
         userId: user.id,
         title: input.title,
         subTitle: input.subTitle ?? null,
-        content: input.content,
+        content: input.content ?? null,
         thumbnail: input.thumbnail ? input.thumbnail.url ?? null : null,
         disabledComment: input.disabledComment ?? true,
+        isDraft: input.isDraft ?? true,
         publishingDate: input.publishingDate
           ? new Date(input.publishingDate)
           : null,
@@ -374,8 +370,10 @@ export class PostsService {
     // 포스트 통계 생성
     this.createPostStats(post.id).catch((e) => console.error(e));
 
-    // 알림 생성
-    this.notifications.createArticles(post.id).catch((e) => console.error(e));
+    if (!input.isDraft) {
+      // 알림 생성
+      this.notifications.createArticles(post.id).catch((e) => console.error(e));
+    }
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -440,6 +438,26 @@ export class PostsService {
 
   async getLikes(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getLikeItems(user, query);
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this._serializes(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  async getDraftPosts(user: UserWithInfo, query: PostListQuery) {
+    const result = await this._getDraftItems(query, user);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
 
@@ -604,6 +622,77 @@ export class PostsService {
                 },
               },
             }),
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
+    };
+  }
+
+  /**
+   * @description 초안 작성 게시물 리스트
+   * @param {PostListQuery} query
+   * @param {UserWithInfo?} user
+   */
+  private async _getDraftItems(
+    { cursor, limit }: PostListQuery,
+    user?: UserWithInfo,
+  ) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    // 내가 좋아요한 게시물 목록
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          userId: user.id,
+          isDraft: true,
+        },
+      }),
+      this.prisma.post.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          userId: user.id,
+          isDraft: true,
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+        },
+        select: DEFAULT_POSTS_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.post.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            isDraft: true,
+            userId: user.id,
           },
           orderBy: [
             {

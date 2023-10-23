@@ -99,10 +99,11 @@ model Post {
   id              Int            @id @default(autoincrement())
   title           String // max 255
   subTitle        String? // max 255
-  content         String // max 255
+  content         String? // max 255
   thumbnail       String?
   disabledComment Boolean?       @default(false) // 댓글 비활성화
   isDeleted       Boolean?       @default(false) // 삭제 여부
+  isDraft         Boolean?       @default(false) // 초안여부
   publishingDate  DateTime? // 발행일
   createdAt       DateTime       @default(now()) // 생성일
   updatedAt       DateTime       @updatedAt // 업데이트일
