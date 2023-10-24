@@ -12,19 +12,19 @@ import {
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // decorator
-import { AuthUser } from '../libs/get-user.decorator';
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
+import { AuthUser } from '../../libs/get-user.decorator';
+import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
 
 // service
-import { UserService } from './user.service';
+import { UserService } from '../services/user.service';
 
 // dto
-import { UpdateBody } from './dto/update';
-import { MyPostListQuery, TrendingUsersQuery } from './dto/list';
+import { UpdateBody } from '../dto/update.input';
+import { MyPostListQuery, TrendingUsersQuery } from '../dto/list.query';
 
 // types
 import type { Response } from 'express';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 @ApiTags('사용자')
 @Controller('api/v1/users')

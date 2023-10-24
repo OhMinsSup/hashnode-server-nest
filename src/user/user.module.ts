@@ -3,10 +3,10 @@ import { CommentsService } from '../comments/comments.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { TagsService } from '../tags/tags.service';
 import { PostsService } from '../posts/services/posts.service';
-import { UserController } from './user.controller';
+import { UserController } from './controllers/user.controller';
 
 // service
-import { UserService } from './user.service';
+import { UserService } from './services/user.service';
 
 @Module({
   controllers: [UserController],

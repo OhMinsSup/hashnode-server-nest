@@ -1,25 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../modules/database/prisma.service';
+import { PrismaService } from '../../modules/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { PostsService } from '../posts/services/posts.service';
+import { PostsService } from '../../posts/services/posts.service';
 
 // constants
-import { EXCEPTION_CODE } from '../constants/exception.code';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // utils
-import { isEmpty, isString } from '../libs/assertion';
-import { escapeForUrl } from '../libs/utils';
-import { MyPostListQuery, TrendingUsersQuery } from './dto/list';
-import { DEFAULT_POSTS_SELECT } from '../modules/database/select/post.select';
+import { isEmpty, isString } from '../../libs/assertion';
+import { escapeForUrl } from '../../libs/utils';
+import { MyPostListQuery, TrendingUsersQuery } from '../dto/list.query';
+import { DEFAULT_POSTS_SELECT } from '../../modules/database/select/post.select';
 
 import type { Response } from 'express';
-import type { UpdateBody } from './dto/update';
+import type { UpdateBody } from '../dto/update.input';
 import type { Post, Prisma } from '@prisma/client';
 import {
   DEFAULT_USER_SELECT,
   UserWithInfo,
   USER_FOLLOW_TAGS_SELECT,
-} from '../modules/database/select/user.select';
+} from '../../modules/database/select/user.select';
 
 type RawTrendingUsers = {
   id: number;

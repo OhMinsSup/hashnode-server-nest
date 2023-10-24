@@ -151,9 +151,47 @@ export class PostsService {
    * @param {number} id
    */
   async detail(id: number) {
+    const now = new Date();
+
     const post = await this.prisma.post.findFirst({
       where: {
         id,
+        isDeleted: false,
+        isDraft: false,
+        publishingDate: {
+          lte: now,
+        },
+      },
+      select: DEFAULT_POSTS_SELECT,
+    });
+
+    if (!post) {
+      throw new BadRequestException({
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '게시물을 찾을 수 없습니다.',
+        error: null,
+        result: null,
+      });
+    }
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: this._serialize(post),
+    };
+  }
+
+  /**
+   * @description 게시물 상세 조회 (게시물을 작성한 유저만 조회 가능)
+   * @param {UserWithInfo} user
+   * @param {number} id
+   */
+  async ownerDetail(user: UserWithInfo, id: number) {
+    const post = await this.prisma.post.findFirst({
+      where: {
+        id,
+        userId: user.id,
       },
       select: DEFAULT_POSTS_SELECT,
     });
