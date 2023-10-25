@@ -18,19 +18,19 @@ import {
 } from '@nestjs/swagger';
 
 // service
-import { FileService } from './file.service';
+import { FileService } from '../services/file.service';
 
 // decorator
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
-import { AuthUser } from '../libs/get-user.decorator';
+import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
+import { AuthUser } from '../../libs/get-user.decorator';
 
 // interceptor
 import { FileInterceptor } from '@nestjs/platform-express';
 
 // type
-import { SignedUrlUploadBody } from './dto/upload';
-import { ListRequestDto } from '../libs/list.query';
-import { UserWithInfo } from '../modules/database/select/user.select';
+import { SignedUrlUploadBody } from '../dto/upload';
+import { ListRequestDto } from '../../libs/list.query';
+import { UserWithInfo } from '../../modules/database/select/user.select';
 
 @ApiTags('파일')
 @Controller('api/v1/files')

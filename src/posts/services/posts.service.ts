@@ -218,10 +218,11 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {number} id
    */
-  async delete(_: UserWithInfo, id: number) {
+  async delete(user: UserWithInfo, id: number) {
     await this.prisma.post.update({
       where: {
         id,
+        userId: user.id,
       },
       data: {
         isDeleted: true,

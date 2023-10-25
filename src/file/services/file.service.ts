@@ -2,20 +2,20 @@ import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 
 // constants
-import { EXCEPTION_CODE } from '../constants/exception.code';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // service
-import { PrismaService } from '../modules/database/prisma.service';
+import { PrismaService } from '../../modules/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { R2Service } from '../modules/r2/r2.service';
+import { R2Service } from '../../modules/r2/r2.service';
 
 // utils
-import { isString } from '../libs/assertion';
+import { isString } from '../../libs/assertion';
 
 // types
-import { ListRequestDto } from '../libs/list.query';
-import { UploadBody, SignedUrlUploadBody } from './dto/upload';
-import { UserWithInfo } from '../modules/database/select/user.select';
+import { ListRequestDto } from '../../libs/list.query';
+import { UploadBody, SignedUrlUploadBody } from '../dto/upload';
+import { UserWithInfo } from '../../modules/database/select/user.select';
 
 @Injectable()
 export class FileService {

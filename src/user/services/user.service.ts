@@ -42,6 +42,15 @@ export class UserService {
   ) {}
 
   /**
+   * @description 포스트를 작성한 유저만 조회 가능한 포스트 상세 정보
+   * @param {UserWithInfo} user
+   * @param {number} id
+   */
+  async getOwnerPostDetai(user: UserWithInfo, id: number) {
+    return this.posts.ownerDetail(user, id);
+  }
+
+  /**
    * @description 유저가 작성한 포스트 리스트
    * @param {UserWithInfo} user 유저 정보
    * @param {MyPostListQuery} param 쿼리

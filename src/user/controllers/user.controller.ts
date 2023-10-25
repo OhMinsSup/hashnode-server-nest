@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
+  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -117,5 +119,15 @@ export class UserController {
     @Query() query: MyPostListQuery,
   ) {
     return this.service.getUserPosts(username, query);
+  }
+
+  @Get('owner-posts/:id')
+  @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
+  @UseGuards(LoggedInGuard)
+  getOwnerPostDetai(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.getOwnerPostDetai(user, id);
   }
 }
