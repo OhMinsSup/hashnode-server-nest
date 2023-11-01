@@ -172,8 +172,9 @@ model PostLike {
 
 model File {
   id         Int       @id @default(autoincrement())
-  name       String // 파일명
-  url        String // url
+  cfId       String
+  publicUrl  String // url
+  filename   String // 파일명
   uploadType String // PROFILE | IMAGE | POST_THUMBNAIL | TAG
   mediaType  String //  IMAGE
   createdAt  DateTime  @default(now())

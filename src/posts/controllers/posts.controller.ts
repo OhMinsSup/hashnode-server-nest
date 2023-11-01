@@ -32,6 +32,18 @@ import type { UserWithInfo } from '../../modules/database/select/user.select';
 export class PostsController {
   constructor(private readonly service: PostsService) {}
 
+  @Post()
+  @ApiOperation({ summary: '게시글 작성' })
+  @ApiBody({
+    required: true,
+    description: '게시글 작성 API',
+    type: CreateBody,
+  })
+  @UseGuards(LoggedInGuard)
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreateBody) {
+    return this.service.create(user, input);
+  }
+
   @Get()
   @ApiOperation({ summary: '게시물 리스트' })
   @ApiQuery({
@@ -82,16 +94,20 @@ export class PostsController {
     return this.service.getDraftPosts(user, query);
   }
 
-  @Post()
-  @ApiOperation({ summary: '게시글 작성' })
-  @ApiBody({
-    required: true,
-    description: '게시글 작성 API',
-    type: CreateBody,
+  @Get('get-deleted-posts')
+  @ApiOperation({ summary: '삭제된 게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: PostListQuery,
+    required: false,
+    description: '페이지네이션',
   })
   @UseGuards(LoggedInGuard)
-  create(@AuthUser() user: UserWithInfo, @Body() input: CreateBody) {
-    return this.service.create(user, input);
+  getDeletedPosts(
+    @AuthUser() user: UserWithInfo,
+    @Query() query: PostListQuery,
+  ) {
+    return this.service.getDeletedPosts(user, query);
   }
 
   @Put(':id')
@@ -110,12 +126,6 @@ export class PostsController {
     return this.service.update(user, id, input);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '게시물 상세 조회' })
-  detail(@Param('id', ParseIntPipe) id: number) {
-    return this.service.detail(id);
-  }
-
   @Delete(':id')
   @ApiOperation({ summary: '게시물 삭제' })
   @UseGuards(LoggedInGuard)
@@ -124,6 +134,12 @@ export class PostsController {
     @Param('id', ParseIntPipe) id: number,
   ) {
     return this.service.delete(user, id);
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: '게시물 상세 조회' })
+  detail(@Param('id', ParseIntPipe) id: number) {
+    return this.service.detail(id);
   }
 
   @Post(':id/like')

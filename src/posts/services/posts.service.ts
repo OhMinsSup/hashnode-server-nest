@@ -475,6 +475,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * @description 게시물 좋아요 리스트
+   * @param {UserWithInfo} user
+   * @param {PostListQuery} query
+   */
   async getLikes(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getLikeItems(user, query);
 
@@ -495,6 +500,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * @description 임시 저장 게시물 목록
+   * @param {UserWithInfo} user
+   * @param {PostListQuery} query
+   */
   async getDraftPosts(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getDraftItems(query, user);
 
@@ -516,9 +526,33 @@ export class PostsService {
   }
 
   /**
+   * @description 삭제된 게시물 리스트
+   * @param {UserWithInfo} user
+   * @param {PostListQuery} query
+   */
+  async getDeletedPosts(user: UserWithInfo, query: PostListQuery) {
+    const result = await this._getDeletedItems(query, user);
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this._serializes(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  /**
    * @description 날짜 별 인기 게시물 목록
    * @param {GetTopPostsQuery} query
-   * @returns
    */
   async getTopPosts(query: GetTopPostsQuery) {
     const { duration } = query;
@@ -568,7 +602,6 @@ export class PostsService {
   /**
    * @description 게시물 리스트
    * @param {PostListQuery} query
-   * @returns
    */
   private async _getItems({ cursor, limit, tag }: PostListQuery) {
     if (isString(cursor)) {
@@ -701,6 +734,7 @@ export class PostsService {
         where: {
           userId: user.id,
           isDraft: true,
+          isDeleted: false,
         },
       }),
       this.prisma.post.findMany({
@@ -712,6 +746,7 @@ export class PostsService {
         where: {
           userId: user.id,
           isDraft: true,
+          isDeleted: false,
           id: cursor
             ? {
                 lt: cursor,
@@ -731,6 +766,78 @@ export class PostsService {
               lt: endCursor,
             },
             isDraft: true,
+            isDeleted: false,
+            userId: user.id,
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
+    };
+  }
+
+  /**
+   * @description 삭제된 게시물 리스트
+   * @param {PostListQuery} query
+   * @param {UserWithInfo?} user
+   */
+  private async _getDeletedItems(
+    { cursor, limit }: PostListQuery,
+    user?: UserWithInfo,
+  ) {
+    if (isString(cursor)) {
+      cursor = Number(cursor);
+    }
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    // 내가 좋아요한 게시물 목록
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          userId: user.id,
+          isDeleted: true,
+        },
+      }),
+      this.prisma.post.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          userId: user.id,
+          isDeleted: true,
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+        },
+        select: DEFAULT_POSTS_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.post.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            isDeleted: true,
             userId: user.id,
           },
           orderBy: [
@@ -753,7 +860,6 @@ export class PostsService {
    * @description 좋아요한 게시물 리스트
    * @param {UserWithInfo} user
    * @param {PostListQuery} query
-   * @returns
    */
   private async _getLikeItems(
     user: UserWithInfo,

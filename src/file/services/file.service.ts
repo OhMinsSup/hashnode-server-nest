@@ -25,11 +25,14 @@ export class FileService {
     private readonly r2: R2Service,
   ) {}
 
+  async create() {}
+
   /**
    * @description 파일 r2 업로드 생성
    * @param {UserWithInfo} user 사용자 정보
    * @param {SignedUrlUploadBody} body 업로드 정보
    * @param {Express.Multer.File} file 파일 정보
+   * @deprecated
    */
   async upload(
     user: UserWithInfo,
@@ -101,6 +104,7 @@ export class FileService {
    * @description 파일 고유한 키 생성
    * @param {UserWithInfo} user 사용자 정보
    * @param {UploadBody} input 업로드 정보
+   * @deprecated
    */
   private _generateKey(user: UserWithInfo, input: UploadBody) {
     return `${
