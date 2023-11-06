@@ -24,6 +24,22 @@ export class CreateBody {
   })
   cfId: string;
 
+  @IsString()
+  @ApiProperty({
+    description: '파일 이름',
+    type: 'string',
+    required: true,
+  })
+  filename: string;
+
+  @IsString()
+  @ApiProperty({
+    description: '파일 확장자',
+    type: 'string',
+    required: true,
+  })
+  mimeType: string;
+
   @IsUrl()
   @ApiProperty({
     description: '파일 URL',
@@ -49,12 +65,4 @@ export class CreateBody {
     required: true,
   })
   uploadType: UploadType;
-
-  @IsString()
-  @ApiProperty({
-    description: '파일 이름',
-    type: 'string',
-    required: true,
-  })
-  filename: string;
 }

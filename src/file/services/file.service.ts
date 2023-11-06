@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import axios from 'axios';
+// import axios from 'axios';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
@@ -14,8 +14,9 @@ import { isString } from '../../libs/assertion';
 
 // types
 import { ListRequestDto } from '../../libs/list.query';
-import { UploadBody, SignedUrlUploadBody } from '../dto/upload';
+// import { UploadBody, SignedUrlUploadBody } from '../dto/upload';
 import { UserWithInfo } from '../../modules/database/select/user.select';
+import { CreateBody } from '../dto/create.input';
 
 @Injectable()
 export class FileService {
@@ -25,39 +26,20 @@ export class FileService {
     private readonly r2: R2Service,
   ) {}
 
-  async create() {}
-
   /**
-   * @description 파일 r2 업로드 생성
-   * @param {UserWithInfo} user 사용자 정보
-   * @param {SignedUrlUploadBody} body 업로드 정보
-   * @param {Express.Multer.File} file 파일 정보
-   * @deprecated
+   * @description 파일 생성
+   * @param {UserWithInfo} user
+   * @param {CreateRequestDto} input
    */
-  async upload(
-    user: UserWithInfo,
-    body: SignedUrlUploadBody,
-    file: Express.Multer.File,
-  ) {
-    const signed_url = await this.r2.getSignedUrl(
-      this._generateKey(user, body),
-    );
-
-    // birnay 업로드
-    await axios.put(signed_url, file.buffer, {
-      headers: {
-        'Content-Type': file.mimetype,
-      },
-    });
-
-    const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
-
+  async create(user: UserWithInfo, input: CreateBody) {
     const data = await this.prisma.file.create({
       data: {
-        name: body.filename,
-        url: `${publicUrl}/${this._generateKey(user, body)}`,
-        uploadType: body.uploadType,
-        mediaType: body.mediaType,
+        cfId: input.cfId,
+        filename: input.filename,
+        publicUrl: input.publicUrl,
+        mimeType: input.mimeType,
+        uploadType: input.uploadType,
+        mediaType: input.mediaType,
       },
     });
 
@@ -67,13 +49,58 @@ export class FileService {
       error: null,
       result: {
         id: data.id,
-        name: data.name,
-        url: data.url,
-        uploadType: data.uploadType,
-        mediaType: data.mediaType,
+        publicUrl: data.publicUrl,
       },
     };
   }
+
+  /**
+   * @description 파일 r2 업로드 생성
+   * @param {UserWithInfo} user 사용자 정보
+   * @param {SignedUrlUploadBody} body 업로드 정보
+   * @param {Express.Multer.File} file 파일 정보
+   * @deprecated
+   */
+  // async upload(
+  //   user: UserWithInfo,
+  //   body: SignedUrlUploadBody,
+  //   file: Express.Multer.File,
+  // ) {
+  //   const signed_url = await this.r2.getSignedUrl(
+  //     this._generateKey(user, body),
+  //   );
+
+  //   // birnay 업로드
+  //   await axios.put(signed_url, file.buffer, {
+  //     headers: {
+  //       'Content-Type': file.mimetype,
+  //     },
+  //   });
+
+  //   const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
+
+  //   const data = await this.prisma.file.create({
+  //     data: {
+  //       name: body.filename,
+  //       url: `${publicUrl}/${this._generateKey(user, body)}`,
+  //       uploadType: body.uploadType,
+  //       mediaType: body.mediaType,
+  //     },
+  //   });
+
+  //   return {
+  //     resultCode: EXCEPTION_CODE.OK,
+  //     message: null,
+  //     error: null,
+  //     result: {
+  //       id: data.id,
+  //       name: data.name,
+  //       url: data.url,
+  //       uploadType: data.uploadType,
+  //       mediaType: data.mediaType,
+  //     },
+  //   };
+  // }
 
   /**
    * @description 파일 목록 리스트
@@ -106,13 +133,13 @@ export class FileService {
    * @param {UploadBody} input 업로드 정보
    * @deprecated
    */
-  private _generateKey(user: UserWithInfo, input: UploadBody) {
-    return `${
-      user.id
-    }/${input.uploadType.toLowerCase()}/${input.mediaType.toLowerCase()}/${
-      input.filename
-    }`;
-  }
+  // private _generateKey(user: UserWithInfo, input: UploadBody) {
+  //   return `${
+  //     user.id
+  //   }/${input.uploadType.toLowerCase()}/${input.mediaType.toLowerCase()}/${
+  //     input.filename
+  //   }`;
+  // }
 
   /**
    * @description 파일 리스트
@@ -146,8 +173,8 @@ export class FileService {
         },
         select: {
           id: true,
-          name: true,
-          url: true,
+          filename: true,
+          publicUrl: true,
           uploadType: true,
           mediaType: true,
           createdAt: true,

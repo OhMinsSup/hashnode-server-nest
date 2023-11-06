@@ -24,7 +24,7 @@ export class DraftController {
   constructor(private readonly service: DraftService) {}
 
   @Get()
-  @ApiOperation({ summary: '임시 게시물 리스트' })
+  @ApiOperation({ summary: '임시 게시물 리스트', deprecated: true })
   @ApiQuery({
     name: 'query',
     type: DraftListQuery,
@@ -37,7 +37,7 @@ export class DraftController {
   }
 
   @Post()
-  @ApiOperation({ summary: '임시 게시글 작성' })
+  @ApiOperation({ summary: '임시 게시글 작성', deprecated: true })
   @ApiBody({
     required: true,
     description: '임시 게시글 작성 API',
@@ -49,7 +49,7 @@ export class DraftController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: '임시 게시물 상세 조회' })
+  @ApiOperation({ summary: '임시 게시물 상세 조회', deprecated: true })
   @UseGuards(LoggedInGuard)
   detail(
     @AuthUser() user: UserWithInfo,
@@ -59,7 +59,7 @@ export class DraftController {
   }
 
   @Put(':id')
-  @ApiOperation({ summary: '임시 게시글 수정' })
+  @ApiOperation({ summary: '임시 게시글 수정', deprecated: true })
   @ApiBody({
     required: true,
     description: '게시글 수정 API',
@@ -75,7 +75,7 @@ export class DraftController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: '임시 게시물 삭제' })
+  @ApiOperation({ summary: '임시 게시물 삭제', deprecated: true })
   @UseGuards(LoggedInGuard)
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.service.delete(id);

@@ -84,7 +84,7 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException({
-        status: EXCEPTION_CODE.ALREADY_EXIST,
+        status: EXCEPTION_CODE.NOT_EXIST,
         message: ['가입되지 않은 이메일입니다.'],
         error: 'email',
       });

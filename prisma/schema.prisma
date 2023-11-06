@@ -175,8 +175,9 @@ model File {
   cfId       String
   publicUrl  String // url
   filename   String // 파일명
-  uploadType String // PROFILE | IMAGE | POST_THUMBNAIL | TAG
-  mediaType  String //  IMAGE
+  mimeType   String // 파일 타입
+  uploadType String // PROFILE | IMAGE | POST_THUMBNAIL | TAG | SEO
+  mediaType  String //  IMAGE | VIDEO | AUDIO
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @default(now()) @updatedAt
   deletedAt  DateTime? // 삭제일 

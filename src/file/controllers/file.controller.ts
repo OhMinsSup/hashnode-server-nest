@@ -31,6 +31,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { SignedUrlUploadBody } from '../dto/upload';
 import { ListRequestDto } from '../../libs/list.query';
 import { UserWithInfo } from '../../modules/database/select/user.select';
+import { CreateBody } from '../dto/create.input';
 
 @ApiTags('파일')
 @Controller('api/v1/files')
@@ -50,26 +51,15 @@ export class FileController {
     return this.service.list(user, query);
   }
 
-  @Post('upload')
-  @ApiOperation({ summary: '파일 업로드 URL API', deprecated: true })
-  @ApiConsumes('multipart/form-data')
-  @UseInterceptors(FileInterceptor('file'))
+  @Post()
+  @ApiOperation({ summary: '파일 생성 API' })
   @ApiBody({
     required: true,
-    description: '파일 업로드 URL API',
-    type: SignedUrlUploadBody,
+    description: '파일 생성 API',
+    type: CreateBody,
   })
   @UseGuards(LoggedInGuard)
-  upload(
-    @AuthUser() user: UserWithInfo,
-    @Body() body: SignedUrlUploadBody,
-    @UploadedFile(
-      new ParseFilePipeBuilder().build({
-        fileIsRequired: true,
-      }),
-    )
-    file: Express.Multer.File,
-  ) {
-    return this.service.upload(user, body, file);
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreateBody) {
+    return this.service.create(user, input);
   }
 }
