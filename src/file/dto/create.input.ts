@@ -15,7 +15,7 @@ const MEDIA_TYPE = {
 
 export type MediaType = keyof typeof MEDIA_TYPE;
 
-export class CreateBody {
+export class CreateInput {
   @IsString()
   @ApiProperty({
     description: 'cloudfare id',

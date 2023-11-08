@@ -14,9 +14,8 @@ import { isString } from '../../libs/assertion';
 
 // types
 import { ListRequestDto } from '../../libs/list.query';
-// import { UploadBody, SignedUrlUploadBody } from '../dto/upload';
 import { UserWithInfo } from '../../modules/database/select/user.select';
-import { CreateBody } from '../dto/create.input';
+import { CreateInput } from '../dto/create.input';
 
 @Injectable()
 export class FileService {
@@ -29,9 +28,9 @@ export class FileService {
   /**
    * @description 파일 생성
    * @param {UserWithInfo} user
-   * @param {CreateRequestDto} input
+   * @param {CreateInput} input
    */
-  async create(user: UserWithInfo, input: CreateBody) {
+  async create(user: UserWithInfo, input: CreateInput) {
     const data = await this.prisma.file.create({
       data: {
         cfId: input.cfId,
@@ -40,6 +39,7 @@ export class FileService {
         mimeType: input.mimeType,
         uploadType: input.uploadType,
         mediaType: input.mediaType,
+        userId: user.id,
       },
     });
 
@@ -55,60 +55,11 @@ export class FileService {
   }
 
   /**
-   * @description 파일 r2 업로드 생성
-   * @param {UserWithInfo} user 사용자 정보
-   * @param {SignedUrlUploadBody} body 업로드 정보
-   * @param {Express.Multer.File} file 파일 정보
-   * @deprecated
-   */
-  // async upload(
-  //   user: UserWithInfo,
-  //   body: SignedUrlUploadBody,
-  //   file: Express.Multer.File,
-  // ) {
-  //   const signed_url = await this.r2.getSignedUrl(
-  //     this._generateKey(user, body),
-  //   );
-
-  //   // birnay 업로드
-  //   await axios.put(signed_url, file.buffer, {
-  //     headers: {
-  //       'Content-Type': file.mimetype,
-  //     },
-  //   });
-
-  //   const publicUrl = this.config.get('CF_R2_PUBLIC_URL');
-
-  //   const data = await this.prisma.file.create({
-  //     data: {
-  //       name: body.filename,
-  //       url: `${publicUrl}/${this._generateKey(user, body)}`,
-  //       uploadType: body.uploadType,
-  //       mediaType: body.mediaType,
-  //     },
-  //   });
-
-  //   return {
-  //     resultCode: EXCEPTION_CODE.OK,
-  //     message: null,
-  //     error: null,
-  //     result: {
-  //       id: data.id,
-  //       name: data.name,
-  //       url: data.url,
-  //       uploadType: data.uploadType,
-  //       mediaType: data.mediaType,
-  //     },
-  //   };
-  // }
-
-  /**
    * @description 파일 목록 리스트
-   * @param {UserWithInfo} user 사용자 정보
    * @param {ListRequestDto} query 리스트 파라미터
    */
-  async list(user: UserWithInfo, query: ListRequestDto) {
-    const result = await this._getRecentItems(user, query);
+  async list(query: ListRequestDto) {
+    const result = await this._getRecentItems(query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
 
@@ -128,28 +79,10 @@ export class FileService {
   }
 
   /**
-   * @description 파일 고유한 키 생성
-   * @param {UserWithInfo} user 사용자 정보
-   * @param {UploadBody} input 업로드 정보
-   * @deprecated
-   */
-  // private _generateKey(user: UserWithInfo, input: UploadBody) {
-  //   return `${
-  //     user.id
-  //   }/${input.uploadType.toLowerCase()}/${input.mediaType.toLowerCase()}/${
-  //     input.filename
-  //   }`;
-  // }
-
-  /**
    * @description 파일 리스트
-   * @param {UserWithInfo} user 사용자 정보
    * @param {ListRequestDto} input 리스트 파라미터
    */
-  private async _getRecentItems(
-    user: UserWithInfo,
-    { cursor, limit }: ListRequestDto,
-  ) {
+  private async _getRecentItems({ cursor, limit }: ListRequestDto) {
     if (isString(cursor)) {
       cursor = Number(cursor);
     }
@@ -179,6 +112,12 @@ export class FileService {
           mediaType: true,
           createdAt: true,
           updatedAt: true,
+          user: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
         },
         take: limit,
       }),
@@ -191,9 +130,6 @@ export class FileService {
             id: {
               lt: endCursor,
             },
-          },
-          orderBy: {
-            id: 'desc',
           },
         })) > 0
       : false;

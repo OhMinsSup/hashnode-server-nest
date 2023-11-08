@@ -29,6 +29,7 @@ model User {
   notifications   Notification[]
   socialAccount   SocialAccount[]
   drafts          PostDraft[]
+  files           File[]
 }
 
 model UserProfile {
@@ -181,6 +182,11 @@ model File {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @default(now()) @updatedAt
   deletedAt  DateTime? // 삭제일 
+  userId     Int // 유저 아이디
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt, uploadType])
+  @@index([userId])
 }
 
 model Tag {
