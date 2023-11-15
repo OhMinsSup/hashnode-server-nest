@@ -21,6 +21,7 @@ export class AuthController {
     type: SignupInput,
   })
   signup(@Body() input: SignupInput) {
+    console.log(input);
     return this.service.signup(input);
   }
 

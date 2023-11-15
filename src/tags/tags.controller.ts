@@ -14,7 +14,7 @@ import { TagsService } from './tags.service';
 
 // decorator
 import { AuthUser } from '../decorators/get-user.decorator';
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
+import { LoggedInGuard } from '../decorators/logged-in.decorator';
 
 // types
 import { TagListQuery } from './dto/list';

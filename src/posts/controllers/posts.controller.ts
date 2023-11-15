@@ -23,7 +23,7 @@ import { UpdateBody } from '../dto/update.input';
 import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
 
 // guard
-import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
+import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
 import type { UserWithInfo } from '../../modules/database/select/user.select';
 

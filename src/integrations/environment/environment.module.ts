@@ -5,13 +5,22 @@ import { ConfigurableModuleClass } from './environment.module-definition';
 import { EnvironmentService } from './environment.service';
 import { validate } from './environment.validation';
 
+const isDev = process.env.NODE_ENV === 'development';
+const isProd = process.env.NODE_ENV === 'production';
+
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      cache: true,
       expandVariables: true,
       validate,
+      envFilePath: isDev
+        ? '.env.development'
+        : isProd
+          ? '.env.production'
+          : '.env',
     }),
   ],
   providers: [EnvironmentService],

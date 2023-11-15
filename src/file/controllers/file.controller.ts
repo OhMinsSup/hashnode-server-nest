@@ -5,7 +5,7 @@ import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { FileService } from '../services/file.service';
 
 // decorator
-import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
+import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
 
 // interceptor

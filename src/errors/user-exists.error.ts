@@ -29,7 +29,7 @@ export const assertUserExists = <D = any>(
   objectOrError?: string | object | any,
   descriptionOrOptions: string | HttpExceptionOptions = 'User already exists',
 ) => {
-  if (!condition) {
+  if (condition) {
     throw new UserExistsError(input, objectOrError, descriptionOrOptions);
   }
   return;

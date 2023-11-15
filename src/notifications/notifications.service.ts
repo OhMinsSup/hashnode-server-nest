@@ -5,7 +5,7 @@ import { isEmpty, isString } from '../libs/assertion';
 import { NotificationListQuery } from './dto/list';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 import { NotificationReadAllQuery } from './dto/read.all';
-import { assertUserNotFound } from 'src/errors/user-notfound.error';
+import { assertUserNotFound } from '../errors/user-not-found.error';
 
 @Injectable()
 export class NotificationsService {

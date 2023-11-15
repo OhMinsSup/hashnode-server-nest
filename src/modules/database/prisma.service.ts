@@ -1,19 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 import type { INestApplication } from '@nestjs/common';
 
-// type QueryEvent = {
-//   timestamp: Date;
-//   query: string; // Query sent to the database
-//   params: string; // Query parameters
-//   duration: number; // Time elapsed (in milliseconds) between client issuing query and database responding - not only time taken to run query
-//   target: string;
-// };
-
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  constructor(private readonly logger: Logger) {
+  constructor() {
     super({
       log: [
         { emit: 'stdout', level: 'query' },

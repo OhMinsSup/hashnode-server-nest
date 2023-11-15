@@ -10,7 +10,7 @@ import {
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../decorators/get-user.decorator';
 import { UserWithInfo } from '../modules/database/select/user.select';
-import { LoggedInGuard } from '../modules/guard/logged-in.guard';
+import { LoggedInGuard } from '../decorators/logged-in.decorator';
 import { NotificationListQuery } from './dto/list';
 import { NotificationsService } from './notifications.service';
 import { NotificationReadAllQuery } from './dto/read.all';

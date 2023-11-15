@@ -10,15 +10,13 @@ import { EnvironmentService } from '../../integrations/environment/environment.s
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { assertUserExists } from '../../errors/user-exists.error';
-import { assertUserNotFound } from '../../errors/user-notfound.error';
-import { assertIncorrectPassword } from '../../errors/user-exists.error copy';
+import { assertUserNotFound } from '../../errors/user-not-found.error';
+import { assertIncorrectPassword } from '../../errors/incorrect-password.error';
+import { isNullOrUndefined } from '../../libs/assertion';
 
 // dto
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
-
-// types
-import type { UserAuthentication } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -42,26 +40,6 @@ export class AuthService {
         expiresAt: expiresAt,
       },
     });
-  }
-
-  /**
-   * @description 유저 로그인 및 회원가입시 인증 토큰을 발급하는 코드
-   * @param {string} userId  유저 아이디
-   * @param {UserAuthentication?} authentication 유저 인증 정보
-   */
-  private async _generateToken(
-    userId: string,
-    authentication?: UserAuthentication | null,
-  ) {
-    const auth = authentication ?? (await this._makeUserAuthtiencation(userId));
-
-    const token = this.token.getJwtToken(userId, {
-      authId: auth.id,
-    });
-
-    return {
-      authToken: token,
-    };
   }
 
   /**
@@ -139,7 +117,9 @@ export class AuthService {
             },
           ],
         },
-        include: {
+        select: {
+          id: true,
+          email: true,
           userProfile: {
             select: {
               username: true,
@@ -149,13 +129,18 @@ export class AuthService {
       });
 
       // 이미 가입한 이메일이 존재하는 경우
-      assertUserExists(!exists, {
+      assertUserExists(!isNullOrUndefined(exists), {
         resultCode: EXCEPTION_CODE.ALREADY_EXIST,
-        message:
-          exists.email === input.email
+        message: exists
+          ? exists.email === input.email
             ? '이미 가입된 이메일입니다.'
-            : '이미 사용중인 아이디입니다.',
-        error: exists.email === input.email ? 'email' : 'username',
+            : '이미 사용중인 아이디입니다.'
+          : null,
+        error: exists
+          ? exists.email === input.email
+            ? 'email'
+            : 'username'
+          : null,
         result: null,
       });
 
@@ -175,7 +160,7 @@ export class AuthService {
           userProfile: {
             create: {
               username: input.username,
-              nickname: input.username,
+              nickname: input.nickname,
             },
           },
           userSocial: {
@@ -190,7 +175,7 @@ export class AuthService {
         },
       });
 
-      const expiresAt = this.env.getAuthTokenExpiresIn();
+      const expiresAt = this.env.getAuthTokenExpiresAt();
 
       const auth = await tx.userAuthentication.create({
         data: {
