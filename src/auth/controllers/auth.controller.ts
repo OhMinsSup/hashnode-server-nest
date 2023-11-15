@@ -1,24 +1,12 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  Res,
-  UseInterceptors,
-} from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-
-// interceptor
-import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
+import { Body, Controller, Post } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 // service
 import { AuthService } from '../services/auth.service';
 
 // dto
-import { SignupBody } from '../dto/signup.input';
-import { SigninBody } from '../dto/signin.input';
-import { SocialQuery } from '../dto/social.query';
+import { SignupInput } from '../input/signup.input';
+import { SigninInput } from '../input/signin.input';
 
 @ApiTags('인증')
 @Controller('api/v1/auth')
@@ -30,10 +18,9 @@ export class AuthController {
   @ApiBody({
     required: true,
     description: '회원가입 API',
-    type: SignupBody,
+    type: SignupInput,
   })
-  @UseInterceptors(CookiInterceptor)
-  signup(@Body() input: SignupBody) {
+  signup(@Body() input: SignupInput) {
     return this.service.signup(input);
   }
 
@@ -42,31 +29,9 @@ export class AuthController {
   @ApiBody({
     required: true,
     description: '로그인 API',
-    type: SigninBody,
+    type: SigninInput,
   })
-  @UseInterceptors(CookiInterceptor)
-  signin(@Body() input: SigninBody) {
+  signin(@Body() input: SigninInput) {
     return this.service.signin(input);
-  }
-
-  @Get('social/callback/github')
-  @ApiOperation({ summary: '깃허브 로그인 콜백' })
-  @ApiQuery({
-    name: 'query',
-    type: SocialQuery,
-    required: true,
-    description: '깃허브 로그인 콜백 쿼리',
-  })
-  githubCallback(
-    @Query() query: SocialQuery,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.service.githubCallback(query, res);
-  }
-
-  @Get('social/callback/google')
-  @ApiOperation({ summary: '구글 로그인 콜백' })
-  googleCallback() {
-    return null;
   }
 }

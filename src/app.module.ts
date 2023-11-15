@@ -1,23 +1,19 @@
 import { Module, Logger, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-
-import joi from '@hapi/joi';
+import { JwtModule } from '@nestjs/jwt';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
-import { JwtModule } from './modules/jwt/jwt.module';
 import { UserModule } from './user/user.module';
 import { AuthGuardModule } from './modules/auth/auth.module';
 import { PostsModule } from './posts/posts.module';
 import { FileModule } from './file/file.module';
-import { R2Module } from './modules/r2/r2.module';
 import { TagsModule } from './tags/tags.module';
 import { WidgetModule } from './widget/widget.module';
 import { CommentsModule } from './comments/comments.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { DraftModule } from './draft/draft.module';
 import { TasksModule } from './modules/jobs/tasks.module';
 import { PrismaModule } from './modules/database/prisma.module';
 import { CacheModule } from '@nestjs/cache-manager';
@@ -28,6 +24,7 @@ import { TransformInterceptor } from './interceptors/transform.interceptor';
 import { ExceptionInterceptor } from './interceptors/exception.interceptor';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { HealthModule } from './health/health.module';
+import { IntegrationsModule } from './integrations/integrations.module';
 
 const isDev = process.env.NODE_ENV === 'development';
 const isProd = process.env.NODE_ENV === 'production';
@@ -40,33 +37,14 @@ const isProd = process.env.NODE_ENV === 'production';
       envFilePath: isDev
         ? '.env.development'
         : isProd
-        ? '.env.production'
-        : '.env',
-      validationSchema: joi.object({
-        NODE_ENV: joi
-          .string()
-          .valid('test', 'development', 'production')
-          .required(),
-        DEPLOY_GROUP: joi
-          .string()
-          .valid('local', 'development', 'production')
-          .required(),
-        DATABASE_URL: joi.string().required(),
-        COOKIE_SECRET: joi.string().required(),
-        PORT: joi.number().optional().default(8080),
-        SALT_ROUNDS: joi.number().optional().default(8),
-        CF_R2_URL: joi.string().required(),
-        CF_R2_ACCESS_KEY: joi.string().required(),
-        CF_R2_SECRET_ACCESS_KEY: joi.string().required(),
-        CF_R2_BUCKET: joi.string().required(),
-        CF_R2_PUBLIC_URL: joi.string().required(),
-      }),
+          ? '.env.production'
+          : '.env',
     }),
-    PrismaModule.forRoot(),
-    JwtModule.forRoot({
-      privateKey: process.env.PRIVATE_KEY,
+    IntegrationsModule,
+    PrismaModule,
+    JwtModule.register({
+      global: true,
     }),
-    R2Module.forRoot(),
     ScheduleModule.forRoot(),
     CacheModule.register(),
     TasksModule,
@@ -79,7 +57,6 @@ const isProd = process.env.NODE_ENV === 'production';
     WidgetModule,
     CommentsModule,
     NotificationsModule,
-    DraftModule,
     HealthModule,
   ],
   controllers: [AppController],

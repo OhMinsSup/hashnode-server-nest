@@ -13,7 +13,7 @@ import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagsService } from './tags.service';
 
 // decorator
-import { AuthUser } from '../libs/get-user.decorator';
+import { AuthUser } from '../decorators/get-user.decorator';
 import { LoggedInGuard } from '../modules/guard/logged-in.guard';
 
 // types

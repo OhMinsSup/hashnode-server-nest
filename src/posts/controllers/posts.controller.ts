@@ -16,7 +16,7 @@ import {
 import { PostsService } from '../services/posts.service';
 
 // dto
-import { CreateBody } from '../dto/create.input';
+import { CreateInput } from '../dto/create.input';
 import { CreateBody as CreateCommentBody } from '../../comments/dto/create';
 import { UpdateBody as UpdateCommentBody } from '../../comments/dto/update';
 import { UpdateBody } from '../dto/update.input';
@@ -24,7 +24,7 @@ import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
 
 // guard
 import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
-import { AuthUser } from '../../libs/get-user.decorator';
+import { AuthUser } from '../../decorators/get-user.decorator';
 import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 @ApiTags('게시물')
@@ -37,10 +37,10 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 작성 API',
-    type: CreateBody,
+    type: CreateInput,
   })
   @UseGuards(LoggedInGuard)
-  create(@AuthUser() user: UserWithInfo, @Body() input: CreateBody) {
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreateInput) {
     return this.service.create(user, input);
   }
 

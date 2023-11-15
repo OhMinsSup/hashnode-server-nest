@@ -6,7 +6,7 @@ import { FileService } from '../services/file.service';
 
 // decorator
 import { LoggedInGuard } from '../../modules/guard/logged-in.guard';
-import { AuthUser } from '../../libs/get-user.decorator';
+import { AuthUser } from '../../decorators/get-user.decorator';
 
 // interceptor
 

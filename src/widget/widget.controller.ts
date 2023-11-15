@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // decorator
-import { AuthUser } from '../libs/get-user.decorator';
+import { AuthUser } from '../decorators/get-user.decorator';
 
 // service
 import { WidgetService } from './widget.service';

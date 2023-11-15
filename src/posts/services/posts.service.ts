@@ -21,7 +21,7 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 // types
 import { CreateBody as CreateCommentBody } from '../../comments/dto/create';
 import { UpdateBody as UpdateCommentBody } from '../../comments/dto/update';
-import { CreateBody } from '../dto/create.input';
+import { CreateInput } from '../dto/create.input';
 import { UpdateBody } from '../dto/update.input';
 import { GetTopPostsQuery, PostListQuery } from '../dto/list.query';
 
@@ -284,13 +284,13 @@ export class PostsService {
       newData.content = input.content;
     }
 
-    if (
-      input.thumbnail &&
-      input.thumbnail.url &&
-      !isEqual(post.thumbnail, input.thumbnail.url)
-    ) {
-      newData.thumbnail = input.thumbnail.url;
-    }
+    // if (
+    //   input.thumbnail &&
+    //   input.thumbnail.url &&
+    //   !isEqual(post.thumbnail, input.thumbnail.url)
+    // ) {
+    //   newData.thumbnail = input.thumbnail.url;
+    // }
 
     if (
       typeof input.disabledComment === 'boolean' &&
@@ -365,7 +365,7 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {CreateRequestDto} input
    */
-  async create(user: UserWithInfo, input: CreateBody) {
+  async create(user: UserWithInfo, input: CreateInput) {
     let createdTags: Tag[] = [];
     // 태크 체크
     if (!isEmpty(input.tags) && input.tags) {
@@ -381,12 +381,19 @@ export class PostsService {
         title: input.title,
         subTitle: input.subTitle ?? null,
         content: input.content ?? null,
-        thumbnail: input.thumbnail ? input.thumbnail.url ?? null : null,
         disabledComment: input.disabledComment ?? true,
         isDraft: input.isDraft ?? true,
         publishingDate: input.publishingDate
           ? new Date(input.publishingDate)
           : null,
+        ...(input.thumbnail &&
+          input.thumbnail.idx && {
+            postThumbnails: {
+              create: {
+                fileId: input.thumbnail?.idx ?? null,
+              },
+            },
+          }),
       },
     });
 

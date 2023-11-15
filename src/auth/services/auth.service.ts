@@ -1,73 +1,66 @@
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { addDays } from 'date-fns';
-import * as bcrypt from 'bcrypt';
+import { Injectable } from '@nestjs/common';
+import bcrypt from 'bcrypt';
 
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
-import { JwtService } from '../../modules/jwt/jwt.service';
+import { TokenService } from './token.service';
 import { NotificationsService } from '../../notifications/notifications.service';
+import { EnvironmentService } from '../../integrations/environment/environment.service';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
+import { assertUserExists } from '../../errors/user-exists.error';
+import { assertUserNotFound } from '../../errors/user-notfound.error';
+import { assertIncorrectPassword } from '../../errors/user-exists.error copy';
 
 // dto
-import { SignupBody } from '../dto/signup.input';
-import { SigninBody } from '../dto/signin.input';
+import { SignupInput } from '../input/signup.input';
+import { SigninInput } from '../input/signin.input';
 
 // types
 import type { UserAuthentication } from '@prisma/client';
-import { SocialQuery } from '../dto/social.query';
-import {
-  getGithubAccessToken,
-  getGithubProfile,
-} from '../../libs/social/github';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly jwt: JwtService,
-    private readonly config: ConfigService,
+    private readonly token: TokenService,
+    private readonly env: EnvironmentService,
     private readonly notifications: NotificationsService,
-    private readonly logger: Logger,
   ) {}
 
   /**
+   * @description 유저 인증 정보를 생성합니다.
+   * @param {string} userId 유저 아이디
+   */
+  private async _makeUserAuthtiencation(userId: string) {
+    const expiresAt = this.env.getAuthTokenExpiresIn();
+    return this.prisma.userAuthentication.create({
+      data: {
+        fk_user_id: userId,
+        lastValidatedAt: new Date(),
+        expiresAt: expiresAt,
+      },
+    });
+  }
+
+  /**
    * @description 유저 로그인 및 회원가입시 인증 토큰을 발급하는 코드
-   * @param {number} userId  유저 아이디
+   * @param {string} userId  유저 아이디
    * @param {UserAuthentication?} authentication 유저 인증 정보
    */
   private async _generateToken(
-    userId: number,
+    userId: string,
     authentication?: UserAuthentication | null,
   ) {
-    const auth =
-      authentication ??
-      (await (async () => {
-        // 7일  후 만료
-        const expiresAt = addDays(new Date(), 7);
-        return this.prisma.userAuthentication.create({
-          data: {
-            userId,
-            lastValidatedAt: new Date(),
-            expiresAt: expiresAt,
-          },
-        });
-      })());
+    const auth = authentication ?? (await this._makeUserAuthtiencation(userId));
 
-    const token = await this.jwt.sign({
+    const token = this.token.getJwtToken(userId, {
       authId: auth.id,
-      userId,
     });
 
     return {
-      accessToken: token,
+      authToken: token,
     };
   }
 
@@ -75,35 +68,46 @@ export class AuthService {
    * @description 로그인
    * @param {SigninBody} input 로그인 정보
    */
-  async signin(input: SigninBody) {
+  async signin(input: SigninInput) {
     const user = await this.prisma.user.findFirst({
       where: {
         email: input.email,
       },
+      select: {
+        id: true,
+        email: true,
+        userPassword: {
+          select: {
+            passwordHash: true,
+          },
+        },
+      },
     });
 
-    if (!user) {
-      throw new NotFoundException({
-        status: EXCEPTION_CODE.NOT_EXIST,
-        message: ['가입되지 않은 이메일입니다.'],
-        error: 'email',
-      });
-    }
+    assertUserNotFound(!user, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '가입되지 않은 이메일입니다.',
+      error: 'email',
+      result: null,
+    });
 
     const passwordMatch = await bcrypt.compare(
       input.password,
-      user.passwordHash,
+      user.userPassword.passwordHash,
     );
 
-    if (!passwordMatch) {
-      throw new BadRequestException({
-        status: EXCEPTION_CODE.INCORRECT_PASSWORD,
-        message: ['비밀번호가 일치하지 않습니다.'],
-        error: 'password',
-      });
-    }
+    assertIncorrectPassword(!passwordMatch, {
+      resultCode: EXCEPTION_CODE.INCORRECT_PASSWORD,
+      message: '비밀번호가 일치하지 않습니다.',
+      error: 'password',
+      result: null,
+    });
 
-    const { accessToken } = await this._generateToken(user.id);
+    const auth = await this._makeUserAuthtiencation(user.id);
+
+    const authToken = this.token.getJwtToken(user.id, {
+      authId: auth.id,
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -111,7 +115,7 @@ export class AuthService {
       error: null,
       result: {
         userId: user.id,
-        accessToken,
+        authToken,
       },
     };
   }
@@ -120,103 +124,99 @@ export class AuthService {
    * @description 회원가입
    * @param {SignupBody} input 회원가입 정보
    */
-  async signup(input: SignupBody) {
-    const exists = await this.prisma.user.findFirst({
-      where: {
-        OR: [
-          {
-            email: input.email,
+  async signup(input: SignupInput) {
+    return await this.prisma.$transaction(async (tx) => {
+      const exists = await tx.user.findFirst({
+        where: {
+          OR: [
+            {
+              email: input.email,
+            },
+            {
+              userProfile: {
+                username: input.username,
+              },
+            },
+          ],
+        },
+        include: {
+          userProfile: {
+            select: {
+              username: true,
+            },
           },
-          {
-            username: input.username,
-          },
-        ],
-      },
-    });
-
-    // 이미 가입한 이메일이 존재하는 경우
-    if (exists) {
-      const message =
-        exists.email === input.email
-          ? '이미 가입된 이메일입니다.'
-          : '이미 사용중인 아이디입니다.';
-
-      throw new BadRequestException({
-        status: EXCEPTION_CODE.ALREADY_EXIST,
-        message: [message],
-        error: exists.email === input.email ? 'email' : 'username',
+        },
       });
-    }
 
-    const salt = await bcrypt.genSalt(this.config.get('SALT_ROUNDS'));
-    const hash = await bcrypt.hash(input.password, salt);
+      // 이미 가입한 이메일이 존재하는 경우
+      assertUserExists(!exists, {
+        resultCode: EXCEPTION_CODE.ALREADY_EXIST,
+        message:
+          exists.email === input.email
+            ? '이미 가입된 이메일입니다.'
+            : '이미 사용중인 아이디입니다.',
+        error: exists.email === input.email ? 'email' : 'username',
+        result: null,
+      });
 
-    // add user to database
-    const user = await this.prisma.user.create({
-      data: {
-        email: input.email,
-        username: input.username,
-        passwordHash: hash,
-      },
-    });
+      const salt = await bcrypt.genSalt(this.env.getSaltRounds());
+      const hash = await bcrypt.hash(input.password, salt);
 
-    // add user profile to database
-    await Promise.all([
-      this.prisma.userProfile.create({
+      // add user to database
+      const user = await tx.user.create({
         data: {
-          userId: user.id,
-          name: input.name || input.username,
+          email: input.email,
+          userPassword: {
+            create: {
+              passwordHash: hash,
+              salt,
+            },
+          },
+          userProfile: {
+            create: {
+              username: input.username,
+              nickname: input.username,
+            },
+          },
+          userSocial: {
+            create: {
+              github: null,
+              twitter: null,
+              facebook: null,
+              instagram: null,
+              website: null,
+            },
+          },
         },
-      }),
-      this.prisma.userSocials.create({
+      });
+
+      const expiresAt = this.env.getAuthTokenExpiresIn();
+
+      const auth = await tx.userAuthentication.create({
         data: {
-          userId: user.id,
+          fk_user_id: user.id,
+          lastValidatedAt: new Date(),
+          expiresAt: expiresAt,
         },
-      }),
-    ]);
+      });
 
-    const { accessToken } = await this._generateToken(user.id);
+      const authToken = this.token.getJwtToken(user.id, {
+        authId: auth.id,
+      });
 
-    this.notifications.createWelcome(user.id).catch((e) => {
-      this.logger.error(e.message, e.stack, 'NotificationsService');
+      this.notifications.createWelcome(user.id).catch((e) => {
+        console.error(e.message, e.stack, 'NotificationsService');
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: {
+          userId: user.id,
+          authToken,
+        },
+      };
     });
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        userId: user.id,
-        accessToken,
-      },
-    };
-  }
-
-  /**
-   * @description 깃허브 로그인 콜백
-   * @param {SocialQuery} query 깃허브 로그인 콜백 쿼리
-   * @param {Response} res 응답 객체
-   */
-  async githubCallback(query: SocialQuery, res: Response) {
-    console.log(res);
-    const clientId = this.config.get('GITHUB_CLIENT_ID');
-    const clientSecret = this.config.get('GITHUB_CLIENT_SECRET');
-
-    const accessToken = await getGithubAccessToken({
-      code: query.code,
-      clientId,
-      clientSecret,
-    });
-    const profile = await getGithubProfile(accessToken);
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        profile,
-        accessToken,
-      },
-    };
   }
 }

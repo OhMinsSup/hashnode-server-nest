@@ -12,7 +12,7 @@ import {
 
 // body
 
-export class SeoBody {
+export class SeoInput {
   @IsOptional()
   @IsString()
   @MaxLength(50)
@@ -42,7 +42,7 @@ export class SeoBody {
   image?: string;
 }
 
-export class ThumbnailBody {
+export class ThumbnailInput {
   @IsOptional()
   @IsNumber()
   @ApiProperty({
@@ -60,7 +60,7 @@ export class ThumbnailBody {
   url?: string;
 }
 
-export class CreateBody {
+export class CreateInput {
   @IsString()
   @MaxLength(255)
   @ApiProperty({
@@ -96,11 +96,11 @@ export class CreateBody {
   @IsOptional()
   @ApiProperty({
     description: '썸네일 이미지',
-    type: ThumbnailBody,
+    type: ThumbnailInput,
     nullable: true,
     required: false,
   })
-  thumbnail?: ThumbnailBody | null;
+  thumbnail?: ThumbnailInput | null;
 
   @IsArray()
   @IsOptional()
@@ -138,11 +138,11 @@ export class CreateBody {
   @IsOptional()
   @ApiProperty({
     description: 'SEO',
-    type: SeoBody,
+    type: SeoInput,
     nullable: true,
     required: false,
   })
-  seo?: SeoBody | null;
+  seo?: SeoInput | null;
 
   @IsBoolean()
   @IsOptional()

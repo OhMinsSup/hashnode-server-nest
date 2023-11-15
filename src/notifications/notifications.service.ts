@@ -5,6 +5,7 @@ import { isEmpty, isString } from '../libs/assertion';
 import { NotificationListQuery } from './dto/list';
 import type { UserWithInfo } from '../modules/database/select/user.select';
 import { NotificationReadAllQuery } from './dto/read.all';
+import { assertUserNotFound } from 'src/errors/user-notfound.error';
 
 @Injectable()
 export class NotificationsService {
@@ -179,33 +180,36 @@ export class NotificationsService {
 
   /**
    * @description 사용자가 가입하면 환영 메시지를 생성한다.
-   * @param {number} userId
+   * @param {string} userId
    */
-  async createWelcome(userId: number) {
+  async createWelcome(userId: string) {
     const user = await this.prisma.user.findUnique({
       where: {
         id: userId,
       },
       select: {
         id: true,
-        username: true,
+        email: true,
+        userProfile: {
+          select: {
+            username: true,
+          },
+        },
       },
     });
 
-    if (!user) {
-      return {
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '사용자를 찾을 수 없습니다.',
-        error: null,
-        result: false,
-      };
-    }
+    assertUserNotFound(!user, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '사용자를 찾을 수 없습니다.',
+      error: null,
+      result: false,
+    });
 
     await this.prisma.notification.create({
       data: {
-        userId,
+        fk_user_id: user.id,
         type: 'WELCOME',
-        message: `${user.username}님 환영합니다.`,
+        message: `${user.userProfile.username}님 환영합니다.`,
       },
     });
 

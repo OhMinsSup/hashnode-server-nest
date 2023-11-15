@@ -7,7 +7,6 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
 import { ConfigService } from '@nestjs/config';
-import { R2Service } from '../../modules/r2/r2.service';
 
 // utils
 import { isString } from '../../libs/assertion';
@@ -22,7 +21,6 @@ export class FileService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
-    private readonly r2: R2Service,
   ) {}
 
   /**

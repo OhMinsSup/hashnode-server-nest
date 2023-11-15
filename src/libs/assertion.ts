@@ -1,3 +1,5 @@
+import { HttpException } from '@nestjs/common';
+
 export type Dict<T = any> = Record<string, T>;
 
 // Number assertions
@@ -112,3 +114,27 @@ export const isInvalidDate = (date?: Date | null) => {
   if (!date) return true;
   return isNaN(date.getTime());
 };
+
+type Assert = (
+  condition: unknown,
+  message?: string,
+  ErrorType?: new (message?: string) => HttpException,
+) => asserts condition;
+
+export const assert: Assert = (condition, message, ErrorType) => {
+  if (!condition) {
+    if (ErrorType) {
+      if (message) {
+        throw new ErrorType(message);
+      }
+
+      throw new ErrorType();
+    }
+
+    throw new Error(message);
+  }
+};
+
+export function assertNotNull<T>(item: T): item is NonNullable<T> {
+  return item !== null && item !== undefined;
+}
