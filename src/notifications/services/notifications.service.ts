@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { PrismaService } from '../modules/database/prisma.service';
-import { EXCEPTION_CODE } from '../constants/exception.code';
-import { isEmpty, isString } from '../libs/assertion';
-import { NotificationListQuery } from './dto/list';
-import type { UserWithInfo } from '../modules/database/select/user.select';
-import { NotificationReadAllQuery } from './dto/read.all';
-import { assertUserNotFound } from '../errors/user-not-found.error';
+import { PrismaService } from '../../modules/database/prisma.service';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
+import { isEmpty, isString } from '../../libs/assertion';
+import { NotificationListQuery } from '../input/list.query';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
+import { NotificationReadAllQuery } from '../input/read-all.query';
 
 @Injectable()
 export class NotificationsService {
@@ -13,9 +12,8 @@ export class NotificationsService {
 
   /**
    * @description 게시글이 생성되었을 때 알림을 생성하는 코드
-   * @param {number} postId 게시글 아이디
-   */
-  async createArticles(postId: number) {
+   * @param {string} postId 게시글 아이디 */
+  async createArticles(postId: string) {
     const post = await this.prisma.post.findUnique({
       where: {
         id: postId,
@@ -45,9 +43,9 @@ export class NotificationsService {
       // 포스트와 연관된 태그들을 가져온다.
       const usedTags = await this.prisma.tag.findMany({
         where: {
-          postsTags: {
+          postTags: {
             some: {
-              postId,
+              fk_post_id: postId,
             },
           },
         },
@@ -59,11 +57,19 @@ export class NotificationsService {
       // 태그를 사용한 사용자들을 가져온다.
       const users = await this.prisma.user.findMany({
         where: {
-          tagFollowing: {
+          tagFollow: {
             some: {
-              tagId: {
+              fk_tag_id: {
                 in: usedTags.map((tag) => tag.id),
               },
+            },
+          },
+        },
+        select: {
+          id: true,
+          userProfile: {
+            select: {
+              username: true,
             },
           },
         },
@@ -74,8 +80,8 @@ export class NotificationsService {
         // 이미 생성된 알림이 있는지 확인한다.
         const notification = await this.prisma.notification.findFirst({
           where: {
-            postId,
-            userId: user.id,
+            fk_post_id: postId,
+            fk_user_id: user.id,
             type: 'ARTICLE',
           },
         });
@@ -86,10 +92,10 @@ export class NotificationsService {
 
         await this.prisma.notification.create({
           data: {
-            userId: user.id,
+            fk_user_id: user.id,
             type: 'ARTICLE',
-            message: `${user.username}님이 ${post.title} 글에 관심을 보이고 있습니다.`,
-            postId,
+            message: `${user.userProfile.username}님이 ${post.title} 글에 관심을 보이고 있습니다.`,
+            fk_post_id: postId,
           },
         });
       }
@@ -111,9 +117,8 @@ export class NotificationsService {
 
   /**
    * @description 태그를 사용한 사용자들에게 알림을 생성한다.
-   * @param {number} tagId
-   */
-  async createTags(tagId: number) {
+   * @param {string} tagId */
+  async createTags(tagId: string) {
     const tag = await this.prisma.tag.findUnique({
       where: {
         id: tagId,
@@ -136,9 +141,17 @@ export class NotificationsService {
     // 태그를 사용한 사용자들을 가져온다.
     const usingTagUsers = await this.prisma.user.findMany({
       where: {
-        tagFollowing: {
+        tagFollow: {
           some: {
-            tagId,
+            fk_tag_id: tagId,
+          },
+        },
+      },
+      select: {
+        id: true,
+        userProfile: {
+          select: {
+            username: true,
           },
         },
       },
@@ -157,8 +170,8 @@ export class NotificationsService {
       // 이미 생성된 알림이 있는지 확인한다.
       const notification = await this.prisma.notification.findFirst({
         where: {
-          tagId,
-          userId: user.id,
+          fk_tag_id: tagId,
+          fk_user_id: user.id,
           type: 'TAG',
         },
       });
@@ -169,63 +182,19 @@ export class NotificationsService {
 
       await this.prisma.notification.create({
         data: {
-          tagId,
-          userId: user.id,
+          fk_tag_id: tagId,
+          fk_user_id: user.id,
           type: 'TAG',
-          message: `${user.username}님이 ${tag.name} 태그를 팔로우 하고 있습니다.`,
+          message: `${user.userProfile.username}님이 ${tag.name} 태그를 팔로우 하고 있습니다.`,
         },
       });
     }
   }
 
   /**
-   * @description 사용자가 가입하면 환영 메시지를 생성한다.
-   * @param {string} userId
-   */
-  async createWelcome(userId: string) {
-    const user = await this.prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-      select: {
-        id: true,
-        email: true,
-        userProfile: {
-          select: {
-            username: true,
-          },
-        },
-      },
-    });
-
-    assertUserNotFound(!user, {
-      resultCode: EXCEPTION_CODE.NOT_EXIST,
-      message: '사용자를 찾을 수 없습니다.',
-      error: null,
-      result: false,
-    });
-
-    await this.prisma.notification.create({
-      data: {
-        fk_user_id: user.id,
-        type: 'WELCOME',
-        message: `${user.userProfile.username}님 환영합니다.`,
-      },
-    });
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: true,
-    };
-  }
-
-  /**
    * @description 알림 리스트
    * @param {UserWithInfo} user
-   * @param {NotificationListQuery} query
-   */
+   * @param {NotificationListQuery} query */
   async list(user: UserWithInfo, query: NotificationListQuery) {
     const { list, totalCount, hasNextPage, endCursor } = await this._getItems(
       user,
@@ -249,12 +218,11 @@ export class NotificationsService {
   /**
    * @description 알림 읽기
    * @param {UserWithInfo} user
-   * @param {NotificationListQuery} query
-   */
-  async read(user: UserWithInfo, id: number) {
-    await this.prisma.notification.updateMany({
+   * @param {string} id */
+  async read(user: UserWithInfo, id: string) {
+    await this.prisma.notification.update({
       where: {
-        userId: user.id,
+        fk_user_id: user.id,
         id,
       },
       data: {
@@ -273,13 +241,12 @@ export class NotificationsService {
   /**
    * @description 알림 모두 읽기
    * @param {UserWithInfo} user
-   * @param {NotificationReadAllQuery} query
-   */
+   * @param {NotificationReadAllQuery} query */
   async readAll(user: UserWithInfo, query: NotificationReadAllQuery) {
     const { type } = query;
     await this.prisma.notification.updateMany({
       where: {
-        userId: user.id,
+        fk_user_id: user.id,
         type,
       },
       data: {
@@ -299,10 +266,6 @@ export class NotificationsService {
     user: UserWithInfo,
     { cursor, limit, type }: NotificationListQuery,
   ) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -311,7 +274,7 @@ export class NotificationsService {
       this.prisma.notification.count({
         where: {
           type,
-          userId: user.id,
+          fk_user_id: user.id,
         },
       }),
       this.prisma.notification.findMany({
@@ -327,7 +290,7 @@ export class NotificationsService {
               }
             : undefined,
           type,
-          userId: user.id,
+          fk_user_id: user.id,
         },
         take: limit,
         select: {
@@ -336,9 +299,6 @@ export class NotificationsService {
           message: true,
           read: true,
           createdAt: true,
-          ...(type === 'comments' && {
-            comment: true,
-          }),
           ...(type === 'likes' && {
             like: {
               select: {
@@ -361,7 +321,7 @@ export class NotificationsService {
               lt: endCursor,
             },
             type,
-            userId: user.id,
+            fk_user_id: user.id,
           },
           orderBy: [
             {

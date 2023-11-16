@@ -21,5 +21,5 @@ export class PaginationQuery {
     required: false,
     description: '페이지 커서',
   })
-  cursor?: number;
+  cursor?: string;
 }

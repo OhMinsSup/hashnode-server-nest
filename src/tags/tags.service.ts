@@ -8,7 +8,7 @@ import { EXCEPTION_CODE } from '../constants/exception.code';
 
 // service
 import { PrismaService } from '../modules/database/prisma.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationsService } from '../notifications/services/notifications.service';
 
 // select
 import {

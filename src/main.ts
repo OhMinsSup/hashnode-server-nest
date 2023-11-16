@@ -13,6 +13,7 @@ import compression from 'compression';
 // import DailyRotateFile from 'winston-daily-rotate-file';
 
 import { PrismaService } from './modules/database/prisma.service';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 import { VersionStrategy } from './constants/version';
 import { AppModule } from './app.module';
 
@@ -74,6 +75,8 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.enableVersioning({
     defaultVersion: VersionStrategy.current,

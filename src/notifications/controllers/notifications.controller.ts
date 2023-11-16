@@ -1,19 +1,11 @@
-import {
-  Controller,
-  Get,
-  Param,
-  ParseIntPipe,
-  Put,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { AuthUser } from '../decorators/get-user.decorator';
-import { UserWithInfo } from '../modules/database/select/user.select';
-import { LoggedInGuard } from '../decorators/logged-in.decorator';
-import { NotificationListQuery } from './dto/list';
-import { NotificationsService } from './notifications.service';
-import { NotificationReadAllQuery } from './dto/read.all';
+import { AuthUser } from '../../decorators/get-user.decorator';
+import { UserWithInfo } from '../../modules/database/select/user.select';
+import { LoggedInGuard } from '../../decorators/logged-in.decorator';
+import { NotificationListQuery } from '../input/list.query';
+import { NotificationsService } from '../services/notifications.service';
+import { NotificationReadAllQuery } from '../input/read-all.query';
 
 @ApiTags('알림')
 @Controller('api/v1/notifications')
@@ -33,13 +25,6 @@ export class NotificationsController {
     return this.service.list(user, query);
   }
 
-  @Put(':id/read')
-  @ApiOperation({ summary: '알림 읽음 처리' })
-  @UseGuards(LoggedInGuard)
-  read(@AuthUser() user: UserWithInfo, @Param('id', ParseIntPipe) id: number) {
-    return this.service.read(user, id);
-  }
-
   @Put('all/read')
   @ApiOperation({ summary: '모든 알림 읽음 처리' })
   @ApiQuery({
@@ -54,5 +39,12 @@ export class NotificationsController {
     @Query() query: NotificationReadAllQuery,
   ) {
     return this.service.readAll(user, query);
+  }
+
+  @Put(':id/read')
+  @ApiOperation({ summary: '알림 읽음 처리' })
+  @UseGuards(LoggedInGuard)
+  read(@AuthUser() user: UserWithInfo, @Param('id') id: string) {
+    return this.service.read(user, id);
   }
 }

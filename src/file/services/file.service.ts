@@ -1,27 +1,22 @@
 import { Injectable } from '@nestjs/common';
-// import axios from 'axios';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
-import { ConfigService } from '@nestjs/config';
 
 // utils
 import { isString } from '../../libs/assertion';
 
 // types
-import { ListRequestDto } from '../../libs/list.query';
+import { PaginationQuery } from '../../libs/pagination.query';
 import { UserWithInfo } from '../../modules/database/select/user.select';
-import { CreateInput } from '../dto/create.input';
+import { CreateInput } from '../input/create.input';
 
 @Injectable()
 export class FileService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
-  ) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   /**
    * @description 파일 생성
@@ -37,7 +32,7 @@ export class FileService {
         mimeType: input.mimeType,
         uploadType: input.uploadType,
         mediaType: input.mediaType,
-        userId: user.id,
+        fk_user_id: user.id,
       },
     });
 
@@ -54,9 +49,9 @@ export class FileService {
 
   /**
    * @description 파일 목록 리스트
-   * @param {ListRequestDto} query 리스트 파라미터
+   * @param {PaginationQuery} query 리스트 파라미터
    */
-  async list(query: ListRequestDto) {
+  async list(query: PaginationQuery) {
     const result = await this._getRecentItems(query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
@@ -78,13 +73,9 @@ export class FileService {
 
   /**
    * @description 파일 리스트
-   * @param {ListRequestDto} input 리스트 파라미터
+   * @param {PaginationQuery} input 리스트 파라미터
    */
-  private async _getRecentItems({ cursor, limit }: ListRequestDto) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
+  private async _getRecentItems({ cursor, limit }: PaginationQuery) {
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -113,7 +104,11 @@ export class FileService {
           user: {
             select: {
               id: true,
-              username: true,
+              userProfile: {
+                select: {
+                  username: true,
+                },
+              },
             },
           },
         },

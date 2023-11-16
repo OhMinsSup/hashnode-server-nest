@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Post, UseInterceptors } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 
 // service
@@ -7,6 +7,7 @@ import { AuthService } from '../services/auth.service';
 // dto
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
+import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
 
 @ApiTags('인증')
 @Controller('api/v1/auth')
@@ -20,8 +21,8 @@ export class AuthController {
     description: '회원가입 API',
     type: SignupInput,
   })
+  @UseInterceptors(CookiInterceptor)
   signup(@Body() input: SignupInput) {
-    console.log(input);
     return this.service.signup(input);
   }
 
@@ -32,6 +33,7 @@ export class AuthController {
     description: '로그인 API',
     type: SigninInput,
   })
+  @UseInterceptors(CookiInterceptor)
   signin(@Body() input: SigninInput) {
     return this.service.signin(input);
   }

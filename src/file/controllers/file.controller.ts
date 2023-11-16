@@ -11,9 +11,9 @@ import { AuthUser } from '../../decorators/get-user.decorator';
 // interceptor
 
 // type
-import { ListRequestDto } from '../../libs/list.query';
+import { PaginationQuery } from '../../libs/pagination.query';
 import { UserWithInfo } from '../../modules/database/select/user.select';
-import { CreateInput } from '../dto/create.input';
+import { CreateInput } from '../input/create.input';
 
 @ApiTags('파일')
 @Controller('api/v1/files')
@@ -24,12 +24,12 @@ export class FileController {
   @ApiOperation({ summary: '파일 목록 API' })
   @ApiQuery({
     name: 'query',
-    type: ListRequestDto,
+    type: PaginationQuery,
     required: false,
     description: '페이지네이션',
   })
   @UseGuards(LoggedInGuard)
-  list(@Query() query: ListRequestDto) {
+  list(@Query() query: PaginationQuery) {
     return this.service.list(query);
   }
 

@@ -16,14 +16,14 @@ export class TasksService {
     // 생성된지 일주일이 지난 임시저장글은 삭제
     this.logger.debug('Called every day at 10 AM');
     try {
-      const data = await this.prisma.postDraft.deleteMany({
-        where: {
-          createdAt: {
-            lte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-          },
-        },
-      });
-      this.logger.debug(`Removed ${data.count} temp drafts items`);
+      // const data = await this.prisma.postDraft.deleteMany({
+      //   where: {
+      //     createdAt: {
+      //       lte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      //     },
+      //   },
+      // });
+      // this.logger.debug(`Removed ${data.count} temp drafts items`);
     } catch (error) {
       this.logger.error(error);
     }

@@ -1,25 +1,14 @@
-import { NotFoundException, HttpExceptionOptions } from '@nestjs/common';
+import { HttpExceptionOptions } from '@nestjs/common';
+import { CustomBaseError } from './custom-base.error';
 import type { BaseErrorData } from './error.type';
 
-export class UserNotFoundError<D = any> extends NotFoundException {
-  private readonly _input: BaseErrorData<D>;
-
+export class UserNotFoundError<D = any> extends CustomBaseError<D> {
   constructor(
     input: BaseErrorData<D>,
     objectOrError?: string | object | any,
     descriptionOrOptions: string | HttpExceptionOptions = 'User not found',
   ) {
-    super(objectOrError, descriptionOrOptions);
-
-    this._input = input;
-  }
-
-  isCustomError(): this is { _input: BaseErrorData<D> } {
-    return this._input !== undefined;
-  }
-
-  getData() {
-    return this._input;
+    super(input, objectOrError, descriptionOrOptions);
   }
 }
 
@@ -29,7 +18,7 @@ export const assertUserNotFound = <D = any>(
   objectOrError?: string | object | any,
   descriptionOrOptions: string | HttpExceptionOptions = 'User not found',
 ) => {
-  if (!condition) {
+  if (condition) {
     throw new UserNotFoundError(input, objectOrError, descriptionOrOptions);
   }
   return;

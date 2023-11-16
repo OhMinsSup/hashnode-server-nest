@@ -1,9 +1,8 @@
-import { BadRequestException, HttpExceptionOptions } from '@nestjs/common';
+import { HttpExceptionOptions } from '@nestjs/common';
+import { CustomBaseError } from './custom-base.error';
 import type { BaseErrorData } from './error.type';
 
-export class IncorrectPasswordError<D = any> extends BadRequestException {
-  private readonly _input: BaseErrorData<D>;
-
+export class IncorrectPasswordError<D = any> extends CustomBaseError<D> {
   constructor(
     input: BaseErrorData<D>,
     objectOrError?: string | object | any,
@@ -11,17 +10,7 @@ export class IncorrectPasswordError<D = any> extends BadRequestException {
       | string
       | HttpExceptionOptions = 'Password is incorrect',
   ) {
-    super(objectOrError, descriptionOrOptions);
-
-    this._input = input;
-  }
-
-  isCustomError(): this is { _input: BaseErrorData<D> } {
-    return this._input !== undefined;
-  }
-
-  getData() {
-    return this._input;
+    super(input, objectOrError, descriptionOrOptions);
   }
 }
 
@@ -31,7 +20,7 @@ export const assertIncorrectPassword = <D = any>(
   objectOrError?: string | object | any,
   descriptionOrOptions: string | HttpExceptionOptions = 'Password is incorrect',
 ) => {
-  if (!condition) {
+  if (condition) {
     throw new IncorrectPasswordError(
       input,
       objectOrError,

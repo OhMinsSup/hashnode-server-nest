@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsOptional, IsString } from 'class-validator';
-import { PaginationQuery } from '../../libs/pagination';
+import { PaginationQuery } from '../../libs/pagination.query';
 
 export class NotificationListQuery extends PaginationQuery {
   @IsOptional()

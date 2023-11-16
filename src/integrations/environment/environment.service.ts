@@ -68,6 +68,7 @@ export class EnvironmentService {
   generateCookie() {
     return {
       httpOnly: true,
+      name: this.getCookieName(),
       path: this.getCookiePath(),
       domain: this.getCookieDomain(),
       sameSite: this.getCookieSameSite(),

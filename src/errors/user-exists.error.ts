@@ -1,25 +1,14 @@
-import { BadRequestException, HttpExceptionOptions } from '@nestjs/common';
+import { HttpExceptionOptions } from '@nestjs/common';
+import { CustomBaseError } from './custom-base.error';
 import type { BaseErrorData } from './error.type';
 
-export class UserExistsError<D = any> extends BadRequestException {
-  private readonly _input: BaseErrorData<D>;
-
+export class UserExistsError<D = any> extends CustomBaseError<D> {
   constructor(
     input: BaseErrorData<D>,
     objectOrError?: string | object | any,
     descriptionOrOptions: string | HttpExceptionOptions = 'User already exists',
   ) {
-    super(objectOrError, descriptionOrOptions);
-
-    this._input = input;
-  }
-
-  isCustomError(): this is { _input: BaseErrorData<D> } {
-    return this._input !== undefined;
-  }
-
-  getData() {
-    return this._input;
+    super(input, objectOrError, descriptionOrOptions);
   }
 }
 

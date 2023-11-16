@@ -4,7 +4,6 @@ import bcrypt from 'bcrypt';
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
 import { TokenService } from './token.service';
-import { NotificationsService } from '../../notifications/notifications.service';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
 
 // constants
@@ -24,7 +23,6 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly token: TokenService,
     private readonly env: EnvironmentService,
-    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -32,7 +30,7 @@ export class AuthService {
    * @param {string} userId 유저 아이디
    */
   private async _makeUserAuthtiencation(userId: string) {
-    const expiresAt = this.env.getAuthTokenExpiresIn();
+    const expiresAt = this.env.getAuthTokenExpiresAt();
     return this.prisma.userAuthentication.create({
       data: {
         fk_user_id: userId,
@@ -172,6 +170,12 @@ export class AuthService {
               website: null,
             },
           },
+          notification: {
+            create: {
+              type: 'WELCOME',
+              message: `${input.nickname}님 환영합니다.`,
+            },
+          },
         },
       });
 
@@ -187,10 +191,6 @@ export class AuthService {
 
       const authToken = this.token.getJwtToken(user.id, {
         authId: auth.id,
-      });
-
-      this.notifications.createWelcome(user.id).catch((e) => {
-        console.error(e.message, e.stack, 'NotificationsService');
       });
 
       return {
