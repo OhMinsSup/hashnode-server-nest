@@ -9,11 +9,11 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
 import { escapeForUrl } from '../../libs/utils';
-import { MyPostListQuery, TrendingUsersQuery } from '../dto/list.query';
+import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
 import { DEFAULT_POSTS_SELECT } from '../../modules/database/select/post.select';
 
 import type { Response } from 'express';
-import type { UpdateBody } from '../dto/update.input';
+import type { UpdateBody } from '../input/update.input';
 import type { Post, Prisma } from '@prisma/client';
 import {
   DEFAULT_USER_SELECT,

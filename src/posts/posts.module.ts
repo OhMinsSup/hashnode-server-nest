@@ -3,7 +3,7 @@ import { PostsController } from './controllers/posts.controller';
 
 // service
 import { PostsService } from './services/posts.service';
-import { TagsService } from '../tags/tags.service';
+import { TagsService } from '../tags/services/tags.service';
 import { NotificationsService } from '../notifications/services/notifications.service';
 
 @Module({

@@ -10,15 +10,15 @@ import {
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // service
-import { TagsService } from './tags.service';
+import { TagsService } from '../services/tags.service';
 
 // decorator
-import { AuthUser } from '../decorators/get-user.decorator';
-import { LoggedInGuard } from '../decorators/logged-in.decorator';
+import { AuthUser } from '../../decorators/get-user.decorator';
+import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 
 // types
-import { TagListQuery } from './dto/list';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import { TagListQuery } from '../input/list.query';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 @ApiTags('태그')
 @Controller('api/v1/tags')

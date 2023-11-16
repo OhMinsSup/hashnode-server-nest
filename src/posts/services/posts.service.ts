@@ -7,7 +7,7 @@ import {
 
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
-import { TagsService } from '../../tags/tags.service';
+import { TagsService } from '../../tags/services/tags.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 
 // utils

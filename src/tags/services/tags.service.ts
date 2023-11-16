@@ -1,28 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 
 // utils
-import { isEmpty, isString } from '../libs/assertion';
+import { isEmpty, isString } from '../../libs/assertion';
 
 // constants
-import { EXCEPTION_CODE } from '../constants/exception.code';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // service
-import { PrismaService } from '../modules/database/prisma.service';
-import { NotificationsService } from '../notifications/services/notifications.service';
-
-// select
-import {
-  TAGS_DETAIL_SELECT,
-  TAGS_LIST_SELECT,
-} from '../modules/database/select/tag.select';
+import { PrismaService } from '../../modules/database/prisma.service';
+import { NotificationsService } from '../../notifications/services/notifications.service';
 
 // utils
-import { calculateRankingScore, escapeForUrl } from '../libs/utils';
+import { calculateRankingScore, escapeForUrl } from '../../libs/utils';
 
 // types
-import { TagListQuery } from './dto/list';
+import { TagListQuery } from '../input/list.query';
 import type { Tag, TagStats } from '@prisma/client';
-import type { UserWithInfo } from '../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/select/user.select';
 
 @Injectable()
 export class TagsService {
@@ -76,10 +70,10 @@ export class TagsService {
       });
     }
 
-    const following = await this.prisma.tagFollowing.create({
+    const following = await this.prisma.tagFollow.create({
       data: {
-        tagId: tagInfo.id,
-        userId: user.id,
+        fk_tag_id: tagInfo.id,
+        fk_user_id: user.id,
       },
     });
 
@@ -124,11 +118,11 @@ export class TagsService {
       });
     }
 
-    const following = await this.prisma.tagFollowing.delete({
+    const following = await this.prisma.tagFollow.delete({
       where: {
-        tagId_userId: {
-          tagId: tagInfo.id,
-          userId: user.id,
+        fk_tag_id_fk_user_id: {
+          fk_tag_id: tagInfo.id,
+          fk_user_id: user.id,
         },
       },
     });
@@ -153,14 +147,14 @@ export class TagsService {
    * @param {number} tagId
    
    */
-  async createTagStats(tagId: number | number[]) {
+  async createTagStats(tagId: string | string[]) {
     const tagIds = Array.isArray(tagId) ? tagId : [tagId];
 
     const tagStatsList: TagStats[] = [];
     for (const id of tagIds) {
       const tagStats = await this.prisma.tagStats.create({
         data: {
-          tagId: id,
+          fk_tag_id: id,
         },
       });
       tagStatsList.push(tagStats);
@@ -171,12 +165,11 @@ export class TagsService {
 
   /**
    * @description 태그에 대해서 following 한 카운터 값을 가져온다.
-   * @param {number} tagId 태그 아이디
-   */
-  private async _countFollowings(tagId: number) {
-    const count = await this.prisma.tagFollowing.count({
+   * @param {string} tagId 태그 아이디 */
+  private async _countFollowings(tagId: string) {
+    const count = await this.prisma.tagFollow.count({
       where: {
-        tagId,
+        fk_tag_id: tagId,
       },
     });
 
@@ -185,14 +178,14 @@ export class TagsService {
 
   /**
    * @description 태그 통계 - following 카운트 업데이트
-   * @param {number} tagId 태그 아이디
+   * @param {string} tagId 태그 아이디
    * @param {number} count 팔로잉 카운트
    * @returns
    */
-  private async _updateTagStatsFollowings(tagId: number, count: number) {
+  private async _updateTagStatsFollowings(tagId: string, count: number) {
     return await this.prisma.tagStats.update({
       where: {
-        tagId,
+        fk_tag_id: tagId,
       },
       data: {
         followings: count,
@@ -202,11 +195,11 @@ export class TagsService {
 
   /**
    * @description 태그 통계 - score 업데이트
-   * @param {number} tagId 태그 아이디
+   * @param {string} tagId 태그 아이디
    * @param {number?} followCount 팔로잉 카운트
    * @returns
    */
-  private async _recalculateRanking(tagId: number, followCount?: number) {
+  private async _recalculateRanking(tagId: string, followCount?: number) {
     const item = await this.prisma.tag.findUnique({ where: { id: tagId } });
     if (!item) return;
     const count = followCount ?? (await this._countFollowings(tagId));
@@ -215,7 +208,7 @@ export class TagsService {
     const score = calculateRankingScore(count, age);
     return this.prisma.tagStats.update({
       where: {
-        tagId,
+        fk_tag_id: tagId,
       },
       data: {
         score,
@@ -234,7 +227,7 @@ export class TagsService {
     const tagInfo = await this.prisma.tag.findFirst({
       where: {
         name,
-        postsTags: {
+        postTags: {
           every: {
             post: {
               isDeleted: false,
@@ -246,12 +239,19 @@ export class TagsService {
         },
       },
       select: {
-        ...TAGS_DETAIL_SELECT,
+        id: true,
+        name: true,
+        _count: {
+          select: {
+            postTags: true,
+            tagFollow: true,
+          },
+        },
         ...(user
           ? {
-              following: {
+              tagFollow: {
                 where: {
-                  userId: user.id,
+                  fk_user_id: user.id,
                 },
                 select: {
                   id: true,
@@ -271,7 +271,7 @@ export class TagsService {
       });
     }
 
-    const isFollowing = !isEmpty(tagInfo.following?.at(0));
+    const isFollowing = !isEmpty(tagInfo.tagFollow?.at(0));
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -280,8 +280,8 @@ export class TagsService {
       result: {
         id: tagInfo.id,
         name: tagInfo.name,
-        postCount: tagInfo._count.postsTags ?? 0,
-        followCount: tagInfo._count.following ?? 0,
+        postCount: tagInfo._count.postTags ?? 0,
+        followCount: tagInfo._count.tagFollow ?? 0,
         isFollowing,
       },
     };
@@ -327,8 +327,7 @@ export class TagsService {
 
   /**
    * @description 인기 태그 리스트 - 시간별 (주간, 월간, 연간)
-   * @param {TagListQuery} params 태그 리스트 쿼리
-   */
+   * @param {TagListQuery} params 태그 리스트 쿼리 */
   private async _getTrandingTimeItems({
     cursor,
     limit,
@@ -351,10 +350,6 @@ export class TagsService {
       default:
         time = null;
         break;
-    }
-
-    if (isString(cursor)) {
-      cursor = Number(cursor);
     }
 
     if (isString(limit)) {
@@ -429,7 +424,7 @@ export class TagsService {
         },
         {
           tagStats: {
-            tagId: 'desc',
+            fk_tag_id: 'desc',
           },
         },
       ],
@@ -437,7 +432,7 @@ export class TagsService {
         tagStats: true,
         _count: {
           select: {
-            postsTags: true,
+            postTags: true,
           },
         },
       },
@@ -450,7 +445,7 @@ export class TagsService {
       ? (await this.prisma.tag.count({
           where: {
             tagStats: {
-              tagId: {
+              fk_tag_id: {
                 lt: endCursor,
               },
               score: {
@@ -472,7 +467,7 @@ export class TagsService {
             },
             {
               tagStats: {
-                tagId: 'desc',
+                fk_tag_id: 'desc',
               },
             },
           ],
@@ -492,10 +487,6 @@ export class TagsService {
    * @param {TagListQuery} params 태그 리스트 쿼리
    */
   private async _getRecentItems({ cursor, limit, name }: TagListQuery) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -518,7 +509,15 @@ export class TagsService {
             : undefined,
           name: name ? { contains: name } : undefined,
         },
-        select: TAGS_LIST_SELECT,
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              postTags: true,
+            },
+          },
+        },
         take: limit,
       }),
     ]);
@@ -543,13 +542,8 @@ export class TagsService {
 
   /**
    * @description 최근 일주일 사이에 생성된 태그 리스트
-   * @param {TagListQuery} params 태그 리스트 쿼리
-   */
+   * @param {TagListQuery} params 태그 리스트 쿼리 */
   private async _getNewItems({ cursor, limit, name }: TagListQuery) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -578,7 +572,15 @@ export class TagsService {
           },
           name: name ? { contains: name } : undefined,
         },
-        select: TAGS_LIST_SELECT,
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              postTags: true,
+            },
+          },
+        },
         take: limit,
       }),
     ]);
@@ -606,13 +608,8 @@ export class TagsService {
 
   /**
    * @description 인기 태그 리스트
-   * @param {TagListQuery} params 태그 리스트 쿼리
-   */
+   * @param {TagListQuery} params 태그 리스트 쿼리 */
   private async _getTrandingItems({ cursor, limit, name }: TagListQuery) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -626,7 +623,7 @@ export class TagsService {
       this.prisma.tag.findMany({
         orderBy: [
           {
-            postsTags: {
+            postTags: {
               _count: 'desc',
             },
           },
@@ -642,7 +639,15 @@ export class TagsService {
             : undefined,
           name: name ? { contains: name } : undefined,
         },
-        select: TAGS_LIST_SELECT,
+        select: {
+          id: true,
+          name: true,
+          _count: {
+            select: {
+              postTags: true,
+            },
+          },
+        },
         take: limit,
       }),
     ]);
@@ -658,7 +663,7 @@ export class TagsService {
           },
           orderBy: [
             {
-              postsTags: {
+              postTags: {
                 _count: 'desc',
               },
             },
@@ -674,19 +679,19 @@ export class TagsService {
 
   /**
    * @description 태그 데이터를 필요한 값만 정리해서 가져온다.
-   * @param {Tag[] & { _count: { postsTags: number; }; }[]} tags
+   * @param {Tag[] & { _count: { postTags: number; }; }[]} tags
    */
   private _serializeTag(
     tags: (Tag & {
       _count: {
-        postsTags: number;
+        postTags: number;
       };
     })[],
   ) {
     return tags.map((tag) => ({
       id: tag.id,
       name: tag.name,
-      postsCount: tag._count.postsTags,
+      postCount: tag._count.postTags,
     }));
   }
 }

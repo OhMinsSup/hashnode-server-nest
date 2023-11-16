@@ -21,8 +21,8 @@ import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { UserService } from '../services/user.service';
 
 // dto
-import { UpdateBody } from '../dto/update.input';
-import { MyPostListQuery, TrendingUsersQuery } from '../dto/list.query';
+import { UpdateBody } from '../input/update.input';
+import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
 
 // types
 import type { Response } from 'express';
