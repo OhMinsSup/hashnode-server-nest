@@ -3,7 +3,7 @@ import { PrismaService } from '../../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { isEmpty, isString } from '../../libs/assertion';
 import { NotificationListQuery } from '../input/list.query';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 import { NotificationReadAllQuery } from '../input/read-all.query';
 
 @Injectable()

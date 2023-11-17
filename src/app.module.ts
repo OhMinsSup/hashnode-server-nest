@@ -3,8 +3,6 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule } from '@nestjs/jwt';
 import { CacheModule } from '@nestjs/cache-manager';
 
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { PostsModule } from './posts/posts.module';
@@ -37,7 +35,6 @@ import { AuthenticationGuardModule } from './guards/authentication.module';
     NotificationsModule,
     HealthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, Logger],
+  providers: [Logger],
 })
 export class AppModule {}

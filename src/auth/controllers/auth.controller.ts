@@ -10,7 +10,7 @@ import { SigninInput } from '../input/signin.input';
 import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
 
 @ApiTags('인증')
-@Controller('api/v1/auth')
+@Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 

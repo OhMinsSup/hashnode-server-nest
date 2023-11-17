@@ -16,7 +16,7 @@ import { calculateRankingScore, escapeForUrl } from '../../libs/utils';
 // types
 import { TagListQuery } from '../input/list.query';
 import type { Tag, TagStats } from '@prisma/client';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @Injectable()
 export class TagsService {

@@ -1,25 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../modules/database/prisma.service';
-import { ConfigService } from '@nestjs/config';
 import { PostsService } from '../../posts/services/posts.service';
+import { EnvironmentService } from '../../integrations/environment/environment.service';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
-import { escapeForUrl } from '../../libs/utils';
 import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
+import { assertUsernameExists } from '../../errors/username-exists.error';
 import { DEFAULT_POSTS_SELECT } from '../../modules/database/select/post.select';
+import { escapeForUrl } from '../../libs/utils';
 
 import type { Response } from 'express';
-import type { UpdateBody } from '../input/update.input';
+import type { UpdateUserBody } from '../input/update.input';
 import type { Post, Prisma } from '@prisma/client';
-import {
-  DEFAULT_USER_SELECT,
-  UserWithInfo,
-  USER_FOLLOW_TAGS_SELECT,
-} from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 type RawTrendingUsers = {
   id: number;
@@ -37,7 +34,7 @@ type TransformedTrendingUsers = Omit<RawTrendingUsers, 'posts'> & {
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly config: ConfigService,
+    private readonly env: EnvironmentService,
     private readonly posts: PostsService,
   ) {}
 
@@ -57,19 +54,57 @@ export class UserService {
    */
   async getUserPosts(username: string, { cursor, limit }: MyPostListQuery) {
     const { result } = await this.getUserInfoByUsername(username);
-    return this.myPosts(result, { cursor, limit });
+    return this.myPosts(result as any, { cursor, limit });
   }
 
   /**
    * @description 유저명으로 유저 정보를 가져온다.
-   * @param {string} username 유저명
+   * @param {string} userId 유저명
    */
-  async getUserInfoByUsername(username: string) {
-    const data = await this.prisma.user.findFirst({
+  async getUserInfoByUsername(userId: string) {
+    const data = await this.prisma.user.findUnique({
       where: {
-        username,
+        id: userId,
       },
-      select: DEFAULT_USER_SELECT,
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        userProfile: {
+          select: {
+            nickname: true,
+            tagline: true,
+            username: true,
+            location: true,
+            bio: true,
+            availableText: true,
+          },
+        },
+        userSocial: {
+          select: {
+            github: true,
+            twitter: true,
+            facebook: true,
+            instagram: true,
+            website: true,
+          },
+        },
+        userImage: {
+          select: {
+            avatarUrl: true,
+          },
+        },
+        userTags: {
+          select: {
+            tag: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
     });
 
     return {
@@ -98,7 +133,7 @@ export class UserService {
    * @param {UserWithInfo} user 유저 정보
    * @param {UpdateBody} input 업데이트 정보
    */
-  async update(user: UserWithInfo, input: UpdateBody) {
+  async update(user: UserWithInfo, input: UpdateUserBody) {
     return this.prisma.$transaction(async (tx) => {
       const newData = {} as Prisma.XOR<
         Prisma.UserUpdateInput,
@@ -111,76 +146,84 @@ export class UserService {
       >;
 
       const newSocialData = {} as Prisma.XOR<
-        Prisma.UserSocialsUpdateInput,
-        Prisma.UserSocialsUncheckedUpdateInput
+        Prisma.UserSocialUpdateInput,
+        Prisma.UserSocialUncheckedUpdateInput
       >;
 
-      if (input.username && input.username !== user.username) {
-        newData.username = input.username;
+      if (input.username && input.username !== user.userProfile.username) {
+        const exists = await tx.userProfile.findUnique({
+          where: {
+            username: input.username,
+          },
+        });
+
+        assertUsernameExists(!!exists, {
+          resultCode: EXCEPTION_CODE.NOT_EXIST,
+          message: '이미 사용중인 아이디입니다.',
+          error: 'username',
+          result: null,
+        });
+
+        newProfileData.username = input.username;
       }
 
-      if (input.email && input.email !== user.email) {
-        newData.email = input.email;
+      if (input.nickname && input.nickname !== user.userProfile.nickname) {
+        newProfileData.nickname = input.nickname;
       }
 
-      if (input.name && input.name !== user.profile.name) {
-        newProfileData.name = input.name;
-      }
-
-      if (input.tagline && input.tagline !== user.profile.tagline) {
+      if (input.tagline && input.tagline !== user.userProfile.tagline) {
         newProfileData.tagline = input.tagline;
       }
 
-      if (input.avatarUrl && input.avatarUrl !== user.profile.avatarUrl) {
-        newProfileData.avatarUrl = input.avatarUrl;
-      }
-
-      if (input.location && input.location !== user.profile.location) {
+      if (input.location && input.location !== user.userProfile.location) {
         newProfileData.location = input.location;
       }
 
-      if (input.bio && input.bio !== user.profile.bio) {
+      if (input.bio && input.bio !== user.userProfile.bio) {
         newProfileData.bio = input.bio;
       }
 
       if (
         input.availableText &&
-        input.availableText !== user.profile.availableText
+        input.availableText !== user.userProfile.availableText
       ) {
         newProfileData.availableText = input.availableText;
       }
 
+      if (input.socials && Object.keys(input.socials).length > 0) {
+        for (const [key, value] of Object.entries(input.socials)) {
+          if (value !== user.userSocial[key]) {
+            newSocialData[key] = value;
+          }
+        }
+      }
+
       if (!isEmpty(input.skills) && input.skills) {
-        const next_tags = input.skills ?? [];
-        const current_tags = user.skills?.map((skill) => skill.tag) ?? [];
+        const tags = input.skills ?? [];
+        const currents = user.userTags?.map((skill) => skill.tag) ?? [];
+
         // 기존 태그와 새로운 태그를 비교하여 삭제할 태그와 추가할 태그를 구분
-        const deleted_tags = current_tags.filter(
-          (tag) => !next_tags.includes(tag.name),
-        );
-        const added_tags = next_tags.filter(
-          (tag) => !current_tags.map((tag) => tag.name).includes(tag),
+        const deleteds = currents.filter((tag) => !tags.includes(tag.name));
+        const addeds = tags.filter(
+          (tag) => !currents.map((tag) => tag.name).includes(tag),
         );
 
         // 삭제할 태그가 존재하는 경우
-        if (deleted_tags.length > 0) {
-          await Promise.all(
-            deleted_tags.map((tag) =>
-              tx.usersTags.delete({
-                where: {
-                  userId_tagId: {
-                    userId: user.id,
-                    tagId: tag.id,
-                  },
-                },
-              }),
-            ),
-          );
+        if (!isEmpty(deleteds)) {
+          await tx.userTags.deleteMany({
+            where: {
+              fk_user_id: user.id,
+              fk_tag_id: {
+                in: deleteds.map((tag) => tag.id),
+              },
+            },
+          });
         }
 
         // 추가할 태그가 존재하는 경우
-        if (added_tags.length > 0) {
-          const tags = await Promise.all(
-            added_tags.map(async (tag) => {
+        if (!isEmpty(addeds)) {
+          const fn1 = () => {
+            return addeds.map(async (tag) => {
               const newTag = escapeForUrl(tag);
               // 태그 정보가 이미 존재하는지 체크
               const tagData = await tx.tag.findFirst({
@@ -197,12 +240,14 @@ export class UserService {
                 });
               }
               return tagData;
-            }),
-          );
+            });
+          };
 
-          await Promise.all(
-            tags.map((tag) =>
-              tx.usersTags.create({
+          const tags = await Promise.all(fn1());
+
+          const fn2 = () => {
+            return tags.map((tag) =>
+              tx.userTags.create({
                 data: {
                   user: {
                     connect: {
@@ -216,16 +261,10 @@ export class UserService {
                   },
                 },
               }),
-            ),
-          );
-        }
-      }
+            );
+          };
 
-      if (input.socials && Object.keys(input.socials).length > 0) {
-        for (const [key, value] of Object.entries(input.socials)) {
-          if (value !== user.socials[key]) {
-            newSocialData[key] = value;
-          }
+          await Promise.all(fn2());
         }
       }
 
@@ -241,16 +280,16 @@ export class UserService {
       if (!isEmpty(newProfileData)) {
         await tx.userProfile.update({
           where: {
-            userId: user.id,
+            fk_user_id: user.id,
           },
           data: newProfileData,
         });
       }
 
       if (!isEmpty(newSocialData)) {
-        await tx.userSocials.update({
+        await tx.userSocial.update({
           where: {
-            userId: user.id,
+            fk_user_id: user.id,
           },
           data: newSocialData,
         });
@@ -300,10 +339,6 @@ export class UserService {
     user: UserWithInfo,
     { cursor, limit, keyword, isDeleted }: MyPostListQuery,
   ) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -312,7 +347,7 @@ export class UserService {
       this.prisma.post.count({
         where: {
           isDeleted: isDeleted ?? undefined,
-          userId: user.id,
+          fk_user_id: user.id,
           ...(keyword &&
             !isEmpty(keyword) && {
               title: {
@@ -334,7 +369,7 @@ export class UserService {
               }
             : undefined,
           isDeleted: isDeleted ?? undefined,
-          userId: user.id,
+          fk_user_id: user.id,
           ...(keyword &&
             !isEmpty(keyword) && {
               title: {
@@ -355,7 +390,7 @@ export class UserService {
               lt: endCursor,
             },
             isDeleted: isDeleted ?? undefined,
-            userId: user.id,
+            fk_user_id: user.id,
             ...(keyword &&
               !isEmpty(keyword) && {
                 title: {
@@ -391,11 +426,25 @@ export class UserService {
    * @param {UserWithInfo} user 유저 정보
    */
   async getFollowTags(user: UserWithInfo) {
-    const tags = await this.prisma.tagFollowing.findMany({
+    const tags = await this.prisma.tagFollow.findMany({
       where: {
-        userId: user.id,
+        fk_user_id: user.id,
       },
-      select: USER_FOLLOW_TAGS_SELECT,
+      select: {
+        tag: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            image: true,
+            _count: {
+              select: {
+                postTags: true,
+              },
+            },
+          },
+        },
+      },
     });
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -457,7 +506,7 @@ export class UserService {
       for (const post of posts) {
         const [id, title, createdAt] = post.split('|');
         serializedPosts.push({
-          id: Number(id),
+          id: id,
           title,
           createdAt: Number(createdAt),
         });
@@ -499,11 +548,12 @@ export class UserService {
    * @param {Response} res 응답 객체
    */
   private clearCookies(res: Response) {
-    res.clearCookie(this.config.get('COOKIE_TOKEN_NAME'), {
-      httpOnly: true,
-      domain: this.config.get('COOKIE_DOMAIN'),
-      path: this.config.get('COOKIE_PATH'),
-      sameSite: this.config.get('COOKIE_SAMESITE'),
+    const cookieData = this.env.generateCookie();
+    res.clearCookie(cookieData.name, {
+      httpOnly: cookieData.httpOnly,
+      domain: cookieData.domain,
+      path: cookieData.path,
+      sameSite: cookieData.sameSite,
     });
   }
 

@@ -80,8 +80,7 @@ async function bootstrap() {
 
   app.enableVersioning({
     defaultVersion: VersionStrategy.current,
-    type: VersioningType.HEADER,
-    header: 'X-API-Version',
+    type: VersioningType.URI,
   });
 
   app.enableCors({

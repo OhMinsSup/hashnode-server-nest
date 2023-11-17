@@ -26,7 +26,7 @@ import { isEqual } from 'lodash';
 
 // types
 import type { Tag, Prisma } from '@prisma/client';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 import {
   DEFAULT_POSTS_SELECT,

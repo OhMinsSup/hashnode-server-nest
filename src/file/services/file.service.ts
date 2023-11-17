@@ -11,7 +11,7 @@ import { isString } from '../../libs/assertion';
 
 // types
 import { PaginationQuery } from '../../libs/pagination.query';
-import { UserWithInfo } from '../../modules/database/select/user.select';
+import { UserWithInfo } from '../../modules/database/prisma.interface';
 import { CreateInput } from '../input/create.input';
 
 @Injectable()
@@ -49,10 +49,10 @@ export class FileService {
 
   /**
    * @description 파일 목록 리스트
-   * @param {PaginationQuery} query 리스트 파라미터
-   */
-  async list(query: PaginationQuery) {
-    const result = await this._getRecentItems(query);
+   * @param {UserWithInfo} user 유저 정보
+   * @param {PaginationQuery} query 리스트 파라미터 */
+  async list(user: UserWithInfo, query: PaginationQuery) {
+    const result = await this._getRecentItems(user, query);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
 
@@ -73,15 +73,19 @@ export class FileService {
 
   /**
    * @description 파일 리스트
-   * @param {PaginationQuery} input 리스트 파라미터
-   */
-  private async _getRecentItems({ cursor, limit }: PaginationQuery) {
+   * @param {UserWithInfo} user 유저 정보
+   * @param {PaginationQuery} input 리스트 파라미터 */
+  private async _getRecentItems(user, { cursor, limit }: PaginationQuery) {
     if (isString(limit)) {
       limit = Number(limit);
     }
 
     const [totalCount, list] = await Promise.all([
-      this.prisma.file.count(),
+      this.prisma.file.count({
+        where: {
+          fk_user_id: user.id,
+        },
+      }),
       this.prisma.file.findMany({
         orderBy: {
           id: 'desc',
@@ -92,6 +96,7 @@ export class FileService {
                 lt: cursor,
               }
             : undefined,
+          fk_user_id: user.id,
         },
         select: {
           id: true,

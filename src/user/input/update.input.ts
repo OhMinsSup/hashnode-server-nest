@@ -1,8 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
-  IsEmail,
-  IsNotEmpty,
   IsObject,
   IsOptional,
   IsString,
@@ -63,8 +61,19 @@ export class UpdateSocialsBody {
   website?: string;
 }
 
-export class UpdateBody {
-  @IsNotEmpty()
+export class UpdateUserBody {
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  @ApiProperty({
+    description: '유저네임',
+    maxLength: 20,
+    type: 'string',
+    required: true,
+  })
+  username?: string;
+
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(20)
@@ -75,7 +84,7 @@ export class UpdateBody {
     type: 'string',
     required: true,
   })
-  name: string;
+  nickname?: string;
 
   @IsOptional()
   @IsString()
@@ -87,15 +96,6 @@ export class UpdateBody {
     required: false,
   })
   tagline?: string;
-
-  @IsOptional()
-  @IsUrl()
-  @ApiProperty({
-    description: '아바타 이미지 url',
-    type: 'string',
-    required: false,
-  })
-  avatarUrl?: string;
 
   @IsOptional()
   @IsString()
@@ -135,7 +135,7 @@ export class UpdateBody {
   @IsString()
   @MaxLength(140)
   @ApiProperty({
-    description: '사용가능한 시간',
+    description: '사용 가능한 텍스트',
     maxLength: 140,
     type: 'string',
     required: false,
@@ -150,26 +150,4 @@ export class UpdateBody {
     required: false,
   })
   socials?: UpdateSocialsBody;
-
-  @IsNotEmpty()
-  @IsString()
-  @MaxLength(20)
-  @ApiProperty({
-    description: '유저네임',
-    maxLength: 20,
-    type: 'string',
-    required: true,
-  })
-  username: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsEmail()
-  @MaxLength(255)
-  @ApiProperty({
-    description: '이메일',
-    type: 'string',
-    required: true,
-  })
-  email: string;
 }

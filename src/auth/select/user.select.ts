@@ -27,4 +27,14 @@ export const USER_SELECT = Prisma.validator<Prisma.UserSelect>()({
       avatarUrl: true,
     },
   },
+  userTags: {
+    select: {
+      tag: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
 });

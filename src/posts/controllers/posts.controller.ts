@@ -23,7 +23,7 @@ import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
 // guard
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('게시물')
 @Controller('api/v1/posts')

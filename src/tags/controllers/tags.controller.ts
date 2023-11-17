@@ -18,7 +18,7 @@ import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 
 // types
 import { TagListQuery } from '../input/list.query';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('태그')
 @Controller('api/v1/tags')

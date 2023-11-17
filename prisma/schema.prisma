@@ -31,6 +31,8 @@ model User {
   post               Post[]
   postLike           PostLike[]
   tagFollow          TagFollow[]
+  userTags           UserTags[]
+  history            History[]
 
   @@index([email], map: "users_email")
   @@map("users")
@@ -113,6 +115,19 @@ model UserAuthentication {
 
   @@index([fk_user_id], map: "user_authentications_fk_user_id")
   @@map("user_authentications")
+}
+
+model UserTags {
+  id         String @id @default(uuid())
+  fk_user_id String
+  fk_tag_id  String
+
+  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
+
+  @@index([fk_user_id], map: "user_tags_fk_user_id")
+  @@index([fk_tag_id], map: "user_tags_fk_tag_id")
+  @@map("user_tags")
 }
 
 model File {
@@ -266,6 +281,7 @@ model Tag {
   tagStats     TagStats?
   tagFollow    TagFollow[]
   notification Notification[]
+  userTags     UserTags[]
 
   @@index([createdAt], map: "tags_createdAt")
   @@index([name], map: "tags_name")
@@ -298,4 +314,19 @@ model TagFollow {
   @@index([fk_tag_id], map: "tag_follows_fk_tag_id")
   @@index([fk_user_id], map: "tag_follows_fk_user_id")
   @@map("tag_follows")
+}
+
+model History {
+  id          String   @id @default(uuid())
+  itemType    String
+  isActive    Boolean  @default(true)
+  fk_user_id  String
+  dateAddedAt DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@index([createdAt(sort: Desc), fk_user_id(sort: Desc)])
+  @@map("histories")
 }

@@ -86,7 +86,6 @@ export class AuthenticationGuard implements CanActivate {
     const { authId, id, exp } = payload;
 
     const diff = differenceInMilliseconds(new Date(exp * 1000), new Date());
-    console.log('diff ====>', diff);
     if (diff > 0) {
       const validated = await this.prisma.userAuthentication.findUnique({
         where: {

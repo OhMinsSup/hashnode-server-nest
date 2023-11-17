@@ -12,7 +12,7 @@ import { AuthUser } from '../../decorators/get-user.decorator';
 
 // type
 import { PaginationQuery } from '../../libs/pagination.query';
-import { UserWithInfo } from '../../modules/database/select/user.select';
+import { UserWithInfo } from '../../modules/database/prisma.interface';
 import { CreateInput } from '../input/create.input';
 
 @ApiTags('파일')
@@ -29,8 +29,8 @@ export class FileController {
     description: '페이지네이션',
   })
   @UseGuards(LoggedInGuard)
-  list(@Query() query: PaginationQuery) {
-    return this.service.list(query);
+  list(@AuthUser() user: UserWithInfo, @Query() query: PaginationQuery) {
+    return this.service.list(user, query);
   }
 
   @Post()

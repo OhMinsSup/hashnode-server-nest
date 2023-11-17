@@ -21,15 +21,15 @@ import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { UserService } from '../services/user.service';
 
 // dto
-import { UpdateBody } from '../input/update.input';
+import { UpdateUserBody } from '../input/update.input';
 import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
 
 // types
 import type { Response } from 'express';
-import type { UserWithInfo } from '../../modules/database/select/user.select';
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('사용자')
-@Controller('api/v1/users')
+@Controller('users')
 export class UserController {
   constructor(private readonly service: UserService) {}
 
@@ -45,10 +45,10 @@ export class UserController {
   @ApiBody({
     required: true,
     description: '내 정보 수정',
-    type: UpdateBody,
+    type: UpdateUserBody,
   })
   @UseGuards(LoggedInGuard)
-  update(@AuthUser() user: UserWithInfo, @Body() input: UpdateBody) {
+  update(@AuthUser() user: UserWithInfo, @Body() input: UpdateUserBody) {
     return this.service.update(user, input);
   }
 
@@ -100,6 +100,16 @@ export class UserController {
     return this.service.getFollowTags(user);
   }
 
+  @Get('owner-posts/:id')
+  @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
+  @UseGuards(LoggedInGuard)
+  getOwnerPostDetai(
+    @AuthUser() user: UserWithInfo,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.service.getOwnerPostDetai(user, id);
+  }
+
   @Get(':username')
   @ApiOperation({ summary: '사용자 정보' })
   getUserInfo(@Query('username') username: string) {
@@ -119,15 +129,5 @@ export class UserController {
     @Query() query: MyPostListQuery,
   ) {
     return this.service.getUserPosts(username, query);
-  }
-
-  @Get('owner-posts/:id')
-  @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
-  @UseGuards(LoggedInGuard)
-  getOwnerPostDetai(
-    @AuthUser() user: UserWithInfo,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
-    return this.service.getOwnerPostDetai(user, id);
   }
 }

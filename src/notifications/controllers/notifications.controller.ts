@@ -1,7 +1,7 @@
 import { Controller, Get, Param, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { AuthUser } from '../../decorators/get-user.decorator';
-import { UserWithInfo } from '../../modules/database/select/user.select';
+import { UserWithInfo } from '../../modules/database/prisma.interface';
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { NotificationListQuery } from '../input/list.query';
 import { NotificationsService } from '../services/notifications.service';
