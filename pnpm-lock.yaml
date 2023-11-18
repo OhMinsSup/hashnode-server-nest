@@ -59,6 +59,9 @@ dependencies:
   cache-manager:
     specifier: ^5.2.4
     version: 5.2.4
+  cjk-slug:
+    specifier: ^0.3.1
+    version: 0.3.1
   class-transformer:
     specifier: ^0.5.1
     version: 0.5.1
@@ -104,6 +107,9 @@ dependencies:
   rxjs:
     specifier: ^7.8.1
     version: 7.8.1
+  slugify:
+    specifier: ^1.6.6
+    version: 1.6.6
   winston:
     specifier: ^3.11.0
     version: 3.11.0
@@ -3976,6 +3982,12 @@ packages:
     engines: {node: '>=8'}
     dev: true
 
+  /cjk-slug@0.3.1:
+    resolution: {integrity: sha512-MyFKeZZeJU+IK/f4J+Y70ssmzlY8opG4CMUbbBJx6O2G0KBNx4XfrDGrrz/EQo8359VrDpwLBM8fokQ2jj3siA==}
+    dependencies:
+      normalize-cjk: 0.4.0
+    dev: false
+
   /cjs-module-lexer@1.2.3:
     resolution: {integrity: sha512-0TNiGstbQmCFwt4akjjBg5pLRTSyj/PkWQ1ZoO2zntmg9yLqSRxwEa4iCfQLGjqhiqBfOJa7W/E8wfGrTDmlZQ==}
     dev: true
@@ -6567,6 +6579,10 @@ packages:
       abbrev: 1.1.1
     dev: false
 
+  /normalize-cjk@0.4.0:
+    resolution: {integrity: sha512-3BgD5wO0/0vrEYEoPdlkxhjnrK+nNo3arosd5PBH1Ywq/TcuO+QSg2wf2LP7Zc2cvKuGIrywmq64tuKwyR3znQ==}
+    dev: false
+
   /normalize-path@3.0.0:
     resolution: {integrity: sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==}
     engines: {node: '>=0.10.0'}
@@ -7299,6 +7315,11 @@ packages:
     resolution: {integrity: sha512-g9Q1haeby36OSStwb4ntCGGGaKsaVSjQ68fBxoQcutl5fS1vuY18H3wSt3jFyFtrkx+Kz0V1G85A4MyAdDMi2Q==}
     engines: {node: '>=8'}
     dev: true
+
+  /slugify@1.6.6:
+    resolution: {integrity: sha512-h+z7HKHYXj6wJU+AnS/+IH8Uh9fdcX1Lrhg1/VMdf9PwoBQXFcXiAdsy2tSK0P6gKwJLXp02r90ahUCqHk9rrw==}
+    engines: {node: '>=8.0.0'}
+    dev: false
 
   /sort-keys-length@1.0.1:
     resolution: {integrity: sha512-GRbEOUqCxemTAk/b32F2xa8wDTs+Z1QHOkbhJDQTvv/6G3ZkbJ+frYWsTcc7cBB3Fu4wy4XlLCuNtJuMn7Gsvw==}

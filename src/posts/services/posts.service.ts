@@ -33,6 +33,7 @@ import {
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
 } from '../../modules/database/select/post.select';
+import { assertNotFound } from '../../errors/not-found.error';
 
 interface UpdatePostLikesParams {
   postId: number;
@@ -127,25 +128,23 @@ export class PostsService {
   /**
    * @description 게시물 상세 조회 (게시물을 작성한 유저만 조회 가능)
    * @param {UserWithInfo} user
-   * @param {number} id
+   * @param {string} postId
    */
-  async ownerDetail(user: UserWithInfo, id: number) {
+  async getOwnerPostById(user: UserWithInfo, postId: string) {
     const post = await this.prisma.post.findFirst({
       where: {
-        id,
-        userId: user.id,
+        id: postId,
+        fk_user_id: user.id,
       },
       select: DEFAULT_POSTS_SELECT,
     });
 
-    if (!post) {
-      throw new BadRequestException({
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '게시물을 찾을 수 없습니다.',
-        error: null,
-        result: null,
-      });
-    }
+    assertNotFound(!post, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '게시물을 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,

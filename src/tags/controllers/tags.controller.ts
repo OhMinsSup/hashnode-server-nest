@@ -1,13 +1,13 @@
 import {
+  Body,
   Controller,
-  Delete,
   Get,
   Param,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // service
 import { TagsService } from '../services/tags.service';
@@ -18,10 +18,11 @@ import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 
 // types
 import { TagListQuery } from '../input/list.query';
+import { TagFollowBody } from '../input/follow.input';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('태그')
-@Controller('api/v1/tags')
+@Controller('tags')
 export class TagsController {
   constructor(private readonly service: TagsService) {}
 
@@ -37,23 +38,21 @@ export class TagsController {
     return this.service.list(query);
   }
 
-  @Get(':tag')
+  @Get(':tagId')
   @ApiOperation({ summary: '태그 상세' })
-  detail(@Param('tag') tag: string, @AuthUser() user?: UserWithInfo) {
-    return this.service.detail(tag, user);
+  detail(@Param('tagId') tagId: string, @AuthUser() user?: UserWithInfo) {
+    return this.service.detail(tagId, user);
   }
 
-  @Post(':tag/follow')
-  @ApiOperation({ summary: '태그 팔로우' })
+  @Post('follow')
+  @ApiOperation({ summary: '태그 팔로우 및 팔로우 해제' })
+  @ApiBody({
+    required: true,
+    description: '태그 팔로우 API',
+    type: TagFollowBody,
+  })
   @UseGuards(LoggedInGuard)
-  follow(@Param('tag') tag: string, @AuthUser() user: UserWithInfo) {
-    return this.service.following(user, tag);
-  }
-
-  @Delete(':tag/follow')
-  @ApiOperation({ summary: '태그 언팔로우' })
-  @UseGuards(LoggedInGuard)
-  unfollow(@Param('tag') tag: string, @AuthUser() user: UserWithInfo) {
-    return this.service.unfollowing(user, tag);
+  follow(@AuthUser() user: UserWithInfo, @Body() input: TagFollowBody) {
+    return this.service.follow(user, input);
   }
 }

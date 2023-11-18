@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
+import { assertNotFound } from '../../errors/not-found.error';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
@@ -15,6 +16,7 @@ import { calculateRankingScore, escapeForUrl } from '../../libs/utils';
 
 // types
 import { TagListQuery } from '../input/list.query';
+import { TagFollowBody } from '../input/follow.input';
 import type { Tag, TagStats } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
@@ -48,26 +50,59 @@ export class TagsService {
   }
 
   /**
-   * @description 태그 팔로우 생성
-   * @param {UserWithInfo} user - 로그인한 유저
-   * @param {string} name - 태그 이름
+   * @description 태그 팔로우 및 팔로우 해제
+   * @param {UserWithInfo} user
+   * @param {TagFollowBody} input
    */
-  async following(user: UserWithInfo, name: string) {
+  async follow(user: UserWithInfo, input: TagFollowBody) {
     const tagInfo = await this.prisma.tag.findUnique({
       where: {
-        name,
+        id: input.tagId,
       },
       select: {
         id: true,
       },
     });
 
-    if (!tagInfo) {
-      throw new NotFoundException({
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '태그를 찾을 수 없습니다.',
-        error: null,
+    assertNotFound(!tagInfo, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '태그를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    const isFollow = !isEmpty(
+      await this.prisma.tagFollow.findFirst({
+        where: {
+          fk_tag_id: tagInfo.id,
+          fk_user_id: user.id,
+        },
+      }),
+    );
+
+    if (isFollow) {
+      const following = await this.prisma.tagFollow.delete({
+        where: {
+          fk_tag_id_fk_user_id: {
+            fk_tag_id: tagInfo.id,
+            fk_user_id: user.id,
+          },
+        },
       });
+
+      const count = await this._countFollowings(tagInfo.id);
+      await this._updateTagStatsFollowings(tagInfo.id, count);
+      this._recalculateRanking(tagInfo.id, count).catch(console.error);
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: {
+          dataId: following.id,
+          count: count,
+        },
+      };
     }
 
     const following = await this.prisma.tagFollow.create({
@@ -83,53 +118,6 @@ export class TagsService {
 
     // 알림 생성
     this.notifications.createTags(tagInfo.id).catch((e) => console.error(e));
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: {
-        dataId: following.id,
-        count: count,
-      },
-    };
-  }
-
-  /**
-   * @description 태그 팔로우 삭제
-   * @param {UserWithInfo} user  - 로그인한 유저
-   * @param {string} name - 태그 이름
-   */
-  async unfollowing(user: UserWithInfo, name: string) {
-    const tagInfo = await this.prisma.tag.findUnique({
-      where: {
-        name,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    if (!tagInfo) {
-      throw new NotFoundException({
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '태그를 찾을 수 없습니다.',
-        error: null,
-      });
-    }
-
-    const following = await this.prisma.tagFollow.delete({
-      where: {
-        fk_tag_id_fk_user_id: {
-          fk_tag_id: tagInfo.id,
-          fk_user_id: user.id,
-        },
-      },
-    });
-
-    const count = await this._countFollowings(tagInfo.id);
-    await this._updateTagStatsFollowings(tagInfo.id, count);
-    this._recalculateRanking(tagInfo.id, count).catch(console.error);
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -218,15 +206,15 @@ export class TagsService {
 
   /**
    * @description 태그 상세 정보
-   * @param {string} name 태그 이름
+   * @param {string} tagId 태그 아이디
    * @param {UserWithInfo} user 유저 정보
    */
-  async detail(name: string, user?: UserWithInfo) {
+  async detail(tagId: string, user?: UserWithInfo) {
     // 유저 정보가 존재하면 태그의 이름 및 팔로잉, 포스트 수를 가져오면서 유저가 팔로잉 했는지 여부를 가져온다.
     // 그리고 유저가 없으면 태그의 이름 및 팔로잉, 포스트 수만 가져온다.
     const tagInfo = await this.prisma.tag.findFirst({
       where: {
-        name,
+        id: tagId,
         postTags: {
           every: {
             post: {
@@ -262,14 +250,12 @@ export class TagsService {
       },
     });
 
-    if (!tagInfo) {
-      throw new NotFoundException({
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '태그를 찾을 수 없습니다.',
-        error: null,
-        result: null,
-      });
-    }
+    assertNotFound(!tagInfo, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '태그를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
 
     const isFollowing = !isEmpty(tagInfo.tagFollow?.at(0));
 

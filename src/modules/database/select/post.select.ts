@@ -22,7 +22,6 @@ export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   title: true,
   subTitle: true,
   content: true,
-  thumbnail: true,
   disabledComment: true,
   publishingDate: true,
   createdAt: true,
@@ -30,26 +29,45 @@ export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   user: {
     select: {
       id: true,
-      username: true,
       email: true,
-      profile: {
+      userImage: {
         select: {
-          name: true,
           avatarUrl: true,
+        },
+      },
+      userProfile: {
+        select: {
+          username: true,
+          nickname: true,
           bio: true,
           availableText: true,
         },
       },
     },
   },
-  seo: {
+  postImage: {
+    select: {
+      file: {
+        select: {
+          id: true,
+          publicUrl: true,
+        },
+      },
+    },
+  },
+  postSeo: {
     select: {
       title: true,
       desc: true,
-      image: true,
+      file: {
+        select: {
+          id: true,
+          publicUrl: true,
+        },
+      },
     },
   },
-  postsTags: {
+  postTags: {
     select: {
       tag: {
         select: {
@@ -62,7 +80,7 @@ export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   _count: {
     select: {
       postLike: true,
-      comments: true,
+      postTags: true,
     },
   },
 });

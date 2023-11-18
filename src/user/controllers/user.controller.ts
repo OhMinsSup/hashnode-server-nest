@@ -1,14 +1,10 @@
 import {
   Body,
   Controller,
-  Delete,
   Get,
   Param,
-  ParseIntPipe,
-  Post,
   Put,
   Query,
-  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -22,10 +18,10 @@ import { UserService } from '../services/user.service';
 
 // dto
 import { UpdateUserBody } from '../input/update.input';
-import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
+import { MyPostListQuery } from '../input/list.query';
 
 // types
-import type { Response } from 'express';
+// import type { Response } from 'express';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('사용자')
@@ -52,46 +48,27 @@ export class UserController {
     return this.service.update(user, input);
   }
 
-  @Delete()
-  @ApiOperation({ summary: '회원 탈퇴' })
-  @UseGuards(LoggedInGuard)
-  delete(
-    @AuthUser() user: UserWithInfo,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.service.delete(user, res);
-  }
+  // @Delete()
+  // @ApiOperation({ summary: '회원 탈퇴' })
+  // @UseGuards(LoggedInGuard)
+  // delete(
+  //   @AuthUser() user: UserWithInfo,
+  //   @Res({ passthrough: true }) res: Response,
+  // ) {
+  //   return this.service.delete(user, res);
+  // }
 
-  @Post('logout')
-  @ApiOperation({ summary: '로그아웃' })
-  logout(@Res({ passthrough: true }) res: Response) {
-    return this.service.logout(res);
-  }
-
-  @Get('my-posts')
-  @ApiOperation({ summary: '내가 쓴 글' })
-  @ApiQuery({
-    name: 'query',
-    type: MyPostListQuery,
-    required: true,
-    description: '페이지네이션',
-  })
-  @UseGuards(LoggedInGuard)
-  myPosts(@AuthUser() user: UserWithInfo, @Query() query: MyPostListQuery) {
-    return this.service.myPosts(user, query);
-  }
-
-  @Get('treanding')
-  @ApiOperation({ summary: '트렌딩 사용자' })
-  @ApiQuery({
-    name: 'query',
-    type: TrendingUsersQuery,
-    required: true,
-    description: '주간, 전체',
-  })
-  getUserTrendings(@Query() query: TrendingUsersQuery) {
-    return this.service.getUserTrendings(query);
-  }
+  // @Get('treanding')
+  // @ApiOperation({ summary: '트렌딩 사용자' })
+  // @ApiQuery({
+  //   name: 'query',
+  //   type: TrendingUsersQuery,
+  //   required: true,
+  //   description: '주간, 전체',
+  // })
+  // getUserTrendings(@Query() query: TrendingUsersQuery) {
+  //   return this.service.getUserTrendings(query);
+  // }
 
   @Get('follow-tags')
   @ApiOperation({ summary: '내가 팔로우한 태그' })
@@ -100,23 +77,23 @@ export class UserController {
     return this.service.getFollowTags(user);
   }
 
-  @Get('owner-posts/:id')
+  @Get('owner-posts/:postId')
   @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
   @UseGuards(LoggedInGuard)
-  getOwnerPostDetai(
+  getOwnerPostById(
     @AuthUser() user: UserWithInfo,
-    @Param('id', ParseIntPipe) id: number,
+    @Param('postId') postId: string,
   ) {
-    return this.service.getOwnerPostDetai(user, id);
+    return this.service.getOwnerPostById(user, postId);
   }
 
-  @Get(':username')
+  @Get(':userId')
   @ApiOperation({ summary: '사용자 정보' })
-  getUserInfo(@Query('username') username: string) {
-    return this.service.getUserInfoByUsername(username);
+  getUserInfo(@Param('userId') userId: string) {
+    return this.service.getUserInfoById(userId);
   }
 
-  @Get(':username/posts')
+  @Get(':userId/posts')
   @ApiOperation({ summary: '사용자가 쓴 글' })
   @ApiQuery({
     name: 'query',
@@ -125,9 +102,9 @@ export class UserController {
     description: '페이지네이션',
   })
   getUserPosts(
-    @Query('username') username: string,
+    @Param('userId') userId: string,
     @Query() query: MyPostListQuery,
   ) {
-    return this.service.getUserPosts(username, query);
+    return this.service.getUserPosts(userId, query);
   }
 }

@@ -8,7 +8,7 @@ import { NotificationsService } from '../services/notifications.service';
 import { NotificationReadAllQuery } from '../input/read-all.query';
 
 @ApiTags('알림')
-@Controller('api/v1/notifications')
+@Controller('notifications')
 export class NotificationsController {
   constructor(private readonly service: NotificationsService) {}
 
@@ -25,7 +25,7 @@ export class NotificationsController {
     return this.service.list(user, query);
   }
 
-  @Put('all/read')
+  @Put('read-all')
   @ApiOperation({ summary: '모든 알림 읽음 처리' })
   @ApiQuery({
     name: 'query',

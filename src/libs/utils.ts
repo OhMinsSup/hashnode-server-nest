@@ -1,3 +1,6 @@
+import slugifyCJK from 'cjk-slug';
+import slugify from 'slugify';
+
 export const escapeForUrl = (text: string) =>
   text
     .replace(
@@ -13,4 +16,9 @@ const G = 0.35;
 
 export function calculateRankingScore(likes: number, hourAge: number) {
   return likes / Math.pow(hourAge + 2, G);
+}
+
+export function getSlug(text: string) {
+  const slug = slugifyCJK(text);
+  return slugify(slug, { trim: true, lower: true });
 }

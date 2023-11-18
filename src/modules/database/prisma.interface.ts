@@ -9,7 +9,7 @@ import type {
 export type UserWithInfo = Pick<User, 'id' | 'email'> & {
   userProfile: Omit<
     UserProfile,
-    'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'userId'
+    'id' | 'createdAt' | 'updatedAt' | 'deletedAt' | 'fk_user_id'
   >;
   userTags: Array<{
     tag: Pick<Tag, 'id' | 'name'>;

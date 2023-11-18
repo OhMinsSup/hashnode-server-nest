@@ -8,27 +8,14 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
-import { MyPostListQuery, TrendingUsersQuery } from '../input/list.query';
+import { MyPostListQuery } from '../input/list.query';
 import { assertUsernameExists } from '../../errors/username-exists.error';
 import { DEFAULT_POSTS_SELECT } from '../../modules/database/select/post.select';
-import { escapeForUrl } from '../../libs/utils';
+import { getSlug } from '../../libs/utils';
 
-import type { Response } from 'express';
 import type { UpdateUserBody } from '../input/update.input';
-import type { Post, Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
-
-type RawTrendingUsers = {
-  id: number;
-  email: string;
-  username: string;
-  avatarUrl: string | null;
-  posts: string;
-};
-
-type TransformedTrendingUsers = Omit<RawTrendingUsers, 'posts'> & {
-  posts: Array<Pick<Post, 'id' | 'title'> & { createdAt: number }>;
-};
 
 @Injectable()
 export class UserService {
@@ -41,27 +28,26 @@ export class UserService {
   /**
    * @description 포스트를 작성한 유저만 조회 가능한 포스트 상세 정보
    * @param {UserWithInfo} user
-   * @param {number} id
-   */
-  async getOwnerPostDetai(user: UserWithInfo, id: number) {
-    return this.posts.ownerDetail(user, id);
+   * @param {string} postId */
+  async getOwnerPostById(user: UserWithInfo, postId: string) {
+    return this.posts.getOwnerPostById(user, postId);
   }
 
   /**
    * @description 유저가 작성한 포스트 리스트
-   * @param {UserWithInfo} user 유저 정보
+   * @param {UserWithInfo} userId 유저 정보
    * @param {MyPostListQuery} param 쿼리
    */
-  async getUserPosts(username: string, { cursor, limit }: MyPostListQuery) {
-    const { result } = await this.getUserInfoByUsername(username);
-    return this.myPosts(result as any, { cursor, limit });
+  async getUserPosts(userId: string, { cursor, limit }: MyPostListQuery) {
+    const { result } = await this.getUserInfoById(userId);
+    return this.getMyPosts(result, { cursor, limit });
   }
 
   /**
    * @description 유저명으로 유저 정보를 가져온다.
    * @param {string} userId 유저명
    */
-  async getUserInfoByUsername(userId: string) {
+  async getUserInfoById(userId: string) {
     const data = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -224,7 +210,7 @@ export class UserService {
         if (!isEmpty(addeds)) {
           const fn1 = () => {
             return addeds.map(async (tag) => {
-              const newTag = escapeForUrl(tag);
+              const newTag = getSlug(tag);
               // 태그 정보가 이미 존재하는지 체크
               const tagData = await tx.tag.findFirst({
                 where: {
@@ -236,6 +222,9 @@ export class UserService {
                 return tx.tag.create({
                   data: {
                     name: newTag,
+                    tagStats: {
+                      create: {},
+                    },
                   },
                 });
               }
@@ -304,38 +293,37 @@ export class UserService {
     });
   }
 
-  /**
-   * @description 유저를 삭제한다.
-   * @param {UserWithInfo} user 유저 정보
-   */
-  async delete(user: UserWithInfo, res: Response) {
-    return this.prisma.$transaction(async (tx) => {
-      await tx.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          deletedAt: new Date(),
-        },
-      });
+  // /**
+  //  * @description 유저를 삭제한다.
+  //  * @param {UserWithInfo} user 유저 정보
+  //  */
+  // async delete(user: UserWithInfo, res: Response) {
+  //   return this.prisma.$transaction(async (tx) => {
+  //     await tx.user.update({
+  //       where: {
+  //         id: user.id,
+  //       },
+  //       data: {
+  //         deletedAt: new Date(),
+  //       },
+  //     });
 
-      this.clearCookies(res);
+  //     this.clearCookies(res);
 
-      return {
-        resultCode: EXCEPTION_CODE.OK,
-        message: null,
-        error: null,
-        result: null,
-      };
-    });
-  }
+  //     return {
+  //       resultCode: EXCEPTION_CODE.OK,
+  //       message: null,
+  //       error: null,
+  //       result: null,
+  //     };
+  //   });
+  // }
 
   /**
    * @description 유저의 포스트 리스트를 가져온다.
    * @param {UserWithInfo} user 유저 정보
-   * @param {MyPostListQuery} params 쿼리 파라미터
-   */
-  async myPosts(
+   * @param {MyPostListQuery} params 쿼리 파라미터 */
+  async getMyPosts(
     user: UserWithInfo,
     { cursor, limit, keyword, isDeleted }: MyPostListQuery,
   ) {
@@ -454,108 +442,89 @@ export class UserService {
     };
   }
 
-  /**
-   * @description 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
-   */
-  async getUserTrendings({ category }: TrendingUsersQuery) {
-    let time: Date | null;
-    switch (category) {
-      case 'week':
-        time = new Date();
-        time.setDate(time.getDate() - 7);
-        break;
-      case 'month':
-        time = new Date();
-        time.setMonth(time.getMonth() - 1);
-        break;
-      case 'year':
-        time = new Date();
-        time.setFullYear(time.getFullYear() - 1);
-        break;
-      default:
-        time = null;
-        break;
-    }
+  // /**
+  //  * @description 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
+  //  */
+  // async getUserTrendings({ category }: TrendingUsersQuery) {
+  //   let time: Date | null;
+  //   switch (category) {
+  //     case 'week':
+  //       time = new Date();
+  //       time.setDate(time.getDate() - 7);
+  //       break;
+  //     case 'month':
+  //       time = new Date();
+  //       time.setMonth(time.getMonth() - 1);
+  //       break;
+  //     case 'year':
+  //       time = new Date();
+  //       time.setFullYear(time.getFullYear() - 1);
+  //       break;
+  //     default:
+  //       time = null;
+  //       break;
+  //   }
 
-    const rawData: Awaited<RawTrendingUsers[]> = await this.prisma.$queryRaw`
-    SELECT u.id, u.email, u.username, up.createdAt, up.avatarUrl, GROUP_CONCAT(p.id || '|' || p.title || '|' || p.createdAt) AS posts
-    FROM User u
-    INNER JOIN (
-      SELECT p1.userId, p1.id AS postId
-      FROM (
-        SELECT p.userId, p.id, ps.score,
-          ROW_NUMBER() OVER (PARTITION BY p.userId ORDER BY ps.score DESC) AS rank
-        FROM Post p
-        INNER JOIN PostStats ps ON p.id = ps.postId
-        WHERE ps.score >= 0 -- 원하는 랭킹 점수로 변경해주세요
-      ) p1
-      WHERE p1.rank <= 3 -- 원하는 상위 랭킹 개수로 변경해주세요
-    ) topPosts ON u.id = topPosts.userId
-    INNER JOIN Post p ON p.id = topPosts.postId
-    LEFT JOIN UserProfile up ON up.userId = u.id
-    WHERE u.createdAt >= ${time ? time.getTime() : 0}
-    GROUP BY u.id, up.id
-    ORDER BY u.createdAt DESC -- 원하는 정렬 기준으로 변경해주세요
-    LIMIT 50;
-    `;
+  //   const rawData: Awaited<RawTrendingUsers[]> = await this.prisma.$queryRaw`
+  //   SELECT u.id, u.email, u.username, up.createdAt, up.avatarUrl, GROUP_CONCAT(p.id || '|' || p.title || '|' || p.createdAt) AS posts
+  //   FROM User u
+  //   INNER JOIN (
+  //     SELECT p1.userId, p1.id AS postId
+  //     FROM (
+  //       SELECT p.userId, p.id, ps.score,
+  //         ROW_NUMBER() OVER (PARTITION BY p.userId ORDER BY ps.score DESC) AS rank
+  //       FROM Post p
+  //       INNER JOIN PostStats ps ON p.id = ps.postId
+  //       WHERE ps.score >= 0 -- 원하는 랭킹 점수로 변경해주세요
+  //     ) p1
+  //     WHERE p1.rank <= 3 -- 원하는 상위 랭킹 개수로 변경해주세요
+  //   ) topPosts ON u.id = topPosts.userId
+  //   INNER JOIN Post p ON p.id = topPosts.postId
+  //   LEFT JOIN UserProfile up ON up.userId = u.id
+  //   WHERE u.createdAt >= ${time ? time.getTime() : 0}
+  //   GROUP BY u.id, up.id
+  //   ORDER BY u.createdAt DESC -- 원하는 정렬 기준으로 변경해주세요
+  //   LIMIT 50;
+  //   `;
 
-    const users: TransformedTrendingUsers[] = [];
-    for (const user of rawData) {
-      const posts = user.posts.split(',');
-      const serializedPosts: TransformedTrendingUsers['posts'][0][] = [];
-      for (const post of posts) {
-        const [id, title, createdAt] = post.split('|');
-        serializedPosts.push({
-          id: id,
-          title,
-          createdAt: Number(createdAt),
-        });
-      }
-      users.push({
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        avatarUrl: user.avatarUrl,
-        posts: serializedPosts,
-      });
-    }
+  //   const users: TransformedTrendingUsers[] = [];
+  //   for (const user of rawData) {
+  //     const posts = user.posts.split(',');
+  //     const serializedPosts: TransformedTrendingUsers['posts'][0][] = [];
+  //     for (const post of posts) {
+  //       const [id, title, createdAt] = post.split('|');
+  //       serializedPosts.push({
+  //         id: id,
+  //         title,
+  //         createdAt: Number(createdAt),
+  //       });
+  //     }
+  //     users.push({
+  //       id: user.id,
+  //       email: user.email,
+  //       username: user.username,
+  //       avatarUrl: user.avatarUrl,
+  //       posts: serializedPosts,
+  //     });
+  //   }
 
-    // 작성한 포스트의 ranking이 높은 유저 50명에 대한 정보를 가져온다.
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: users,
-    };
-  }
+  //   // 작성한 포스트의 ranking이 높은 유저 50명에 대한 정보를 가져온다.
+  //   return {
+  //     resultCode: EXCEPTION_CODE.OK,
+  //     message: null,
+  //     error: null,
+  //     result: users,
+  //   };
+  // }
 
-  /**
-   * @description 로그아웃
-   * @param {Response} res 응답 객체
-   */
-  async logout(res: Response) {
-    this.clearCookies(res);
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: null,
-    };
-  }
-
-  /**
-   * @description 쿠키 제거
-   * @param {Response} res 응답 객체
-   */
-  private clearCookies(res: Response) {
-    const cookieData = this.env.generateCookie();
-    res.clearCookie(cookieData.name, {
-      httpOnly: cookieData.httpOnly,
-      domain: cookieData.domain,
-      path: cookieData.path,
-      sameSite: cookieData.sameSite,
-    });
-  }
+  // /**
+  //  * @description 쿠키 제거
+  //  * @param {Response} res 응답 객체
+  //  */
+  // private clearCookies(res: Response) {
+  //   const cookieData = this.env.generateCookie();
+  //   res.clearCookie(cookieData.name);
+  // }
 
   private _serializeFollowTag(data: any) {
     return {
