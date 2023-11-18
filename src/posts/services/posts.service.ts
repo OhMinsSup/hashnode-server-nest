@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -13,13 +12,15 @@ import { NotificationsService } from '../../notifications/services/notifications
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
 import { calculateRankingScore } from '../../libs/utils';
+import { assertNotFound } from '../../errors/not-found.error';
+import { assertNoPermission } from '../../errors/no-permission.error';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // types
-import { CreateInput } from '../dto/create.input';
-import { UpdateBody } from '../dto/update.input';
+import { CreatePostInput } from '../dto/create.input';
+import { UpdatePostInput } from '../dto/update.input';
 import { GetTopPostsQuery, PostListQuery } from '../dto/list.query';
 
 import { isEqual } from 'lodash';
@@ -33,15 +34,14 @@ import {
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
 } from '../../modules/database/select/post.select';
-import { assertNotFound } from '../../errors/not-found.error';
 
 interface UpdatePostLikesParams {
-  postId: number;
+  postId: string;
   likes: number;
 }
 
 interface PostActionParams extends Pick<UpdatePostLikesParams, 'postId'> {
-  userId: number;
+  userId: string;
 }
 
 @Injectable()
@@ -56,9 +56,9 @@ export class PostsService {
   /**
    * @description 게시물 좋아요
    * @param {UserWithInfo} user
-   * @param {number} id
+   * @param {string} id
    */
-  async like(user: UserWithInfo, id: number) {
+  async like(user: UserWithInfo, id: string) {
     const result = await this._likeItem({ userId: user.id, postId: id });
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -74,9 +74,9 @@ export class PostsService {
   /**
    * @description 게시물 안좋아요
    * @param {UserWithInfo} user
-   * @param {number} id
+   * @param {string} id
    */
-  async unlike(user: UserWithInfo, id: number) {
+  async unlike(user: UserWithInfo, id: string) {
     const result = await this._unlikeItem({ userId: user.id, postId: id });
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -91,9 +91,8 @@ export class PostsService {
 
   /**
    * @description 게시물 상세 조회
-   * @param {number} id
-   */
-  async detail(id: number) {
+   * @param {string} id */
+  async detail(id: string) {
     const now = new Date();
 
     const post = await this.prisma.post.findFirst({
@@ -108,14 +107,12 @@ export class PostsService {
       select: DEFAULT_POSTS_SELECT,
     });
 
-    if (!post) {
-      throw new BadRequestException({
-        resultCode: EXCEPTION_CODE.NOT_EXIST,
-        message: '게시물을 찾을 수 없습니다.',
-        error: null,
-        result: null,
-      });
-    }
+    assertNotFound(!post, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '게시물을 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -157,13 +154,12 @@ export class PostsService {
   /**
    * @description 게시물 삭제
    * @param {UserWithInfo} user
-   * @param {number} id
-   */
-  async delete(user: UserWithInfo, id: number) {
+   * @param {string} id */
+  async delete(user: UserWithInfo, id: string) {
     await this.prisma.post.update({
       where: {
         id,
-        userId: user.id,
+        fk_user_id: user.id,
       },
       data: {
         isDeleted: true,
@@ -180,133 +176,156 @@ export class PostsService {
   /**
    * @description 게시글 수정
    * @param {UserWithInfo} user
-   * @param {any} input
+   * @param {string} id
+   * @param {UpdatePostInput} input
    */
-  async update(user: UserWithInfo, id: number, input: UpdateBody) {
-    const post = await this.prisma.post.findFirst({
-      where: {
-        id: id,
-      },
-      select: DEFAULT_POSTS_SELECT,
-    });
+  async update(user: UserWithInfo, id: string, input: UpdatePostInput) {
+    return this.prisma.$transaction(async (tx) => {
+      const post = await tx.post.findFirst({
+        where: {
+          id,
+        },
+        select: DEFAULT_POSTS_SELECT,
+      });
 
-    if (!post) {
-      throw new BadRequestException({
+      assertNotFound(!post, {
         resultCode: EXCEPTION_CODE.NOT_EXIST,
         message: '게시물을 찾을 수 없습니다.',
         error: null,
         result: null,
       });
-    }
 
-    if (post.user.id !== user.id) {
-      throw new ForbiddenException({
+      assertNoPermission(post.user.id !== user.id, {
         resultCode: EXCEPTION_CODE.NO_PERMISSION,
         message: '권한이 없습니다.',
         error: null,
         result: null,
       });
-    }
 
-    const newData = {} as Prisma.XOR<
-      Prisma.PostUpdateInput,
-      Prisma.PostUncheckedUpdateInput
-    >;
+      const newData = {} as Prisma.XOR<
+        Prisma.PostUpdateInput,
+        Prisma.PostUncheckedUpdateInput
+      >;
 
-    if (input.title && !isEqual(post.title, input.title)) {
-      newData.title = input.title;
-    }
-
-    if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
-      newData.subTitle = input.subTitle;
-    }
-
-    if (input.content && !isEqual(post.content, input.content)) {
-      newData.content = input.content;
-    }
-
-    // if (
-    //   input.thumbnail &&
-    //   input.thumbnail.url &&
-    //   !isEqual(post.thumbnail, input.thumbnail.url)
-    // ) {
-    //   newData.thumbnail = input.thumbnail.url;
-    // }
-
-    if (
-      typeof input.disabledComment === 'boolean' &&
-      post.disabledComment !== input.disabledComment
-    ) {
-      newData.disabledComment = input.disabledComment;
-    }
-
-    if (
-      input.publishingDate &&
-      !isEqual(post.publishingDate, input.publishingDate)
-    ) {
-      newData.publishingDate = new Date(input.publishingDate);
-    }
-
-    if (input.seo) {
-      if (input.seo.title && !isEqual(post.seo.title, input.seo.title)) {
-        newData.seo.update.title = input.seo.title;
+      if (input.title && !isEqual(post.title, input.title)) {
+        newData.title = input.title;
       }
-      if (input.seo.desc && !isEqual(post.seo.desc, input.seo.desc)) {
-        newData.seo.update.desc = input.seo.desc;
+
+      if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
+        newData.subTitle = input.subTitle;
       }
-      if (input.seo.image && !isEqual(post.seo.image, input.seo.image)) {
-        newData.seo.update.image = input.seo.image;
+
+      if (input.content && !isEqual(post.content, input.content)) {
+        newData.content = input.content;
       }
-    }
 
-    if (input.tags) {
-      const prevTags = post.postsTags.map((postTag) => postTag.tag);
+      if (
+        typeof input.disabledComment === 'boolean' &&
+        !isEqual(
+          post.disabledComment,
+          input.disabledComment === undefined
+            ? post.disabledComment
+            : input.disabledComment,
+        )
+      ) {
+        newData.disabledComment = input.disabledComment;
+      }
 
-      const newTags = input.tags.filter(
-        (tag) => !prevTags.find((t) => t.name === tag),
-      );
-      const deleteTags = prevTags.filter(
-        (tag) => !input.tags.find((t) => t === tag.name),
-      );
+      if (
+        typeof input.isDraft === 'boolean' &&
+        !isEqual(
+          post.isDraft,
+          input.isDraft === undefined ? post.isDraft : input.isDraft,
+        )
+      ) {
+        newData.isDraft = input.isDraft;
+      }
 
-      const tags = await Promise.all(
-        newTags.map((tag) => this.tags.findOrCreate(tag)),
-      );
+      if (
+        input.publishingDate &&
+        !isEqual(
+          post.publishingDate.getTime(),
+          new Date(input.publishingDate).getTime(),
+        )
+      ) {
+        newData.publishingDate = new Date(input.publishingDate);
+      }
 
-      newData.postsTags = {
-        deleteMany: {
-          postId: post.id,
-          tagId: {
-            in: deleteTags.map((tag) => tag.id),
+      if (input?.seo?.title && !isEqual(post.postSeo.title, input.seo.title)) {
+        newData.postSeo.update.title = input.seo.title;
+      }
+
+      if (input?.seo?.desc && !isEqual(post.postSeo.desc, input.seo.desc)) {
+        newData.postSeo.update.desc = input.seo.desc;
+      }
+
+      if (input?.seo?.image) {
+        if (post.postSeo.file) {
+          if (!isEqual(post.postSeo.file.id, input.seo.image.id)) {
+            newData.postSeo = {
+              update: {
+                fk_file_id: input.seo.image.id,
+              },
+            };
+          }
+        } else {
+          newData.postSeo = {
+            create: {
+              fk_file_id: input.seo.image.id,
+            },
+          };
+        }
+      }
+
+      if (input.tags) {
+        const tags = post.postTags.map((postTag) => postTag.tag);
+
+        const addeds = input.tags.filter(
+          (tag) => !tags.find((t) => t.name === tag),
+        );
+        const deleteds = tags.filter(
+          (tag) => !input.tags.find((t) => t === tag.name),
+        );
+
+        const newTags = await Promise.all(
+          addeds.map((tag) => this.tags.findOrCreate(tag)),
+        );
+
+        newData.postTags = {
+          deleteMany: {
+            fk_post_id: post.id,
+            fk_tag_id: {
+              in: deleteds.map((tag) => tag.id),
+            },
           },
+          create: newTags.map((tag) => ({
+            fk_tag_id: tag.id,
+          })),
+        };
+      }
+
+      await tx.post.update({
+        where: {
+          id: post.id,
         },
-        create: tags.map((tag) => ({
-          tagId: tag.id,
-        })),
+        data: newData,
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: null,
       };
-    }
-
-    await this.prisma.post.update({
-      where: {
-        id: post.id,
-      },
-      data: newData,
     });
-
-    return {
-      resultCode: EXCEPTION_CODE.OK,
-      message: null,
-      error: null,
-      result: null,
-    };
   }
 
   /**
    * @description 게시글 생성
    * @param {UserWithInfo} user
-   * @param {CreateRequestDto} input
+   * @param {CreatePostInput} input
    */
-  async create(user: UserWithInfo, input: CreateInput) {
+  async create(user: UserWithInfo, input: CreatePostInput) {
     let createdTags: Tag[] = [];
     // 태크 체크
     if (!isEmpty(input.tags) && input.tags) {
@@ -316,46 +335,45 @@ export class PostsService {
       createdTags = tags;
     }
 
+    const date = input.publishingDate ? new Date(input.publishingDate) : null;
+
     const post = await this.prisma.post.create({
       data: {
-        userId: user.id,
+        fk_user_id: user.id,
         title: input.title,
         subTitle: input.subTitle ?? null,
         content: input.content ?? null,
         disabledComment: input.disabledComment ?? true,
         isDraft: input.isDraft ?? true,
-        publishingDate: input.publishingDate
-          ? new Date(input.publishingDate)
-          : null,
+        publishingDate: date,
+        postStats: {
+          create: {},
+        },
+        postSeo: {
+          create: {
+            title: input.seo?.title ?? null,
+            desc: input.seo?.desc ?? null,
+            ...(input.seo?.image && {
+              image: {
+                create: {
+                  fk_file_id: input.seo.image.id,
+                },
+              },
+            }),
+          },
+        },
         ...(input.thumbnail &&
-          input.thumbnail.idx && {
-            postThumbnails: {
+          input.thumbnail.id && {
+            postImage: {
               create: {
-                fileId: input.thumbnail?.idx ?? null,
+                fk_file_id: input.thumbnail.id,
               },
             },
           }),
       },
     });
 
-    await this.prisma.postSeo.create({
-      data: {
-        postId: post.id,
-        title: input.seo?.title ?? null,
-        desc: input.seo?.desc ?? null,
-        image: input.seo?.image ?? null,
-      },
-    });
-
     await this._connectTagsToPost(post.id, createdTags);
-
-    // 태그 통계 생성
-    this.tags
-      .createTagStats(createdTags.map((tag) => tag.id))
-      .catch((e) => console.error(e));
-
-    // 포스트 통계 생성
-    this.createPostStats(post.id).catch((e) => console.error(e));
 
     if (!input.isDraft) {
       // 알림 생성
@@ -373,23 +391,10 @@ export class PostsService {
   }
 
   /**
-   * @description 게시물 통계 추가
-   * @param {number} postId
-   */
-  private createPostStats(postId: number) {
-    return this.prisma.postStats.create({
-      data: {
-        postId,
-      },
-    });
-  }
-
-  /**
    * @description 게시물 목록 리스트
    * @param {PostListQuery} query
-   * @param {UserWithInfo?} user
    */
-  async list(query: PostListQuery, user?: UserWithInfo) {
+  async list(query: PostListQuery) {
     let result = undefined;
     switch (query.type) {
       case 'past':
@@ -399,7 +404,7 @@ export class PostsService {
         result = await this._getItems(query);
         break;
       case 'featured':
-        result = await this._getFeaturedItems(query, user);
+        result = await this._getFeaturedItems(query);
         break;
       default:
         result = await this._getItems(query);
@@ -552,17 +557,13 @@ export class PostsService {
    * @param {PostListQuery} query
    */
   private async _getItems({ cursor, limit, tag }: PostListQuery) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
 
     const now = new Date();
 
-    let tagId: number | null = null;
+    let tagId: string | null = null;
     if (tag) {
       const data = await this.prisma.tag.findFirst({
         where: {
@@ -668,10 +669,6 @@ export class PostsService {
     { cursor, limit }: PostListQuery,
     user?: UserWithInfo,
   ) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -680,7 +677,7 @@ export class PostsService {
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
-          userId: user.id,
+          fk_user_id: user.id,
           isDraft: true,
           isDeleted: false,
         },
@@ -692,7 +689,7 @@ export class PostsService {
           },
         ],
         where: {
-          userId: user.id,
+          fk_user_id: user.id,
           isDraft: true,
           isDeleted: false,
           id: cursor
@@ -715,7 +712,7 @@ export class PostsService {
             },
             isDraft: true,
             isDeleted: false,
-            userId: user.id,
+            fk_user_id: user.id,
           },
           orderBy: [
             {
@@ -742,10 +739,6 @@ export class PostsService {
     { cursor, limit }: PostListQuery,
     user?: UserWithInfo,
   ) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -754,7 +747,7 @@ export class PostsService {
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
-          userId: user.id,
+          fk_user_id: user.id,
           isDeleted: true,
         },
       }),
@@ -765,7 +758,7 @@ export class PostsService {
           },
         ],
         where: {
-          userId: user.id,
+          fk_user_id: user.id,
           isDeleted: true,
           id: cursor
             ? {
@@ -786,7 +779,7 @@ export class PostsService {
               lt: endCursor,
             },
             isDeleted: true,
-            userId: user.id,
+            fk_user_id: user.id,
           },
           orderBy: [
             {
@@ -813,10 +806,6 @@ export class PostsService {
     user: UserWithInfo,
     { cursor, limit }: PostListQuery,
   ) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -827,7 +816,7 @@ export class PostsService {
     const [totalCount, list] = await Promise.all([
       this.prisma.postLike.count({
         where: {
-          userId: user.id,
+          fk_user_id: user.id,
           post: {
             isDeleted: false,
             publishingDate: {
@@ -848,7 +837,7 @@ export class PostsService {
                 lt: cursor,
               }
             : undefined,
-          userId: user.id,
+          fk_user_id: user.id,
           post: {
             isDeleted: false,
             publishingDate: {
@@ -868,7 +857,7 @@ export class PostsService {
             id: {
               lt: endCursor,
             },
-            userId: user.id,
+            fk_user_id: user.id,
             post: {
               isDeleted: false,
               publishingDate: {
@@ -906,10 +895,6 @@ export class PostsService {
     endDate,
     startDate,
   }: PostListQuery) {
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -999,22 +984,13 @@ export class PostsService {
   /**
    * @description 추천 게시물 리스트
    * @param {PostListQuery} query
-   * @param {UserWithInfo?} user
    */
-  private async _getFeaturedItems(
-    { cursor, limit, tag }: PostListQuery,
-    user?: UserWithInfo,
-  ) {
-    console.log(user);
-    if (isString(cursor)) {
-      cursor = Number(cursor);
-    }
-
+  private async _getFeaturedItems({ cursor, limit, tag }: PostListQuery) {
     if (isString(limit)) {
       limit = Number(limit);
     }
 
-    let tagId: number | null = null;
+    let tagId: string | null = null;
     if (tag) {
       const data = await this.prisma.tag.findFirst({
         where: {
@@ -1120,7 +1096,7 @@ export class PostsService {
         },
         {
           postStats: {
-            postId: 'desc',
+            fk_post_id: 'desc',
           },
         },
       ],
@@ -1134,7 +1110,7 @@ export class PostsService {
       ? (await this.prisma.post.count({
           where: {
             postStats: {
-              postId: {
+              fk_post_id: {
                 lt: endCursor,
               },
               score: {
@@ -1162,7 +1138,7 @@ export class PostsService {
             },
             {
               postStats: {
-                postId: 'desc',
+                fk_post_id: 'desc',
               },
             },
           ],
@@ -1227,10 +1203,10 @@ export class PostsService {
 
   /**
    * @description 게시물 통계 - score 업데이트
-   * @param {number} postId 게시물 ID
+   * @param {string} postId 게시물 ID
    * @param {number?} likesCount 좋아요 수
    */
-  private async _recalculateRanking(postId: number, likesCount?: number) {
+  private async _recalculateRanking(postId: string, likesCount?: number) {
     const item = await this.prisma.post.findUnique({ where: { id: postId } });
     if (!item) return;
     const likes = likesCount ?? (await this._countLikes(postId));
@@ -1239,7 +1215,7 @@ export class PostsService {
     const score = calculateRankingScore(likes, age);
     return this.prisma.postStats.update({
       where: {
-        postId,
+        fk_post_id: postId,
       },
       data: {
         score,
@@ -1249,12 +1225,12 @@ export class PostsService {
 
   /**
    * @description  좋아요 카운트
-   * @param {number} postId
+   * @param {string} postId
    */
-  private async _countLikes(postId: number) {
+  private async _countLikes(postId: string) {
     const count = await this.prisma.postLike.count({
       where: {
-        postId,
+        fk_post_id: postId,
       },
     });
     return count;
@@ -1270,7 +1246,7 @@ export class PostsService {
         likes,
       },
       where: {
-        postId,
+        fk_post_id: postId,
       },
     });
   }
@@ -1280,12 +1256,10 @@ export class PostsService {
    * @param {PostActionParams} params``
    */
   private async _likeItem({ userId, postId }: PostActionParams) {
-    const alreadyLiked = await this.prisma.postLike.findUnique({
+    const alreadyLiked = await this.prisma.postLike.findFirst({
       where: {
-        postId_userId: {
-          postId,
-          userId,
-        },
+        fk_post_id: postId,
+        fk_user_id: userId,
       },
     });
 
@@ -1293,8 +1267,8 @@ export class PostsService {
       try {
         await this.prisma.postLike.create({
           data: {
-            postId,
-            userId,
+            fk_post_id: postId,
+            fk_user_id: userId,
           },
         });
       } catch (e) {}
@@ -1310,16 +1284,22 @@ export class PostsService {
    * @param {PostActionParams} params
    */
   private async _unlikeItem({ userId, postId }: PostActionParams) {
-    try {
-      await this.prisma.postLike.delete({
-        where: {
-          postId_userId: {
-            postId,
-            userId,
+    const alreadyLiked = await this.prisma.postLike.findFirst({
+      where: {
+        fk_post_id: postId,
+        fk_user_id: userId,
+      },
+    });
+
+    if (alreadyLiked) {
+      try {
+        await this.prisma.postLike.delete({
+          where: {
+            id: alreadyLiked.id,
           },
-        },
-      });
-    } catch (e) {}
+        });
+      } catch (e) {}
+    }
 
     const likes = await this._countLikes(postId);
     const itemStats = await this._updatePostLikes({ postId, likes });
@@ -1329,14 +1309,14 @@ export class PostsService {
 
   /**
    * @description 태그 연결
-   * @param {number} postId
+   * @param {string} postId
    * @param {Tag[]} tags
    */
-  private async _connectTagsToPost(postId: number, tags: Tag[]) {
+  private async _connectTagsToPost(postId: string, tags: Tag[]) {
     const tagIds = tags.map((tag) => tag.id);
     for (const tagId of tagIds) {
       try {
-        await this.prisma.postsTags.create({
+        await this.prisma.postTags.create({
           data: {
             post: {
               connect: {

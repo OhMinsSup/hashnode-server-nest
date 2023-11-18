@@ -7,9 +7,9 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { SeoBody, ThumbnailBody } from './create.input';
+import { SeoInput, ThumbnailInput } from './create.input';
 
-export class UpdateBody {
+export class UpdatePostInput {
   @IsOptional()
   @IsString()
   @MaxLength(255)
@@ -46,11 +46,11 @@ export class UpdateBody {
   @IsOptional()
   @ApiProperty({
     description: '썸네일 이미지',
-    type: ThumbnailBody,
+    type: ThumbnailInput,
     nullable: true,
     required: false,
   })
-  thumbnail?: ThumbnailBody | null;
+  thumbnail?: ThumbnailInput | null;
 
   @IsArray()
   @IsOptional()
@@ -88,9 +88,19 @@ export class UpdateBody {
   @IsOptional()
   @ApiProperty({
     description: 'SEO',
-    type: SeoBody,
+    type: SeoInput,
     nullable: true,
     required: false,
   })
-  seo?: SeoBody | null;
+  seo?: SeoInput | null;
+
+  @IsBoolean()
+  @IsOptional()
+  @ApiProperty({
+    description: '초안작성 여부',
+    type: 'boolean',
+    required: false,
+    nullable: true,
+  })
+  isDraft?: boolean;
 }

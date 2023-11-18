@@ -5,7 +5,6 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Post,
   Put,
   Query,
@@ -15,18 +14,18 @@ import {
 // service
 import { PostsService } from '../services/posts.service';
 
-// dto
-import { CreateInput } from '../dto/create.input';
-import { UpdateBody } from '../dto/update.input';
-import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
-
 // guard
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
+
+// types
+import { CreatePostInput } from '../dto/create.input';
+import { UpdatePostInput } from '../dto/update.input';
+import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('게시물')
-@Controller('api/v1/posts')
+@Controller('posts')
 export class PostsController {
   constructor(private readonly service: PostsService) {}
 
@@ -35,10 +34,10 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 작성 API',
-    type: CreateInput,
+    type: CreatePostInput,
   })
   @UseGuards(LoggedInGuard)
-  create(@AuthUser() user: UserWithInfo, @Body() input: CreateInput) {
+  create(@AuthUser() user: UserWithInfo, @Body() input: CreatePostInput) {
     return this.service.create(user, input);
   }
 
@@ -50,8 +49,8 @@ export class PostsController {
     required: false,
     description: '페이지네이션',
   })
-  list(@Query() query: PostListQuery, @AuthUser() user?: UserWithInfo) {
-    return this.service.list(query, user);
+  list(@Query() query: PostListQuery) {
+    return this.service.list(query);
   }
 
   @Get('get-likes')
@@ -113,13 +112,13 @@ export class PostsController {
   @ApiBody({
     required: true,
     description: '게시글 수정 API',
-    type: UpdateBody,
+    type: UpdatePostInput,
   })
   @UseGuards(LoggedInGuard)
   update(
     @AuthUser() user: UserWithInfo,
-    @Param('id', ParseIntPipe) id: number,
-    @Body() input: UpdateBody,
+    @Param('id') id: string,
+    @Body() input: UpdatePostInput,
   ) {
     return this.service.update(user, id, input);
   }
@@ -127,33 +126,27 @@ export class PostsController {
   @Delete(':id')
   @ApiOperation({ summary: '게시물 삭제' })
   @UseGuards(LoggedInGuard)
-  delete(
-    @AuthUser() user: UserWithInfo,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  delete(@AuthUser() user: UserWithInfo, @Param('id') id: string) {
     return this.service.delete(user, id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: '게시물 상세 조회' })
-  detail(@Param('id', ParseIntPipe) id: number) {
+  detail(@Param('id') id: string) {
     return this.service.detail(id);
   }
 
   @Post(':id/like')
   @ApiOperation({ summary: '게시글 좋아요' })
   @UseGuards(LoggedInGuard)
-  like(@AuthUser() user: UserWithInfo, @Param('id', ParseIntPipe) id: number) {
+  like(@AuthUser() user: UserWithInfo, @Param('id') id: string) {
     return this.service.like(user, id);
   }
 
   @Delete(':id/like')
   @ApiOperation({ summary: '게시글 싫어요' })
   @UseGuards(LoggedInGuard)
-  unlike(
-    @AuthUser() user: UserWithInfo,
-    @Param('id', ParseIntPipe) id: number,
-  ) {
+  unlike(@AuthUser() user: UserWithInfo, @Param('id') id: string) {
     return this.service.unlike(user, id);
   }
 }

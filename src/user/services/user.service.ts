@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../modules/database/prisma.service';
 import { PostsService } from '../../posts/services/posts.service';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
+import { isEqual } from 'lodash';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
@@ -136,7 +137,10 @@ export class UserService {
         Prisma.UserSocialUncheckedUpdateInput
       >;
 
-      if (input.username && input.username !== user.userProfile.username) {
+      if (
+        input.username &&
+        !isEqual(input.username, user.userProfile.username)
+      ) {
         const exists = await tx.userProfile.findUnique({
           where: {
             username: input.username,
@@ -153,25 +157,31 @@ export class UserService {
         newProfileData.username = input.username;
       }
 
-      if (input.nickname && input.nickname !== user.userProfile.nickname) {
+      if (
+        input.nickname &&
+        !isEqual(input.nickname, user.userProfile.nickname)
+      ) {
         newProfileData.nickname = input.nickname;
       }
 
-      if (input.tagline && input.tagline !== user.userProfile.tagline) {
+      if (input.tagline && !isEqual(input.tagline, user.userProfile.tagline)) {
         newProfileData.tagline = input.tagline;
       }
 
-      if (input.location && input.location !== user.userProfile.location) {
+      if (
+        input.location &&
+        !isEqual(input.location, user.userProfile.location)
+      ) {
         newProfileData.location = input.location;
       }
 
-      if (input.bio && input.bio !== user.userProfile.bio) {
+      if (input.bio && !isEqual(input.bio, user.userProfile.bio)) {
         newProfileData.bio = input.bio;
       }
 
       if (
         input.availableText &&
-        input.availableText !== user.userProfile.availableText
+        !isEqual(input.availableText, user.userProfile.availableText)
       ) {
         newProfileData.availableText = input.availableText;
       }

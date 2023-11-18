@@ -2,7 +2,6 @@ import { ApiProperty } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
-  IsNumber,
   IsObject,
   IsOptional,
   IsString,
@@ -11,6 +10,22 @@ import {
 } from 'class-validator';
 
 // body
+
+export class SeoImageInput {
+  @IsString()
+  @ApiProperty({
+    description: 'SEO image',
+    type: 'string',
+  })
+  id: string;
+
+  @IsUrl()
+  @ApiProperty({
+    description: 'SEO image',
+    type: 'string',
+  })
+  url: string;
+}
 
 export class SeoInput {
   @IsOptional()
@@ -34,22 +49,23 @@ export class SeoInput {
   desc?: string;
 
   @IsOptional()
-  @IsUrl()
   @ApiProperty({
     description: 'SEO image',
-    type: 'string',
+    type: SeoImageInput,
+    nullable: true,
+    required: false,
   })
-  image?: string;
+  image?: SeoImageInput;
 }
 
 export class ThumbnailInput {
   @IsOptional()
-  @IsNumber()
+  @IsString()
   @ApiProperty({
     description: '이미지 아이디',
-    type: 'number',
+    type: 'string',
   })
-  idx?: number;
+  id?: string;
 
   @IsOptional()
   @IsString()
@@ -60,7 +76,7 @@ export class ThumbnailInput {
   url?: string;
 }
 
-export class CreateInput {
+export class CreatePostInput {
   @IsString()
   @MaxLength(255)
   @ApiProperty({

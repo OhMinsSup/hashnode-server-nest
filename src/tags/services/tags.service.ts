@@ -12,12 +12,12 @@ import { PrismaService } from '../../modules/database/prisma.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
 
 // utils
-import { calculateRankingScore, escapeForUrl } from '../../libs/utils';
+import { calculateRankingScore, getSlug } from '../../libs/utils';
 
 // types
 import { TagListQuery } from '../input/list.query';
 import { TagFollowBody } from '../input/follow.input';
-import type { Tag, TagStats } from '@prisma/client';
+import type { Tag } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @Injectable()
@@ -32,7 +32,7 @@ export class TagsService {
    * @param {string} text
    */
   async findOrCreate(text: string) {
-    const name = escapeForUrl(text);
+    const name = getSlug(text);
     const data = await this.prisma.tag.findUnique({
       where: {
         name,
@@ -43,6 +43,9 @@ export class TagsService {
       const tag = await this.prisma.tag.create({
         data: {
           name,
+          tagStats: {
+            create: {},
+          },
         },
       });
       return tag;
@@ -128,27 +131,6 @@ export class TagsService {
         count: count,
       },
     };
-  }
-
-  /**
-   * @description 태그 상태값 - (following, score, clicks) 에 대한 정보를 생성
-   * @param {number} tagId
-   
-   */
-  async createTagStats(tagId: string | string[]) {
-    const tagIds = Array.isArray(tagId) ? tagId : [tagId];
-
-    const tagStatsList: TagStats[] = [];
-    for (const id of tagIds) {
-      const tagStats = await this.prisma.tagStats.create({
-        data: {
-          fk_tag_id: id,
-        },
-      });
-      tagStatsList.push(tagStats);
-    }
-
-    return tagStatsList;
   }
 
   /**
