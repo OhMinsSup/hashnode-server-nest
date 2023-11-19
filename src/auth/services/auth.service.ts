@@ -26,24 +26,8 @@ export class AuthService {
   ) {}
 
   /**
-   * @description 유저 인증 정보를 생성합니다.
-   * @param {string} userId 유저 아이디
-   */
-  private async _makeUserAuthtiencation(userId: string) {
-    const expiresAt = this.env.getAuthTokenExpiresAt();
-    return this.prisma.userAuthentication.create({
-      data: {
-        fk_user_id: userId,
-        lastValidatedAt: new Date(),
-        expiresAt: expiresAt,
-      },
-    });
-  }
-
-  /**
    * @description 로그인
-   * @param {SigninBody} input 로그인 정보
-   */
+   * @param {SigninBody} input 로그인 정보 */
   async signin(input: SigninInput) {
     const user = await this.prisma.user.findFirst({
       where: {
@@ -79,7 +63,14 @@ export class AuthService {
       result: null,
     });
 
-    const auth = await this._makeUserAuthtiencation(user.id);
+    const expiresAt = this.env.getAuthTokenExpiresAt();
+    const auth = await this.prisma.userAuthentication.create({
+      data: {
+        fk_user_id: user.id,
+        lastValidatedAt: new Date(),
+        expiresAt: expiresAt,
+      },
+    });
 
     const authToken = this.token.getJwtToken(user.id, {
       authId: auth.id,
@@ -98,8 +89,7 @@ export class AuthService {
 
   /**
    * @description 회원가입
-   * @param {SignupBody} input 회원가입 정보
-   */
+   * @param {SignupBody} input 회원가입 정보 */
   async signup(input: SignupInput) {
     return await this.prisma.$transaction(async (tx) => {
       const exists = await tx.user.findFirst({
@@ -174,6 +164,13 @@ export class AuthService {
             create: {
               type: 'WELCOME',
               message: `${input.nickname}님 환영합니다.`,
+            },
+          },
+          history: {
+            create: {
+              itemType: 'JOIN_HASHNODE',
+              text: 'Joined Hashnode',
+              dateAddedAt: new Date(),
             },
           },
         },

@@ -19,9 +19,9 @@ import { assertNoPermission } from '../../errors/no-permission.error';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // types
-import { CreatePostInput } from '../dto/create.input';
-import { UpdatePostInput } from '../dto/update.input';
-import { GetTopPostsQuery, PostListQuery } from '../dto/list.query';
+import { CreatePostInput } from '../input/create.input';
+import { UpdatePostInput } from '../input/update.input';
+import { GetTopPostsQuery, PostListQuery } from '../input/list.query';
 
 import { isEqual } from 'lodash';
 
@@ -30,7 +30,7 @@ import type { Tag, Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 import {
-  DEFAULT_POSTS_SELECT,
+  POSTS_SELECT,
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
 } from '../../modules/database/select/post.select';
@@ -104,7 +104,7 @@ export class PostsService {
           lte: now,
         },
       },
-      select: DEFAULT_POSTS_SELECT,
+      select: POSTS_SELECT,
     });
 
     assertNotFound(!post, {
@@ -133,7 +133,7 @@ export class PostsService {
         id: postId,
         fk_user_id: user.id,
       },
-      select: DEFAULT_POSTS_SELECT,
+      select: POSTS_SELECT,
     });
 
     assertNotFound(!post, {
@@ -185,7 +185,7 @@ export class PostsService {
         where: {
           id,
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
       });
 
       assertNotFound(!post, {
@@ -538,7 +538,7 @@ export class PostsService {
           },
         ],
       },
-      select: DEFAULT_POSTS_SELECT,
+      select: POSTS_SELECT,
       take: 6,
     });
 
@@ -620,7 +620,7 @@ export class PostsService {
             },
           }),
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);
@@ -698,7 +698,7 @@ export class PostsService {
               }
             : undefined,
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);
@@ -766,7 +766,7 @@ export class PostsService {
               }
             : undefined,
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);
@@ -944,7 +944,7 @@ export class PostsService {
             lte: now,
           },
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);

@@ -1,6 +1,6 @@
 import { Prisma } from '@prisma/client';
 
-export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
+export const POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   id: true,
   title: true,
   subTitle: true,
@@ -72,12 +72,12 @@ export const DEFAULT_POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
 export const POSTS_LIKES_SELECT = Prisma.validator<Prisma.PostLikeSelect>()({
   id: true,
   post: {
-    select: DEFAULT_POSTS_SELECT,
+    select: POSTS_SELECT,
   },
 });
 
 export const POSTS_STATUS_SELECT = Prisma.validator<Prisma.PostSelect>()({
-  ...DEFAULT_POSTS_SELECT,
+  ...POSTS_SELECT,
   postStats: {
     select: {
       score: true,

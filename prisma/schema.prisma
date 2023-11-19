@@ -193,6 +193,7 @@ model Post {
   postLike     PostLike[]
   postTags     PostTags[]
   notification Notification[]
+  history      History[]
 
   @@index([createdAt], map: "posts_createdAt")
   @@index([fk_user_id], map: "posts_fk_user_id")
@@ -318,15 +319,17 @@ model TagFollow {
 
 model History {
   id          String   @id @default(uuid())
+  text        String
   itemType    String
   isActive    Boolean  @default(true)
   fk_user_id  String
+  fk_post_id  String?
   dateAddedAt DateTime
   createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  user User  @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  post Post? @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
-  @@index([createdAt(sort: Desc), fk_user_id(sort: Desc)])
+  @@index([createdAt(sort: Desc)])
   @@map("histories")
 }

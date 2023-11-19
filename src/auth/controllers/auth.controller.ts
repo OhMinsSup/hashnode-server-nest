@@ -4,10 +4,12 @@ import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
 // service
 import { AuthService } from '../services/auth.service';
 
-// dto
+// interceptor
+import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
+
+// input
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
-import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
 
 @ApiTags('인증')
 @Controller('auth')

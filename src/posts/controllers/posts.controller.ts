@@ -19,9 +19,9 @@ import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
 
 // types
-import { CreatePostInput } from '../dto/create.input';
-import { UpdatePostInput } from '../dto/update.input';
-import { PostListQuery, GetTopPostsQuery } from '../dto/list.query';
+import { CreatePostInput } from '../input/create.input';
+import { UpdatePostInput } from '../input/update.input';
+import { PostListQuery, GetTopPostsQuery } from '../input/list.query';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('게시물')

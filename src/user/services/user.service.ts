@@ -6,12 +6,12 @@ import { isEqual } from 'lodash';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
+import { POSTS_SELECT } from '../../modules/database/select/post.select';
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
 import { MyPostListQuery } from '../input/list.query';
 import { assertUsernameExists } from '../../errors/username-exists.error';
-import { DEFAULT_POSTS_SELECT } from '../../modules/database/select/post.select';
 import { getSlug } from '../../libs/utils';
 
 import type { UpdateUserBody } from '../input/update.input';
@@ -37,8 +37,7 @@ export class UserService {
   /**
    * @description 유저가 작성한 포스트 리스트
    * @param {UserWithInfo} userId 유저 정보
-   * @param {MyPostListQuery} param 쿼리
-   */
+   * @param {MyPostListQuery} param 쿼리 */
   async getUserPosts(userId: string, { cursor, limit }: MyPostListQuery) {
     const { result } = await this.getUserInfoById(userId);
     return this.getMyPosts(result, { cursor, limit });
@@ -46,8 +45,7 @@ export class UserService {
 
   /**
    * @description 유저명으로 유저 정보를 가져온다.
-   * @param {string} userId 유저명
-   */
+   * @param {string} userId 유저명 */
   async getUserInfoById(userId: string) {
     const data = await this.prisma.user.findUnique({
       where: {
@@ -375,7 +373,7 @@ export class UserService {
               },
             }),
         },
-        select: DEFAULT_POSTS_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);

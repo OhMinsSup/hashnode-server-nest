@@ -16,7 +16,7 @@ import { UserWithInfo } from '../../modules/database/prisma.interface';
 import { CreateInput } from '../input/create.input';
 
 @ApiTags('파일')
-@Controller('api/v1/files')
+@Controller('files')
 export class FileController {
   constructor(private readonly service: FileService) {}
 
