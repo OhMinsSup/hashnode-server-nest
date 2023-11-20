@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../modules/database/prisma.service';
 import { PostsService } from '../../posts/services/posts.service';
-import { EnvironmentService } from '../../integrations/environment/environment.service';
+import { SerializeService } from '../../integrations/serialize/serialize.service';
 import { isEqual } from 'lodash';
 
 // constants
@@ -22,8 +22,8 @@ import type { UserWithInfo } from '../../modules/database/prisma.interface';
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
-    private readonly env: EnvironmentService,
     private readonly posts: PostsService,
+    private readonly serialize: SerializeService,
   ) {}
 
   /**
@@ -40,6 +40,7 @@ export class UserService {
    * @param {MyPostListQuery} param 쿼리 */
   async getUserPosts(userId: string, { cursor, limit }: MyPostListQuery) {
     const { result } = await this.getUserInfoById(userId);
+    // @ts-ignore - result가 UserWithInfo 타입이 아닌 경우
     return this.getMyPosts(result, { cursor, limit });
   }
 
@@ -96,7 +97,7 @@ export class UserService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: data,
+      result: this.serialize.getUser(data),
     };
   }
 
@@ -109,7 +110,7 @@ export class UserService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: user,
+      result: this.serialize.getUser(user),
     };
   }
 
@@ -446,7 +447,7 @@ export class UserService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: tags.map(this._serializeFollowTag),
+      result: this.serialize.getFollowTags(tags),
     };
   }
 

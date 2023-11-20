@@ -1,15 +1,16 @@
-import { BadRequestException, HttpExceptionOptions } from '@nestjs/common';
+import { HttpException, HttpExceptionOptions } from '@nestjs/common';
 import type { BaseErrorData } from './error.type';
 
-export class CustomBaseError<D = any> extends BadRequestException {
+export class CustomBaseError<D = any> extends HttpException {
   private readonly _input: BaseErrorData<D>;
 
   constructor(
     input: BaseErrorData<D>,
-    objectOrError?: string | object | any,
-    descriptionOrOptions?: string | HttpExceptionOptions | undefined,
+    response: string | Record<string, any>,
+    status: number,
+    options?: HttpExceptionOptions,
   ) {
-    super(objectOrError, descriptionOrOptions);
+    super(response, status, options);
 
     this._input = input;
   }
@@ -29,11 +30,12 @@ export class CustomBaseError<D = any> extends BadRequestException {
 export const assertCustomError = <D = any>(
   condition: boolean,
   input: BaseErrorData<D>,
-  objectOrError?: string | object | any,
-  descriptionOrOptions?: string | HttpExceptionOptions | undefined,
+  response: string | Record<string, any>,
+  status: number,
+  options?: HttpExceptionOptions,
 ) => {
   if (condition) {
-    throw new CustomBaseError(input, objectOrError, descriptionOrOptions);
+    throw new CustomBaseError(input, response, status, options);
   }
   return;
 };

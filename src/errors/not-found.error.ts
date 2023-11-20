@@ -1,4 +1,8 @@
-import { HttpExceptionOptions } from '@nestjs/common';
+import {
+  HttpException,
+  HttpExceptionOptions,
+  HttpStatus,
+} from '@nestjs/common';
 import { CustomBaseError } from './custom-base.error';
 import type { BaseErrorData } from './error.type';
 
@@ -8,7 +12,19 @@ export class NotFoundError<D = any> extends CustomBaseError<D> {
     objectOrError?: string | object | any,
     descriptionOrOptions: string | HttpExceptionOptions = 'Not found',
   ) {
-    super(input, objectOrError, descriptionOrOptions);
+    const { description, httpExceptionOptions } =
+      HttpException.extractDescriptionAndOptionsFrom(descriptionOrOptions);
+
+    super(
+      input,
+      HttpException.createBody(
+        objectOrError,
+        description,
+        HttpStatus.NOT_FOUND,
+      ),
+      HttpStatus.NOT_FOUND,
+      httpExceptionOptions,
+    );
   }
 }
 
