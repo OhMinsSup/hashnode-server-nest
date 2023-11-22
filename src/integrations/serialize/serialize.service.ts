@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { isEmpty } from '../../libs/assertion';
 
 import type {
+  SerializeFollow,
   SerializeTag,
   SerializeUser,
   SerializeUserImage,
@@ -68,22 +69,34 @@ export class SerializeService {
     return {
       id: data.id,
       name: data.name,
-      description: data?.description ?? undefined,
-      image: data?.image ?? undefined,
-      _count: {
-        post: data?.postTags ?? 0,
-      },
+      isFollow: isEmpty(data?.tagFollow ?? []) ? false : true,
+      postCount: data?._count?.postTags ?? 0,
     } as SerializeTag;
   }
 
-  getFollowTags(data: any) {
+  getTags(data: any) {
     const clone = isEmpty(data) ? [] : [...data];
-    return clone.map((item: any) => {
-      if ('tag' in item) {
-        return this.getTag(item.tag);
-      }
-      return this.getTag(item);
-    });
+    return clone.map((item: any) => this.getTag(item));
+  }
+
+  getFollowTags(data: any) {
+    console.log(data);
+    return [];
+    // const clone = isEmpty(data) ? [] : [...data];
+    // return clone.map((item: any) => {
+    //   if ('tag' in item) {
+    //     return this.getTag(item.tag);
+    //   }
+    //   return this.getTag(item);
+    // });
+  }
+
+  getFollow(data: any) {
+    return {
+      type: data?.type ?? 'none',
+      dataId: data?.dataId ?? '',
+      count: data?.count ?? 0,
+    } as SerializeFollow;
   }
 
   transformDataToUndefined(data: any) {

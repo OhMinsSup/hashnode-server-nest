@@ -34,8 +34,8 @@ export class TagsController {
     required: false,
     description: '쿼리',
   })
-  list(@Query() query: TagListQuery) {
-    return this.service.list(query);
+  list(@Query() query: TagListQuery, @AuthUser() user?: UserWithInfo) {
+    return this.service.list(query, user);
   }
 
   @Get(':tagId')

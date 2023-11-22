@@ -37,9 +37,11 @@ export type SerializeUser = {
 export type SerializeTag = {
   id: number;
   name: string;
-  description: string | undefined;
-  image: string | undefined;
-  _count: {
-    post: number;
-  };
+  postCount: number;
+};
+
+export type SerializeFollow = {
+  type: 'create' | 'delete' | 'none';
+  dataId: string;
+  count: number;
 };

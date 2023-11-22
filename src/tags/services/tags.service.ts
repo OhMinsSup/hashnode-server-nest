@@ -10,14 +10,14 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
 import { NotificationsService } from '../../notifications/services/notifications.service';
+import { SerializeService } from '../../integrations/serialize/serialize.service';
 
 // utils
 import { calculateRankingScore, getSlug } from '../../libs/utils';
 
 // types
-import { TagListQuery } from '../input/list.query';
-import { TagFollowBody } from '../input/follow.input';
-import type { Tag } from '@prisma/client';
+import type { TagListQuery } from '../input/list.query';
+import type { TagFollowBody } from '../input/follow.input';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @Injectable()
@@ -25,6 +25,7 @@ export class TagsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly serialize: SerializeService,
   ) {}
 
   /**
@@ -101,10 +102,11 @@ export class TagsService {
         resultCode: EXCEPTION_CODE.OK,
         message: null,
         error: null,
-        result: {
+        result: this.serialize.getFollow({
+          type: 'delete',
           dataId: following.id,
           count: count,
-        },
+        }),
       };
     }
 
@@ -126,10 +128,11 @@ export class TagsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {
+      result: this.serialize.getFollow({
+        type: 'create',
         dataId: following.id,
         count: count,
-      },
+      }),
     };
   }
 
@@ -259,20 +262,20 @@ export class TagsService {
    * @description 태그 목록 리스트
    * @param {TagListQuery} query 태그 리스트 쿼리
    */
-  async list(query: TagListQuery) {
+  async list(query: TagListQuery, user: UserWithInfo) {
     let result = undefined;
     switch (query.type) {
       case 'popular':
-        result = await this._getTrandingItems(query);
+        result = await this._getTrandingItems(query, user);
         break;
       case 'new':
-        result = await this._getNewItems(query);
+        result = await this._getNewItems(query, user);
         break;
       case 'trending':
-        result = await this._getTrandingTimeItems(query);
+        result = await this._getTrandingTimeItems(query, user);
         break;
       default:
-        result = await this._getRecentItems(query);
+        result = await this._getRecentItems(query, user);
         break;
     }
 
@@ -283,7 +286,7 @@ export class TagsService {
       message: null,
       error: null,
       result: {
-        list: this._serializeTag(list),
+        list,
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -296,11 +299,10 @@ export class TagsService {
   /**
    * @description 인기 태그 리스트 - 시간별 (주간, 월간, 연간)
    * @param {TagListQuery} params 태그 리스트 쿼리 */
-  private async _getTrandingTimeItems({
-    cursor,
-    limit,
-    category,
-  }: TagListQuery) {
+  private async _getTrandingTimeItems(
+    { cursor, limit, category }: TagListQuery,
+    user: UserWithInfo,
+  ) {
     let time: Date | null;
     switch (category) {
       case 'week':
@@ -403,6 +405,17 @@ export class TagsService {
             postTags: true,
           },
         },
+        ...(user && {
+          tagFollow: {
+            where: {
+              fk_user_id: user.id,
+            },
+            select: {
+              id: true,
+            },
+            take: 1,
+          },
+        }),
       },
       take: limit,
     });
@@ -444,7 +457,7 @@ export class TagsService {
 
     return {
       totalCount,
-      list: this._serializeTag(list),
+      list: this.serialize.getTags(list),
       endCursor,
       hasNextPage,
     };
@@ -454,7 +467,10 @@ export class TagsService {
    * @description 태그 리스트
    * @param {TagListQuery} params 태그 리스트 쿼리
    */
-  private async _getRecentItems({ cursor, limit, name }: TagListQuery) {
+  private async _getRecentItems(
+    { cursor, limit, name }: TagListQuery,
+    user: UserWithInfo,
+  ) {
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -485,6 +501,17 @@ export class TagsService {
               postTags: true,
             },
           },
+          ...(user && {
+            tagFollow: {
+              where: {
+                fk_user_id: user.id,
+              },
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
+          }),
         },
         take: limit,
       }),
@@ -505,13 +532,21 @@ export class TagsService {
         })) > 0
       : false;
 
-    return { totalCount, list, endCursor, hasNextPage };
+    return {
+      totalCount,
+      list: this.serialize.getTags(list),
+      endCursor,
+      hasNextPage,
+    };
   }
 
   /**
    * @description 최근 일주일 사이에 생성된 태그 리스트
    * @param {TagListQuery} params 태그 리스트 쿼리 */
-  private async _getNewItems({ cursor, limit, name }: TagListQuery) {
+  private async _getNewItems(
+    { cursor, limit, name }: TagListQuery,
+    user: UserWithInfo,
+  ) {
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -548,6 +583,17 @@ export class TagsService {
               postTags: true,
             },
           },
+          ...(user && {
+            tagFollow: {
+              where: {
+                fk_user_id: user.id,
+              },
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
+          }),
         },
         take: limit,
       }),
@@ -571,13 +617,21 @@ export class TagsService {
         })) > 0
       : false;
 
-    return { totalCount, list, endCursor, hasNextPage };
+    return {
+      totalCount,
+      list: this.serialize.getTags(list),
+      endCursor,
+      hasNextPage,
+    };
   }
 
   /**
    * @description 인기 태그 리스트
    * @param {TagListQuery} params 태그 리스트 쿼리 */
-  private async _getTrandingItems({ cursor, limit, name }: TagListQuery) {
+  private async _getTrandingItems(
+    { cursor, limit, name }: TagListQuery,
+    user: UserWithInfo,
+  ) {
     if (isString(limit)) {
       limit = Number(limit);
     }
@@ -615,6 +669,17 @@ export class TagsService {
               postTags: true,
             },
           },
+          ...(user && {
+            tagFollow: {
+              where: {
+                fk_user_id: user.id,
+              },
+              select: {
+                id: true,
+              },
+              take: 1,
+            },
+          }),
         },
         take: limit,
       }),
@@ -642,24 +707,11 @@ export class TagsService {
         })) > 0
       : false;
 
-    return { totalCount, list, endCursor, hasNextPage };
-  }
-
-  /**
-   * @description 태그 데이터를 필요한 값만 정리해서 가져온다.
-   * @param {Tag[] & { _count: { postTags: number; }; }[]} tags
-   */
-  private _serializeTag(
-    tags: (Tag & {
-      _count: {
-        postTags: number;
-      };
-    })[],
-  ) {
-    return tags.map((tag) => ({
-      id: tag.id,
-      name: tag.name,
-      postCount: tag._count.postTags,
-    }));
+    return {
+      totalCount,
+      list: this.serialize.getTags(list),
+      endCursor,
+      hasNextPage,
+    };
   }
 }
