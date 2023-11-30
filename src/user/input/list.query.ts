@@ -24,14 +24,37 @@ export class MyPostListQuery extends PaginationQuery {
   isDeleted?: boolean;
 }
 
-export class TrendingUsersQuery {
+export class UserListQuery extends PaginationQuery {
+  @IsString()
+  @IsIn(['default', 'trending'])
+  @IsOptional()
+  @ApiProperty({
+    name: 'type',
+    type: 'string',
+    enum: ['default', 'trending'],
+    required: false,
+    description: '유저 리스트 타입',
+  })
+  type?: string;
+
+  @IsString()
+  @IsOptional()
+  @ApiProperty({
+    name: 'name',
+    type: 'string',
+    required: false,
+    description: '검색어',
+  })
+  name?: string;
+
+  @IsOptional()
   @IsIn(['week', 'all', 'month', 'year'])
   @ApiProperty({
     name: 'category',
     type: 'string',
-    required: true,
+    required: false,
     enum: ['week', 'all', 'month', 'year'],
     description: '주간, 전체',
   })
-  category: 'week' | 'all' | 'month' | 'year';
+  category?: 'week' | 'all' | 'month' | 'year';
 }

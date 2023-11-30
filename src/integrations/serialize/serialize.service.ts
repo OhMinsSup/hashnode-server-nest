@@ -65,6 +65,11 @@ export class SerializeService {
     } as SerializeUser;
   }
 
+  getUsers(data: any) {
+    const clone = isEmpty(data) ? [] : [...data];
+    return clone.map((item: any) => this.getUser(item));
+  }
+
   getTag(data: any) {
     return {
       id: data.id,

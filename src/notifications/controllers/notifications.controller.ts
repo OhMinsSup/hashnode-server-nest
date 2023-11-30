@@ -25,6 +25,14 @@ export class NotificationsController {
     return this.service.list(user, query);
   }
 
+  // 유저의 알림 카운트 값을 가져온다.
+  @Get('count')
+  @ApiOperation({ summary: '알림 카운트' })
+  @UseGuards(LoggedInGuard)
+  count(@AuthUser() user: UserWithInfo) {
+    return this.service.count(user);
+  }
+
   @Put('read-all')
   @ApiOperation({ summary: '모든 알림 읽음 처리' })
   @ApiQuery({

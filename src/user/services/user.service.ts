@@ -7,10 +7,11 @@ import { isEqual } from 'lodash';
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { POSTS_SELECT } from '../../modules/database/select/post.select';
+import { USER_SELECT } from '../../auth/select/user.select';
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
-import { MyPostListQuery } from '../input/list.query';
+import { MyPostListQuery, UserListQuery } from '../input/list.query';
 import { assertUsernameExists } from '../../errors/username-exists.error';
 import { getSlug } from '../../libs/utils';
 
@@ -451,10 +452,226 @@ export class UserService {
     };
   }
 
+  /**
+   * @description 유저 리스트 조회
+   * @param {UserListQuery} query
+   * @param {UserWithInfo?} user
+   */
+  async list(query: UserListQuery, user?: UserWithInfo) {
+    let result = undefined;
+    switch (query.type) {
+      case 'trending':
+        result = await this._getTrendingItems(query);
+        break;
+      default:
+        result = await this._getItems(query, user);
+        break;
+    }
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list,
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
+      },
+    };
+  }
+
+  /**
+   * @description 유저 리스트 조회 (기본)
+   * @param {UserListQuery} query
+   * @param {UserWithInfo?} user
+   */
+  private async _getItems(
+    { limit, category, cursor, name }: UserListQuery,
+    user?: UserWithInfo,
+  ) {
+    const { time } = this._getCategoryTime(category);
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    console.log('user', user);
+
+    // 내가 좋아요한 게시물 목록
+    const [totalCount, list] = await Promise.all([
+      this.prisma.user.count({
+        where: {
+          createdAt: time
+            ? {
+                gte: time,
+              }
+            : undefined,
+          ...(name && {
+            username: {
+              contains: name,
+            },
+          }),
+          ...(user && {
+            id: {
+              not: user.id,
+            },
+          }),
+        },
+      }),
+      this.prisma.user.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          createdAt: time
+            ? {
+                gte: time,
+              }
+            : undefined,
+          ...(name && {
+            username: {
+              contains: name,
+            },
+          }),
+          ...(user && {
+            id: {
+              not: user.id,
+            },
+          }),
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+        },
+        select: USER_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.user.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            createdAt: time
+              ? {
+                  gte: time,
+                }
+              : undefined,
+            ...(name && {
+              username: {
+                contains: name,
+              },
+            }),
+            ...(user && {
+              id: {
+                not: user.id,
+              },
+            }),
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list: this.serialize.getUsers(list),
+      endCursor,
+      hasNextPage,
+    };
+  }
+
+  private async _getTrendingItems({
+    limit,
+    category,
+    cursor,
+    name,
+  }: UserListQuery) {
+    const { time } = this._getCategoryTime(category);
+
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    // 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
+    const rawData = await this.prisma.$queryRaw`
+    SELECT
+        users.id AS user_id,
+        users.email,
+        posts.id AS post_id,
+        posts.title,
+        posts.content,
+        post_stats.score
+      FROM
+        users
+        INNER JOIN posts ON users.id = posts.fk_user_id
+        INNER JOIN post_stats ON posts.id = post_stats.fk_post_id
+      WHERE
+        posts.isDeleted = false
+        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 WEEK) -- 일주일 기준
+        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 MONTH) -- 한달 기준
+        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 YEAR) -- 1년 기준
+      ORDER BY
+        post_stats.score DESC;
+      -- LIMIT
+      --   ${limit};
+      -- OFFSET
+      --   ${cursor ?? 0};
+    `;
+
+    console.log(rawData);
+
+    return {
+      totalCount: 0,
+      list: [],
+      endCursor: null,
+      hasNextPage: false,
+    };
+  }
+
+  private _getCategoryTime(category: string) {
+    let time: Date | null;
+    switch (category) {
+      case 'week':
+        time = new Date();
+        time.setDate(time.getDate() - 7);
+        break;
+      case 'month':
+        time = new Date();
+        time.setMonth(time.getMonth() - 1);
+        break;
+      case 'year':
+        time = new Date();
+        time.setFullYear(time.getFullYear() - 1);
+        break;
+      default:
+        time = null;
+        break;
+    }
+    return {
+      time,
+      category,
+    };
+  }
+
   // /**
   //  * @description 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
   //  */
-  // async getUserTrendings({ category }: TrendingUsersQuery) {
+  // async getUserTrendings({ category }: any) {
   //   let time: Date | null;
   //   switch (category) {
   //     case 'week':
@@ -474,16 +691,16 @@ export class UserService {
   //       break;
   //   }
 
-  //   const rawData: Awaited<RawTrendingUsers[]> = await this.prisma.$queryRaw`
+  //   const rawData: Awaited<any[]> = await this.prisma.$queryRaw`
   //   SELECT u.id, u.email, u.username, up.createdAt, up.avatarUrl, GROUP_CONCAT(p.id || '|' || p.title || '|' || p.createdAt) AS posts
   //   FROM User u
   //   INNER JOIN (
-  //     SELECT p1.userId, p1.id AS postId
+  //     SELECT p1.userId, p1.id AS fk_post_id
   //     FROM (
   //       SELECT p.userId, p.id, ps.score,
   //         ROW_NUMBER() OVER (PARTITION BY p.userId ORDER BY ps.score DESC) AS rank
   //       FROM Post p
-  //       INNER JOIN PostStats ps ON p.id = ps.postId
+  //       INNER JOIN post_stats ps ON p.id = ps.fk_post_id
   //       WHERE ps.score >= 0 -- 원하는 랭킹 점수로 변경해주세요
   //     ) p1
   //     WHERE p1.rank <= 3 -- 원하는 상위 랭킹 개수로 변경해주세요
@@ -496,10 +713,10 @@ export class UserService {
   //   LIMIT 50;
   //   `;
 
-  //   const users: TransformedTrendingUsers[] = [];
+  //   const users: any[] = [];
   //   for (const user of rawData) {
   //     const posts = user.posts.split(',');
-  //     const serializedPosts: TransformedTrendingUsers['posts'][0][] = [];
+  //     const serializedPosts: any['posts'][0][] = [];
   //     for (const post of posts) {
   //       const [id, title, createdAt] = post.split('|');
   //       serializedPosts.push({

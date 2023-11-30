@@ -18,7 +18,7 @@ import { UserService } from '../services/user.service';
 
 // dto
 import { UpdateUserBody } from '../input/update.input';
-import { MyPostListQuery } from '../input/list.query';
+import { MyPostListQuery, UserListQuery } from '../input/list.query';
 
 // types
 // import type { Response } from 'express';
@@ -30,10 +30,15 @@ export class UserController {
   constructor(private readonly service: UserService) {}
 
   @Get()
-  @ApiOperation({ summary: '내 정보' })
-  @UseGuards(LoggedInGuard)
-  me(@AuthUser() user: UserWithInfo) {
-    return this.service.getUserInfo(user);
+  @ApiOperation({ summary: '유저 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: UserListQuery,
+    required: true,
+    description: '페이지네이션',
+  })
+  list(@Query() query: UserListQuery, @AuthUser() user?: UserWithInfo) {
+    return this.service.list(query, user);
   }
 
   @Put()
@@ -69,6 +74,12 @@ export class UserController {
   // getUserTrendings(@Query() query: TrendingUsersQuery) {
   //   return this.service.getUserTrendings(query);
   // }
+  @Get('me')
+  @ApiOperation({ summary: '내 정보' })
+  @UseGuards(LoggedInGuard)
+  me(@AuthUser() user: UserWithInfo) {
+    return this.service.getUserInfo(user);
+  }
 
   @Get('follow-tags')
   @ApiOperation({ summary: '내가 팔로우한 태그' })

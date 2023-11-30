@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
+import { differenceInMilliseconds, subMinutes } from 'date-fns';
 import { PrismaService } from '../../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { isEmpty, isString } from '../../libs/assertion';
 import { NotificationListQuery } from '../input/list.query';
-import type { UserWithInfo } from '../../modules/database/prisma.interface';
 import { NotificationReadAllQuery } from '../input/read-all.query';
+
+import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @Injectable()
 export class NotificationsService {
@@ -259,6 +261,33 @@ export class NotificationsService {
       message: null,
       error: null,
       result: true,
+    };
+  }
+
+  /**
+   * @description 유저의 알림 카운트 값을 가져온다.
+   * @param {UserWithInfo} user
+   */
+  async count(user: UserWithInfo) {
+    const now = new Date();
+    // 알림 생성 시간이 1달 이내인 알림의 갯수를 가져온다.
+    const time = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+
+    const count = await this.prisma.notification.count({
+      where: {
+        fk_user_id: user.id,
+        read: false,
+        createdAt: {
+          gte: time,
+        },
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: count,
     };
   }
 

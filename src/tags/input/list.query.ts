@@ -30,7 +30,7 @@ export class TagListQuery extends PaginationQuery {
   @ApiProperty({
     name: 'category',
     type: 'string',
-    required: true,
+    required: false,
     enum: ['week', 'all', 'month', 'year'],
     description: '주간, 전체',
   })
