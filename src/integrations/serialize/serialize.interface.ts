@@ -41,7 +41,7 @@ export type SerializeTag = {
 };
 
 export type SerializeFollow = {
-  type: 'create' | 'delete' | 'none';
+  type: 'create' | 'delete' | 'none' | 'unfollow' | 'follow';
   dataId: string;
-  count: number;
+  count?: number;
 };

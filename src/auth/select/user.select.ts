@@ -37,4 +37,13 @@ export const USER_SELECT = Prisma.validator<Prisma.UserSelect>()({
       },
     },
   },
+  followers: {
+    select: {
+      id: true,
+    },
+    // where: {
+    //   fk_follower_user_id: user?.id ?? undefined,
+    // },
+    // take: 1,
+  },
 });

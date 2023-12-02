@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { differenceInMilliseconds, subMinutes } from 'date-fns';
 import { PrismaService } from '../../modules/database/prisma.service';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { isEmpty, isString } from '../../libs/assertion';
@@ -191,6 +190,86 @@ export class NotificationsService {
         },
       });
     }
+  }
+
+  async createFollows(userId: string, followId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        userProfile: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return {
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '사용자를 찾을 수 없습니다.',
+        error: null,
+        result: false,
+      };
+    }
+
+    const follow = await this.prisma.user.findUnique({
+      where: {
+        id: followId,
+      },
+      select: {
+        id: true,
+        userProfile: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+
+    if (!follow) {
+      return {
+        resultCode: EXCEPTION_CODE.NOT_EXIST,
+        message: '사용자를 찾을 수 없습니다.',
+        error: null,
+        result: false,
+      };
+    }
+
+    // 이미 생성된 알림이 있는지 확인한다.
+    const notification = await this.prisma.notification.findFirst({
+      where: {
+        fk_user_id: followId,
+        type: 'FOLLOW',
+      },
+    });
+
+    if (notification) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: true,
+      };
+    }
+
+    await this.prisma.notification.create({
+      data: {
+        fk_user_id: followId,
+        type: 'FOLLOW',
+        message: `${follow.userProfile.username}님이 ${user.userProfile.username}님을 팔로우 하고 있습니다.`,
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: true,
+    };
   }
 
   /**

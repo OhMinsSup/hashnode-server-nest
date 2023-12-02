@@ -14,10 +14,12 @@ import { isEmpty, isString } from '../../libs/assertion';
 import { MyPostListQuery, UserListQuery } from '../input/list.query';
 import { assertUsernameExists } from '../../errors/username-exists.error';
 import { getSlug } from '../../libs/utils';
+import { assertNotFound } from '../../errors/not-found.error';
 
 import type { UpdateUserBody } from '../input/update.input';
 import type { Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
+import type { UserFollowBody } from '../input/follow.input';
 
 @Injectable()
 export class UserService {
@@ -303,6 +305,78 @@ export class UserService {
     });
   }
 
+  /**
+   * @description 유저를 팔로우 및 팔로우 해제한다.
+   * @param {UserWithInfo} user 유저 정보
+   * @param {UserFollowBody} input 쿼리 파라미터
+   */
+  async follow(user: UserWithInfo, input: UserFollowBody) {
+    const userInfo = await this.prisma.user.findUnique({
+      where: {
+        id: input.userId,
+      },
+    });
+
+    assertNotFound(!userInfo, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '존재하지 않는 사용자입니다.',
+      error: 'userId',
+      result: null,
+    });
+
+    const followData = await this.prisma.followUser.findFirst({
+      where: {
+        fk_follower_user_id: user.id,
+        fk_following_user_id: input.userId,
+      },
+    });
+
+    const isFollow = !isEmpty(followData);
+
+    if (isFollow) {
+      await this.prisma.followUser.delete({
+        where: {
+          id: followData.id,
+        },
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: this.serialize.getFollow({
+          type: 'unfollow',
+          dataId: input.userId,
+        }),
+      };
+    }
+
+    await this.prisma.followUser.create({
+      data: {
+        follower: {
+          connect: {
+            id: user.id,
+          },
+        },
+        following: {
+          connect: {
+            id: input.userId,
+          },
+        },
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: this.serialize.getFollow({
+        type: 'follow',
+        dataId: input.userId,
+      }),
+    };
+  }
+
   // /**
   //  * @description 유저를 삭제한다.
   //  * @param {UserWithInfo} user 유저 정보
@@ -460,9 +534,9 @@ export class UserService {
   async list(query: UserListQuery, user?: UserWithInfo) {
     let result = undefined;
     switch (query.type) {
-      case 'trending':
-        result = await this._getTrendingItems(query);
-        break;
+      // case 'trending':
+      // result = await this._getTrendingItems(query);
+      // break;
       default:
         result = await this._getItems(query, user);
         break;
@@ -499,8 +573,6 @@ export class UserService {
     if (isString(limit)) {
       limit = Number(limit);
     }
-
-    console.log('user', user);
 
     // 내가 좋아요한 게시물 목록
     const [totalCount, list] = await Promise.all([
@@ -540,18 +612,27 @@ export class UserService {
               contains: name,
             },
           }),
-          ...(user && {
-            id: {
-              not: user.id,
-            },
-          }),
           id: cursor
             ? {
                 lt: cursor,
+                not: user?.id ?? undefined,
               }
-            : undefined,
+            : {
+                not: user?.id ?? undefined,
+              },
         },
-        select: USER_SELECT,
+        select: {
+          ...USER_SELECT,
+          following: {
+            select: {
+              id: true,
+            },
+            where: {
+              fk_follower_user_id: user?.id ?? undefined,
+            },
+            take: 1,
+          },
+        },
         take: limit,
       }),
     ]);
@@ -561,6 +642,7 @@ export class UserService {
       ? (await this.prisma.user.count({
           where: {
             id: {
+              not: user?.id ?? undefined,
               lt: endCursor,
             },
             createdAt: time
@@ -571,11 +653,6 @@ export class UserService {
             ...(name && {
               username: {
                 contains: name,
-              },
-            }),
-            ...(user && {
-              id: {
-                not: user.id,
               },
             }),
           },
@@ -595,53 +672,53 @@ export class UserService {
     };
   }
 
-  private async _getTrendingItems({
-    limit,
-    category,
-    cursor,
-    name,
-  }: UserListQuery) {
-    const { time } = this._getCategoryTime(category);
+  // private async _getTrendingItems({
+  //   limit,
+  //   // category,
+  //   cursor
+  //   // name,
+  // }: UserListQuery) {
+  //   // const { time } = this._getCategoryTime(category);
 
-    if (isString(limit)) {
-      limit = Number(limit);
-    }
+  //   if (isString(limit)) {
+  //     limit = Number(limit);
+  //   }
 
-    // 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
-    const rawData = await this.prisma.$queryRaw`
-    SELECT
-        users.id AS user_id,
-        users.email,
-        posts.id AS post_id,
-        posts.title,
-        posts.content,
-        post_stats.score
-      FROM
-        users
-        INNER JOIN posts ON users.id = posts.fk_user_id
-        INNER JOIN post_stats ON posts.id = post_stats.fk_post_id
-      WHERE
-        posts.isDeleted = false
-        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 WEEK) -- 일주일 기준
-        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 MONTH) -- 한달 기준
-        -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 YEAR) -- 1년 기준
-      ORDER BY
-        post_stats.score DESC;
-      -- LIMIT
-      --   ${limit};
-      -- OFFSET
-      --   ${cursor ?? 0};
-    `;
+  //   // 포스트 랭킹 점수가 높은 포스트를 가진 상위 3명의 유저
+  //   const rawData = await this.prisma.$queryRaw`
+  //   SELECT
+  //       users.id AS user_id,
+  //       users.email,
+  //       posts.id AS post_id,
+  //       posts.title,
+  //       posts.content,
+  //       post_stats.score
+  //     FROM
+  //       users
+  //       INNER JOIN posts ON users.id = posts.fk_user_id
+  //       INNER JOIN post_stats ON posts.id = post_stats.fk_post_id
+  //     WHERE
+  //       posts.isDeleted = false
+  //       -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 WEEK) -- 일주일 기준
+  //       -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 MONTH) -- 한달 기준
+  //       -- AND posts.createdAt >= DATE_SUB(NOW(), INTERVAL 1 YEAR) -- 1년 기준
+  //     ORDER BY
+  //       post_stats.score DESC;
+  //     -- LIMIT
+  //     --   ${limit};
+  //     -- OFFSET
+  //     --   ${cursor ?? 0};
+  //   `;
 
-    console.log(rawData);
+  //   console.log(rawData);
 
-    return {
-      totalCount: 0,
-      list: [],
-      endCursor: null,
-      hasNextPage: false,
-    };
-  }
+  //   return {
+  //     totalCount: 0,
+  //     list: [],
+  //     endCursor: null,
+  //     hasNextPage: false,
+  //   };
+  // }
 
   private _getCategoryTime(category: string) {
     let time: Date | null;
@@ -751,17 +828,4 @@ export class UserService {
   //   const cookieData = this.env.generateCookie();
   //   res.clearCookie(cookieData.name);
   // }
-
-  private _serializeFollowTag(data: any) {
-    return {
-      id: data?.tag?.id,
-      name: data?.tag?.name,
-      description: data?.tag?.description,
-      image: data?.tag?.image,
-      count: {
-        posts: data?.tag?._count?.postsTags ?? 0,
-      },
-      createdAt: data?.tag?.createdAt,
-    };
-  }
 }

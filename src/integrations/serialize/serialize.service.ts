@@ -62,6 +62,9 @@ export class SerializeService {
       userImage: this.getUserImage(user?.userImage),
       userSocial: this.getUserSocial(user?.userSocial),
       userTags: this.getUserTags(user?.userTags),
+      ...(user?.following && {
+        isFollow: isEmpty(user?.following ?? []) ? false : true,
+      }),
     } as SerializeUser;
   }
 
@@ -100,7 +103,7 @@ export class SerializeService {
     return {
       type: data?.type ?? 'none',
       dataId: data?.dataId ?? '',
-      count: data?.count ?? 0,
+      ...(data?.count && { count: data?.count }),
     } as SerializeFollow;
   }
 

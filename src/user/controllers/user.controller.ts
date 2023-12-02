@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   Param,
+  Post,
   Put,
   Query,
   UseGuards,
@@ -18,10 +19,10 @@ import { UserService } from '../services/user.service';
 
 // dto
 import { UpdateUserBody } from '../input/update.input';
+import { UserFollowBody } from '../input/follow.input';
 import { MyPostListQuery, UserListQuery } from '../input/list.query';
 
 // types
-// import type { Response } from 'express';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('사용자')
@@ -79,6 +80,18 @@ export class UserController {
   @UseGuards(LoggedInGuard)
   me(@AuthUser() user: UserWithInfo) {
     return this.service.getUserInfo(user);
+  }
+
+  @Post('follow')
+  @ApiOperation({ summary: '사용자 팔로우 및 팔로우 해제' })
+  @ApiBody({
+    required: true,
+    description: '사용자 팔로우 API',
+    type: UserFollowBody,
+  })
+  @UseGuards(LoggedInGuard)
+  follow(@AuthUser() user: UserWithInfo, @Body() input: UserFollowBody) {
+    return this.service.follow(user, input);
   }
 
   @Get('follow-tags')
