@@ -16,14 +16,17 @@ import { assertUsernameExists } from '../../errors/username-exists.error';
 import { getSlug } from '../../libs/utils';
 import { assertNotFound } from '../../errors/not-found.error';
 
+import type { Response } from 'express';
 import type { UpdateUserBody } from '../input/update.input';
 import type { Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 import type { UserFollowBody } from '../input/follow.input';
+import type { EnvironmentService } from 'src/integrations/environment/environment.service';
 
 @Injectable()
 export class UserService {
   constructor(
+    private readonly env: EnvironmentService,
     private readonly prisma: PrismaService,
     private readonly posts: PostsService,
     private readonly serialize: SerializeService,
@@ -137,6 +140,11 @@ export class UserService {
       const newSocialData = {} as Prisma.XOR<
         Prisma.UserSocialUpdateInput,
         Prisma.UserSocialUncheckedUpdateInput
+      >;
+
+      const newImage = {} as Prisma.XOR<
+        Prisma.UserImageUpdateInput,
+        Prisma.UserImageUncheckedUpdateInput
       >;
 
       if (
@@ -269,6 +277,30 @@ export class UserService {
         }
       }
 
+      if (input.image && input.image.id && input.image.url) {
+        const file = await tx.file.findUnique({
+          where: {
+            id: input.image.id,
+          },
+        });
+
+        if (file) {
+          if (user.userImage && user.userImage.avatarUrl) {
+            if (!isEqual(input.image.url, user.userImage.avatarUrl)) {
+              newImage.cfId = file.cfId;
+              newImage.filename = file.filename;
+              newImage.mimeType = file.mimeType;
+              newImage.avatarUrl = input.image.url;
+            }
+          } else {
+            newImage.cfId = file.cfId;
+            newImage.filename = file.filename;
+            newImage.mimeType = file.mimeType;
+            newImage.avatarUrl = input.image.url;
+          }
+        }
+      }
+
       if (!isEmpty(newData)) {
         await tx.user.update({
           where: {
@@ -294,6 +326,30 @@ export class UserService {
           },
           data: newSocialData,
         });
+      }
+
+      if (!isEmpty(newImage)) {
+        const image = await tx.userImage.findFirst({
+          where: {
+            fk_user_id: user.id,
+          },
+        });
+
+        if (image) {
+          await tx.userImage.update({
+            where: {
+              fk_user_id: user.id,
+            },
+            data: newImage,
+          });
+        } else {
+          await tx.userImage.create({
+            data: {
+              ...(newImage as Prisma.UserImageUncheckedCreateInput),
+              fk_user_id: user.id,
+            },
+          });
+        }
       }
 
       return {
@@ -377,31 +433,31 @@ export class UserService {
     };
   }
 
-  // /**
-  //  * @description 유저를 삭제한다.
-  //  * @param {UserWithInfo} user 유저 정보
-  //  */
-  // async delete(user: UserWithInfo, res: Response) {
-  //   return this.prisma.$transaction(async (tx) => {
-  //     await tx.user.update({
-  //       where: {
-  //         id: user.id,
-  //       },
-  //       data: {
-  //         deletedAt: new Date(),
-  //       },
-  //     });
+  /**
+   * @description 유저를 삭제한다.
+   * @param {UserWithInfo} user 유저 정보
+   */
+  async softDelete(user: UserWithInfo, res: Response) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
 
-  //     this.clearCookies(res);
+      this.clearCookies(res);
 
-  //     return {
-  //       resultCode: EXCEPTION_CODE.OK,
-  //       message: null,
-  //       error: null,
-  //       result: null,
-  //     };
-  //   });
-  // }
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: null,
+      };
+    });
+  }
 
   /**
    * @description 유저의 포스트 리스트를 가져온다.
@@ -820,12 +876,12 @@ export class UserService {
   //   };
   // }
 
-  // /**
-  //  * @description 쿠키 제거
-  //  * @param {Response} res 응답 객체
-  //  */
-  // private clearCookies(res: Response) {
-  //   const cookieData = this.env.generateCookie();
-  //   res.clearCookie(cookieData.name);
-  // }
+  /**
+   * @description 쿠키 제거
+   * @param {Response} res 응답 객체
+   */
+  private clearCookies(res: Response) {
+    const { name } = this.env.generateCookie();
+    res.clearCookie(name);
+  }
 }

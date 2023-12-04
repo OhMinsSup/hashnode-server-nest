@@ -61,6 +61,24 @@ export class UpdateSocialsBody {
   website?: string;
 }
 
+export class UpdateUserImageBody {
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: '이미지 아이디',
+    type: 'string',
+  })
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  @ApiProperty({
+    description: '이미지 url',
+    type: 'string',
+  })
+  url?: string;
+}
+
 export class UpdateUserBody {
   @IsOptional()
   @IsString()
@@ -150,4 +168,13 @@ export class UpdateUserBody {
     required: false,
   })
   socials?: UpdateSocialsBody;
+
+  @IsOptional()
+  @IsObject()
+  @ApiProperty({
+    description: '이미지 정보',
+    type: UpdateUserImageBody,
+    required: false,
+  })
+  image?: UpdateUserImageBody;
 }

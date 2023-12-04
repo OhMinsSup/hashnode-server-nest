@@ -8,6 +8,7 @@ export type SerializeUserProfile = {
 };
 
 export type SerializeUserImage = {
+  id: string;
   avatarUrl: string | undefined;
 };
 

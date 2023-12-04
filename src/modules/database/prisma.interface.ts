@@ -18,5 +18,5 @@ export type UserWithInfo = Pick<User, 'id' | 'email'> & {
     UserSocial,
     'github' | 'facebook' | 'instagram' | 'twitter' | 'website'
   >;
-  userImage: Pick<UserImage, 'avatarUrl'>;
+  userImage: Pick<UserImage, 'avatarUrl' | 'id'>;
 };

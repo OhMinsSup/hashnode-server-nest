@@ -1,11 +1,13 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Put,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
@@ -23,6 +25,7 @@ import { UserFollowBody } from '../input/follow.input';
 import { MyPostListQuery, UserListQuery } from '../input/list.query';
 
 // types
+import type { Response } from 'express';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('사용자')
@@ -54,27 +57,16 @@ export class UserController {
     return this.service.update(user, input);
   }
 
-  // @Delete()
-  // @ApiOperation({ summary: '회원 탈퇴' })
-  // @UseGuards(LoggedInGuard)
-  // delete(
-  //   @AuthUser() user: UserWithInfo,
-  //   @Res({ passthrough: true }) res: Response,
-  // ) {
-  //   return this.service.delete(user, res);
-  // }
+  @Delete()
+  @ApiOperation({ summary: '회원 탈퇴' })
+  @UseGuards(LoggedInGuard)
+  delete(
+    @AuthUser() user: UserWithInfo,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.service.softDelete(user, res);
+  }
 
-  // @Get('treanding')
-  // @ApiOperation({ summary: '트렌딩 사용자' })
-  // @ApiQuery({
-  //   name: 'query',
-  //   type: TrendingUsersQuery,
-  //   required: true,
-  //   description: '주간, 전체',
-  // })
-  // getUserTrendings(@Query() query: TrendingUsersQuery) {
-  //   return this.service.getUserTrendings(query);
-  // }
   @Get('me')
   @ApiOperation({ summary: '내 정보' })
   @UseGuards(LoggedInGuard)
