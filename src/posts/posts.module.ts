@@ -7,7 +7,6 @@ import { TagsService } from '../tags/services/tags.service';
 import { NotificationsService } from '../notifications/services/notifications.service';
 
 @Module({
-  imports: [],
   controllers: [PostsController],
   providers: [PostsService, TagsService, NotificationsService],
 })

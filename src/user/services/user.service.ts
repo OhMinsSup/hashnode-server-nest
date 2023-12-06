@@ -16,20 +16,17 @@ import { assertUsernameExists } from '../../errors/username-exists.error';
 import { getSlug } from '../../libs/utils';
 import { assertNotFound } from '../../errors/not-found.error';
 
-import type { Response } from 'express';
 import type { UpdateUserBody } from '../input/update.input';
 import type { Prisma } from '@prisma/client';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 import type { UserFollowBody } from '../input/follow.input';
-import type { EnvironmentService } from 'src/integrations/environment/environment.service';
 
 @Injectable()
 export class UserService {
   constructor(
-    private readonly env: EnvironmentService,
     private readonly prisma: PrismaService,
-    private readonly posts: PostsService,
     private readonly serialize: SerializeService,
+    private readonly posts: PostsService,
   ) {}
 
   /**
@@ -48,6 +45,45 @@ export class UserService {
     const { result } = await this.getUserInfoById(userId);
     // @ts-ignore - result가 UserWithInfo 타입이 아닌 경우
     return this.getMyPosts(result, { cursor, limit });
+  }
+
+  /**
+   * @description 유저명으로 유저 기록을 가져온다.
+   * @param {string} userId 유저명 */
+  async getUserHistories(userId: string) {
+    const data = await this.prisma.history.findMany({
+      where: {
+        fk_user_id: userId,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        text: true,
+        itemType: true,
+        isActive: true,
+        dateAddedAt: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            userProfile: {
+              select: {
+                username: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: this.serialize.getHistories(data),
+    };
   }
 
   /**
@@ -94,6 +130,12 @@ export class UserService {
                 name: true,
               },
             },
+          },
+        },
+        _count: {
+          select: {
+            followers: true,
+            following: true,
           },
         },
       },
@@ -437,7 +479,7 @@ export class UserService {
    * @description 유저를 삭제한다.
    * @param {UserWithInfo} user 유저 정보
    */
-  async softDelete(user: UserWithInfo, res: Response) {
+  async softDelete(user: UserWithInfo) {
     return this.prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: {
@@ -447,8 +489,6 @@ export class UserService {
           deletedAt: new Date(),
         },
       });
-
-      this.clearCookies(res);
 
       return {
         resultCode: EXCEPTION_CODE.OK,
@@ -875,13 +915,4 @@ export class UserService {
   //     result: users,
   //   };
   // }
-
-  /**
-   * @description 쿠키 제거
-   * @param {Response} res 응답 객체
-   */
-  private clearCookies(res: Response) {
-    const { name } = this.env.generateCookie();
-    res.clearCookie(name);
-  }
 }

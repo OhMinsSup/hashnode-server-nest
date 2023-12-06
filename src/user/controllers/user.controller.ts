@@ -7,14 +7,15 @@ import {
   Post,
   Put,
   Query,
-  Res,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // decorator
 import { AuthUser } from '../../decorators/get-user.decorator';
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
+import { CookieClearInterceptor } from '../../interceptors/cookie-clear.interceptor';
 
 // service
 import { UserService } from '../services/user.service';
@@ -25,7 +26,6 @@ import { UserFollowBody } from '../input/follow.input';
 import { MyPostListQuery, UserListQuery } from '../input/list.query';
 
 // types
-import type { Response } from 'express';
 import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 @ApiTags('사용자')
@@ -60,11 +60,9 @@ export class UserController {
   @Delete()
   @ApiOperation({ summary: '회원 탈퇴' })
   @UseGuards(LoggedInGuard)
-  delete(
-    @AuthUser() user: UserWithInfo,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.service.softDelete(user, res);
+  @UseInterceptors(CookieClearInterceptor)
+  delete(@AuthUser() user: UserWithInfo) {
+    return this.service.softDelete(user);
   }
 
   @Get('me')
@@ -107,6 +105,12 @@ export class UserController {
   @ApiOperation({ summary: '사용자 정보' })
   getUserInfo(@Param('userId') userId: string) {
     return this.service.getUserInfoById(userId);
+  }
+
+  @Get(':userId/histories')
+  @ApiOperation({ summary: '사용자의 기록' })
+  getUserHistories(@Param('userId') userId: string) {
+    return this.service.getUserHistories(userId);
   }
 
   @Get(':userId/posts')

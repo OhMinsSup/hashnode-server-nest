@@ -46,3 +46,16 @@ export type SerializeFollow = {
   dataId: string;
   count?: number;
 };
+
+export type SerializeHistory = {
+  id: string;
+  text: string;
+  itemType: string;
+  isActive: boolean;
+  user: {
+    id: string;
+    username: string;
+  };
+  dateAddedAt: Date;
+  createdAt: Date;
+};

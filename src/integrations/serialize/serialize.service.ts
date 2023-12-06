@@ -3,6 +3,7 @@ import { isEmpty } from '../../libs/assertion';
 
 import type {
   SerializeFollow,
+  SerializeHistory,
   SerializeTag,
   SerializeUser,
   SerializeUserImage,
@@ -14,6 +15,21 @@ import type {
 @Injectable()
 export class SerializeService {
   constructor() {}
+
+  getHistory(data: any) {
+    return {
+      ...data,
+      user: {
+        id: data?.user?.id,
+        username: data?.user?.userProfile?.username,
+      },
+    } as SerializeHistory;
+  }
+
+  getHistories(data: any[]) {
+    const clone = isEmpty(data) ? [] : [...data];
+    return clone.map((item) => this.getHistory(item));
+  }
 
   getUserProfile(data: any) {
     const clone = isEmpty(data) ? {} : { ...data };
@@ -65,6 +81,8 @@ export class SerializeService {
       ...(user?.following && {
         isFollow: isEmpty(user?.following ?? []) ? false : true,
       }),
+      followerCount: user?._count?.followers ?? 0,
+      followingCount: user?._count?.following ?? 0,
     } as SerializeUser;
   }
 
