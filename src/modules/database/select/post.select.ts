@@ -14,17 +14,45 @@ export const POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
     select: {
       id: true,
       email: true,
+      createdAt: true,
+      userProfile: {
+        select: {
+          nickname: true,
+          tagline: true,
+          username: true,
+          location: true,
+          bio: true,
+          availableText: true,
+        },
+      },
+      userSocial: {
+        select: {
+          github: true,
+          twitter: true,
+          facebook: true,
+          instagram: true,
+          website: true,
+        },
+      },
       userImage: {
         select: {
           avatarUrl: true,
         },
       },
-      userProfile: {
+      userTags: {
         select: {
-          username: true,
-          nickname: true,
-          bio: true,
-          availableText: true,
+          tag: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+        },
+      },
+      _count: {
+        select: {
+          followers: true,
+          following: true,
         },
       },
     },
@@ -64,7 +92,6 @@ export const POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   _count: {
     select: {
       postLike: true,
-      postTags: true,
     },
   },
 });

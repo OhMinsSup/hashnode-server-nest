@@ -34,6 +34,7 @@ import {
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
 } from '../../modules/database/select/post.select';
+import { SerializeService } from '../../integrations/serialize/serialize.service';
 
 interface UpdatePostLikesParams {
   postId: string;
@@ -49,8 +50,8 @@ export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
-
     private readonly notifications: NotificationsService,
+    private readonly serialize: SerializeService,
   ) {}
 
   /**
@@ -147,7 +148,7 @@ export class PostsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: this._serialize(post),
+      result: this.serialize.getPost(post),
     };
   }
 
@@ -458,7 +459,7 @@ export class PostsService {
    * @param {UserWithInfo} user
    * @param {PostListQuery} query
    */
-  async getDraftPosts(user: UserWithInfo, query: PostListQuery) {
+  async getDrafts(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getDraftItems(query, user);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
@@ -722,9 +723,11 @@ export class PostsService {
         })) > 0
       : false;
 
+    console.log('list', list);
+
     return {
       totalCount,
-      list,
+      list: this.serialize.getPosts(list),
       endCursor,
       hasNextPage,
     };

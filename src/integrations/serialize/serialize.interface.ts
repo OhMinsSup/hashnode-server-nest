@@ -59,3 +59,37 @@ export type SerializeHistory = {
   dateAddedAt: Date;
   createdAt: Date;
 };
+
+export type SerializePostImage = {
+  id: string;
+  publicUrl: string;
+};
+
+export type SerializePostSeo = {
+  title: string;
+  description: string;
+  file: SerializePostImage;
+};
+
+export type SerializePostTag = {
+  id: number;
+  name: string;
+};
+
+export type SerializePostTags = SerializePostTag[];
+
+export type SerializePost = {
+  id: string;
+  title: string;
+  subtitle: string;
+  content: string;
+  disabledComment: boolean;
+  publishingDate: Date;
+  createdAt: Date;
+  updatedAt: Date;
+  user: SerializeUser;
+  postImage: SerializePostImage;
+  postTags: SerializePostTags;
+  postSeo: SerializePostSeo;
+  likeCount: number;
+};

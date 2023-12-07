@@ -88,7 +88,7 @@ export class PostsController {
   })
   @UseGuards(LoggedInGuard)
   getDraftPosts(@AuthUser() user: UserWithInfo, @Query() query: PostListQuery) {
-    return this.service.getDraftPosts(user, query);
+    return this.service.getDrafts(user, query);
   }
 
   @Get('get-deleted-posts')

@@ -4,6 +4,11 @@ import { isEmpty } from '../../libs/assertion';
 import type {
   SerializeFollow,
   SerializeHistory,
+  SerializePost,
+  SerializePostImage,
+  SerializePostSeo,
+  SerializePostTag,
+  SerializePostTags,
   SerializeTag,
   SerializeUser,
   SerializeUserImage,
@@ -106,15 +111,7 @@ export class SerializeService {
   }
 
   getFollowTags(data: any) {
-    console.log(data);
-    return [];
-    // const clone = isEmpty(data) ? [] : [...data];
-    // return clone.map((item: any) => {
-    //   if ('tag' in item) {
-    //     return this.getTag(item.tag);
-    //   }
-    //   return this.getTag(item);
-    // });
+    return data;
   }
 
   getFollow(data: any) {
@@ -123,6 +120,63 @@ export class SerializeService {
       dataId: data?.dataId ?? '',
       ...(data?.count && { count: data?.count }),
     } as SerializeFollow;
+  }
+
+  getPostTag(data: any) {
+    return {
+      id: data?.tag?.id,
+      name: data?.tag?.name,
+    } as SerializePostTag;
+  }
+
+  getPostTags(data: any) {
+    const clone = isEmpty(data) ? [] : [...data];
+    return clone.map((item: any) => this.getPostTag(item)) as SerializePostTags;
+  }
+
+  getPostSeo(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const postSeo = clone as SerializePostSeo;
+    Object.keys(postSeo).forEach((key) => {
+      if (key === 'file') {
+        postSeo[key] = this.getPostImage(postSeo);
+        return;
+      }
+      postSeo[key] = this.transformDataToUndefined(postSeo?.[key]);
+    });
+    return postSeo;
+  }
+
+  getPostImage(data: any) {
+    const clone = isEmpty(data) ? {} : { ...(data?.file ?? {}) };
+    const postImage = clone as SerializePostImage;
+    Object.keys(postImage).forEach((key) => {
+      postImage[key] = this.transformDataToUndefined(postImage?.[key]);
+    });
+    return postImage;
+  }
+
+  getPost(data: any) {
+    return {
+      id: data.id,
+      title: data.title,
+      subtitle: data.subtitle,
+      content: data.content,
+      disabledComment: data.disabledComment,
+      publishingDate: data.publishingDate,
+      createdAt: data.createdAt,
+      updatedAt: data.updatedAt,
+      user: this.getUser(data?.user),
+      postImage: this.getPostImage(data?.postImage),
+      postTags: this.getPostTags(data?.postTags),
+      postSeo: this.getPostSeo(data?.postSeo),
+      likeCount: data?._count?.postLike ?? 0,
+    } as SerializePost;
+  }
+
+  getPosts(data: any) {
+    const clone = isEmpty(data) ? [] : [...data];
+    return clone.map((item: any) => this.getPost(item));
   }
 
   transformDataToUndefined(data: any) {
