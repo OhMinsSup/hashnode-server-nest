@@ -35,6 +35,7 @@ export class SeoInput {
     description: 'SEO title',
     maxLength: 50,
     type: 'string',
+    required: false,
   })
   title?: string;
 
@@ -45,6 +46,7 @@ export class SeoInput {
     description: 'SEO description',
     maxLength: 156,
     type: 'string',
+    required: false,
   })
   desc?: string;
 

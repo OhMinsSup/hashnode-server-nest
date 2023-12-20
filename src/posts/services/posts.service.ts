@@ -11,7 +11,7 @@ import { NotificationsService } from '../../notifications/services/notifications
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
-import { calculateRankingScore } from '../../libs/utils';
+import { calculateRankingScore, getSlug } from '../../libs/utils';
 import { assertNotFound } from '../../errors/not-found.error';
 import { assertNoPermission } from '../../errors/no-permission.error';
 
@@ -33,6 +33,7 @@ import {
   POSTS_SELECT,
   POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
+  POSTS_SELECT_SIMPLE,
 } from '../../modules/database/select/post.select';
 import { SerializeService } from '../../integrations/serialize/serialize.service';
 
@@ -186,7 +187,7 @@ export class PostsService {
         where: {
           id,
         },
-        select: POSTS_SELECT,
+        select: POSTS_SELECT_SIMPLE,
       });
 
       assertNotFound(!post, {
@@ -220,6 +221,35 @@ export class PostsService {
         newData.content = input.content;
       }
 
+      if (input.thumbnail) {
+        const { id } = input.thumbnail;
+
+        const postImage = await tx.postImage.findFirst({
+          where: {
+            fk_file_id: id,
+            fk_post_id: post.id,
+          },
+        });
+
+        if (!postImage) {
+          await tx.postImage.create({
+            data: {
+              fk_file_id: id,
+              fk_post_id: post.id,
+            },
+          });
+        } else if (!isEqual(input.thumbnail.id, postImage.fk_file_id)) {
+          await tx.postImage.update({
+            where: {
+              id: postImage.id,
+            },
+            data: {
+              fk_file_id: input.thumbnail.id,
+            },
+          });
+        }
+      }
+
       if (
         typeof input.disabledComment === 'boolean' &&
         !isEqual(
@@ -242,67 +272,109 @@ export class PostsService {
         newData.isDraft = input.isDraft;
       }
 
-      if (
-        input.publishingDate &&
-        !isEqual(
-          post.publishingDate.getTime(),
-          new Date(input.publishingDate).getTime(),
-        )
-      ) {
-        newData.publishingDate = new Date(input.publishingDate);
-      }
+      if (input.publishingDate) {
+        const newDate = new Date(input.publishingDate);
+        const oldDate =
+          post.publishingDate instanceof Date
+            ? post.publishingDate
+            : new Date(post.publishingDate);
 
-      if (input?.seo?.title && !isEqual(post.postSeo.title, input.seo.title)) {
-        newData.postSeo.update.title = input.seo.title;
-      }
-
-      if (input?.seo?.desc && !isEqual(post.postSeo.desc, input.seo.desc)) {
-        newData.postSeo.update.desc = input.seo.desc;
-      }
-
-      if (input?.seo?.image) {
-        if (post.postSeo.file) {
-          if (!isEqual(post.postSeo.file.id, input.seo.image.id)) {
-            newData.postSeo = {
-              update: {
-                fk_file_id: input.seo.image.id,
-              },
-            };
-          }
-        } else {
-          newData.postSeo = {
-            create: {
-              fk_file_id: input.seo.image.id,
-            },
-          };
+        if (!isEqual(oldDate.getTime(), newDate.getTime())) {
+          newData.publishingDate = newDate;
         }
       }
 
-      if (input.tags) {
-        const tags = post.postTags.map((postTag) => postTag.tag);
+      if (input.seo) {
+        const newPostSeo = {} as Prisma.XOR<
+          Prisma.PostSeoUpdateInput,
+          Prisma.PostSeoUncheckedUpdateInput
+        >;
 
-        const addeds = input.tags.filter(
-          (tag) => !tags.find((t) => t.name === tag),
-        );
-        const deleteds = tags.filter(
-          (tag) => !input.tags.find((t) => t === tag.name),
-        );
+        const { seo } = input;
 
-        const newTags = await Promise.all(
-          addeds.map((tag) => this.tags.findOrCreate(tag)),
-        );
+        if (seo.title && !isEqual(post?.postSeo?.title, seo.title)) {
+          newPostSeo.title = seo.title;
+        }
 
-        newData.postTags = {
-          deleteMany: {
-            fk_post_id: post.id,
-            fk_tag_id: {
-              in: deleteds.map((tag) => tag.id),
-            },
+        if (seo.desc && !isEqual(post?.postSeo?.desc, seo.desc)) {
+          newPostSeo.desc = seo.desc;
+        }
+
+        if (seo.image && !isEqual(post?.postSeo?.fk_file_id, seo.image.id)) {
+          newPostSeo.fk_file_id = seo.image.id;
+        }
+
+        await tx.postSeo.update({
+          where: {
+            id: post.postSeo.id,
           },
-          create: newTags.map((tag) => ({
-            fk_tag_id: tag.id,
-          })),
-        };
+          data: newPostSeo,
+        });
+      }
+
+      if (!isEmpty(input.tags) && input.tags) {
+        const tags = input.tags ?? [];
+        const currents = post.postTags?.map((postTag) => postTag.tag) ?? [];
+
+        // 기존 태그와 새로운 태그를 비교하여 삭제할 태그와 추가할 태그를 구분
+        const deleteds = currents.filter((tag) => !tags.includes(tag.name));
+        const addeds = tags.filter(
+          (tag) => !currents.map((tag) => tag.name).includes(tag),
+        );
+
+        // 삭제할 태그가 존재하는 경우
+        if (!isEmpty(deleteds)) {
+          await tx.postTags.deleteMany({
+            where: {
+              fk_post_id: post.id,
+              fk_tag_id: {
+                in: deleteds.map((tag) => tag.id),
+              },
+            },
+          });
+        }
+
+        // 추가할 태그가 존재하는 경우
+        if (!isEmpty(addeds)) {
+          const fn1 = () => {
+            return addeds.map(async (tag) => {
+              const newTag = getSlug(tag);
+              // 태그 정보가 이미 존재하는지 체크
+              const tagData = await tx.tag.findFirst({
+                where: {
+                  name: newTag,
+                },
+              });
+              // 없으면 새롭게 생성하고 있으면 기존 데이터를 사용
+              if (!tagData) {
+                return tx.tag.create({
+                  data: {
+                    name: newTag,
+                    tagStats: {
+                      create: {},
+                    },
+                  },
+                });
+              }
+              return tagData;
+            });
+          };
+
+          const tags = await Promise.all(fn1());
+
+          const fn2 = () => {
+            return tags.map((tag) =>
+              tx.postTags.create({
+                data: {
+                  fk_post_id: post.id,
+                  fk_tag_id: tag.id,
+                },
+              }),
+            );
+          };
+
+          await Promise.all(fn2());
+        }
       }
 
       await tx.post.update({
@@ -722,8 +794,6 @@ export class PostsService {
           ],
         })) > 0
       : false;
-
-    console.log('list', list);
 
     return {
       totalCount,

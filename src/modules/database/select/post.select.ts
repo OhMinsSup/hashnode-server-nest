@@ -96,6 +96,49 @@ export const POSTS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   },
 });
 
+export const POSTS_SELECT_SIMPLE = Prisma.validator<Prisma.PostSelect>()({
+  id: true,
+  title: true,
+  subTitle: true,
+  content: true,
+  disabledComment: true,
+  publishingDate: true,
+  isDraft: true,
+  createdAt: true,
+  updatedAt: true,
+  user: {
+    select: {
+      id: true,
+    },
+  },
+  postImage: {
+    select: {
+      id: true,
+      fk_file_id: true,
+      fk_post_id: true,
+    },
+  },
+  postSeo: {
+    select: {
+      id: true,
+      title: true,
+      desc: true,
+      fk_file_id: true,
+      fk_post_id: true,
+    },
+  },
+  postTags: {
+    select: {
+      tag: {
+        select: {
+          id: true,
+          name: true,
+        },
+      },
+    },
+  },
+});
+
 export const POSTS_LIKES_SELECT = Prisma.validator<Prisma.PostLikeSelect>()({
   id: true,
   post: {
