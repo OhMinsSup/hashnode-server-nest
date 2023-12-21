@@ -588,28 +588,17 @@ export class PostsService {
     date.setDate(date.getDate() - duration);
     date.setHours(0, 0, 0, 0);
 
-    const posts = await this.prisma.post.findMany({
+    const list = await this.prisma.post.findMany({
       orderBy: [
         {
           id: 'desc',
         },
       ],
       where: {
-        AND: [
-          {
-            isDeleted: false,
-          },
-          {
-            publishingDate: {
-              lte: now,
-            },
-          },
-          {
-            createdAt: {
-              gte: date,
-            },
-          },
-        ],
+        isDeleted: false,
+        publishingDate: {
+          lte: now,
+        },
       },
       select: POSTS_SELECT,
       take: 6,
@@ -620,7 +609,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        posts: this._serializes(posts),
+        posts: this.serialize.getPosts(list),
       },
     };
   }
