@@ -31,7 +31,6 @@ import type { UserWithInfo } from '../../modules/database/prisma.interface';
 
 import {
   POSTS_SELECT,
-  POSTS_LIKES_SELECT,
   POSTS_STATUS_SELECT,
   POSTS_SELECT_SIMPLE,
 } from '../../modules/database/select/post.select';
@@ -516,7 +515,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this._serializes(list),
+        list,
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -876,18 +875,22 @@ export class PostsService {
 
     // 내가 좋아요한 게시물 목록
     const [totalCount, list] = await Promise.all([
-      this.prisma.postLike.count({
+      this.prisma.post.count({
         where: {
-          fk_user_id: user.id,
-          post: {
-            isDeleted: false,
-            publishingDate: {
-              lte: now,
+          postLike: {
+            some: {
+              fk_user_id: user.id,
+              post: {
+                isDeleted: false,
+                publishingDate: {
+                  lte: now,
+                },
+              },
             },
           },
         },
       }),
-      this.prisma.postLike.findMany({
+      this.prisma.post.findMany({
         orderBy: [
           {
             id: 'desc',
@@ -899,31 +902,39 @@ export class PostsService {
                 lt: cursor,
               }
             : undefined,
-          fk_user_id: user.id,
-          post: {
-            isDeleted: false,
-            publishingDate: {
-              lte: now,
+          postLike: {
+            some: {
+              fk_user_id: user.id,
+              post: {
+                isDeleted: false,
+                publishingDate: {
+                  lte: now,
+                },
+              },
             },
           },
         },
-        select: POSTS_LIKES_SELECT,
+        select: POSTS_SELECT,
         take: limit,
       }),
     ]);
 
     const endCursor = list.at(-1)?.id ?? null;
     const hasNextPage = endCursor
-      ? (await this.prisma.postLike.count({
+      ? (await this.prisma.post.count({
           where: {
             id: {
               lt: endCursor,
             },
-            fk_user_id: user.id,
-            post: {
-              isDeleted: false,
-              publishingDate: {
-                lte: now,
+            postLike: {
+              some: {
+                fk_user_id: user.id,
+                post: {
+                  isDeleted: false,
+                  publishingDate: {
+                    lte: now,
+                  },
+                },
               },
             },
           },
@@ -937,10 +948,7 @@ export class PostsService {
 
     return {
       totalCount,
-      list: list.flatMap((item) => ({
-        ...item.post,
-        cursorId: item.id,
-      })),
+      list: this.serialize.getPosts(list),
       endCursor,
       hasNextPage,
     };

@@ -139,13 +139,6 @@ export const POSTS_SELECT_SIMPLE = Prisma.validator<Prisma.PostSelect>()({
   },
 });
 
-export const POSTS_LIKES_SELECT = Prisma.validator<Prisma.PostLikeSelect>()({
-  id: true,
-  post: {
-    select: POSTS_SELECT,
-  },
-});
-
 export const POSTS_STATUS_SELECT = Prisma.validator<Prisma.PostSelect>()({
   ...POSTS_SELECT,
   postStats: {

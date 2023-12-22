@@ -35,6 +35,7 @@ model User {
   history            History[]
   followers          FollowUser[]         @relation("follower_relation")
   following          FollowUser[]         @relation("following_relation")
+  postRead           PostRead[]
 
   @@index([email], map: "users_email")
   @@map("users")
@@ -211,11 +212,25 @@ model Post {
   postTags     PostTags[]
   notification Notification[]
   history      History[]
+  postRead     PostRead[]
 
   @@index([createdAt], map: "posts_createdAt")
   @@index([fk_user_id], map: "posts_fk_user_id")
   @@index([isDraft], map: "posts_isDraft")
   @@map("posts")
+}
+
+model PostRead {
+  id         String @id @default(uuid())
+  fk_post_id String
+  fk_user_id String
+
+  post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@unique([fk_post_id, fk_user_id])
+  @@index([fk_post_id], map: "post_reads_fk_post_id")
+  @@map("post_reads")
 }
 
 model PostSeo {
