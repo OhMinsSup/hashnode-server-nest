@@ -171,6 +171,7 @@ export class SerializeService {
       postTags: this.getPostTags(data?.postTags),
       postSeo: this.getPostSeo(data?.postSeo),
       likeCount: data?._count?.postLike ?? 0,
+      readCount: data?._count?.postRead ?? 0,
     } as SerializePost;
   }
 

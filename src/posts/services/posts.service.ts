@@ -11,7 +11,7 @@ import { NotificationsService } from '../../notifications/services/notifications
 
 // utils
 import { isEmpty, isString } from '../../libs/assertion';
-import { calculateRankingScore, getSlug } from '../../libs/utils';
+import { calculateRankingScore, generateHash, getSlug } from '../../libs/utils';
 import { assertNotFound } from '../../errors/not-found.error';
 import { assertNoPermission } from '../../errors/no-permission.error';
 
@@ -35,6 +35,7 @@ import {
   POSTS_SELECT_SIMPLE,
 } from '../../modules/database/select/post.select';
 import { SerializeService } from '../../integrations/serialize/serialize.service';
+import { EnvironmentService } from '../../integrations/environment/environment.service';
 
 interface UpdatePostLikesParams {
   postId: string;
@@ -52,6 +53,7 @@ export class PostsService {
     private readonly tags: TagsService,
     private readonly notifications: NotificationsService,
     private readonly serialize: SerializeService,
+    private readonly env: EnvironmentService,
   ) {}
 
   /**
@@ -120,6 +122,56 @@ export class PostsService {
       message: null,
       error: null,
       result: this._serialize(post),
+    };
+  }
+
+  /**
+   * @description 게시물 읽기 조회
+   * @param {UserWithInfo} user
+   * @param {string} id
+   * @param {string} ip
+   */
+  async read(user: UserWithInfo, id: string, ip: string) {
+    const ipHash = generateHash(ip, this.env.getHashSecret());
+    const post = await this.prisma.post.findUnique({
+      where: {
+        id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    assertNotFound(!post, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '게시물을 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    const postRead = await this.prisma.postRead.findFirst({
+      where: {
+        fk_post_id: post.id,
+        fk_user_id: user.id,
+        ipHash,
+      },
+    });
+
+    if (!postRead) {
+      await this.prisma.postRead.create({
+        data: {
+          fk_user_id: user.id,
+          fk_post_id: post.id,
+          ipHash,
+        },
+      });
+    }
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
     };
   }
 

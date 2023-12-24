@@ -221,15 +221,20 @@ model Post {
 }
 
 model PostRead {
-  id         String @id @default(uuid())
+  id         String   @id @default(uuid())
+  ipHash     String?
   fk_post_id String
   fk_user_id String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
   user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
-  @@unique([fk_post_id, fk_user_id])
+  @@index([createdAt], map: "post_reads_createdAt_fk_post_id")
   @@index([fk_post_id], map: "post_reads_fk_post_id")
+  @@index([fk_user_id], map: "post_reads_fk_user_id")
+  @@index([ipHash, fk_post_id], map: "post_reads_ip_hash_fk_post_id")
   @@map("post_reads")
 }
 

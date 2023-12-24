@@ -99,4 +99,11 @@ export class EnvironmentService {
     const expiresAt = addMilliseconds(new Date().getTime(), ms(expiresIn));
     return expiresAt;
   }
+
+  // -----------------------------------------------------------------------------
+  // hash
+  // -----------------------------------------------------------------------------
+  getHashSecret(): string {
+    return this.configService.get<string>('HASH_SECRET');
+  }
 }

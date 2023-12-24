@@ -68,6 +68,12 @@ export class EnvironmentVariables {
 
   @IsString()
   JWT_ISSUER: string;
+
+  // -----------------------------------------------------------------------------
+  // Hash
+  // -----------------------------------------------------------------------------
+  @IsString()
+  HASH_SECRET: string;
 }
 
 export function validate(config: Record<string, unknown>) {

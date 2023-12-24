@@ -1,5 +1,6 @@
 import slugifyCJK from 'cjk-slug';
 import slugify from 'slugify';
+import { createHmac } from 'crypto';
 
 export const escapeForUrl = (text: string) =>
   text
@@ -21,4 +22,8 @@ export function calculateRankingScore(likes: number, hourAge: number) {
 export function getSlug(text: string) {
   const slug = slugifyCJK(text);
   return slugify(slug, { trim: true, lower: true });
+}
+
+export function generateHash(text: string, salt: string) {
+  return createHmac('sha256', salt).update(text).digest('hex');
 }

@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Ip,
   UseGuards,
 } from '@nestjs/common';
 
@@ -107,6 +108,12 @@ export class PostsController {
     return this.service.getDeletedPosts(user, query);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: '게시물 상세 조회' })
+  detail(@Param('id') id: string) {
+    return this.service.detail(id);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: '게시글 수정' })
   @ApiBody({
@@ -130,10 +137,16 @@ export class PostsController {
     return this.service.delete(user, id);
   }
 
-  @Get(':id')
-  @ApiOperation({ summary: '게시물 상세 조회' })
-  detail(@Param('id') id: string) {
-    return this.service.detail(id);
+  @Post(':id/read')
+  @ApiOperation({ summary: '게시물 조회수 증가' })
+  @UseGuards(LoggedInGuard)
+  read(
+    @AuthUser() user: UserWithInfo,
+    @Param('id') id: string,
+    @Ip() ip: string,
+  ) {
+    console.log(ip);
+    return this.service.read(user, id, ip);
   }
 
   @Post(':id/like')
