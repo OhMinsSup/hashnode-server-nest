@@ -55,4 +55,10 @@ export class TagsController {
   follow(@AuthUser() user: UserWithInfo, @Body() input: TagFollowBody) {
     return this.service.follow(user, input);
   }
+
+  @Get(':slug/slug')
+  @ApiOperation({ summary: '태그 상세(slug)' })
+  detailBySlug(@Param('slug') slug: string, @AuthUser() user?: UserWithInfo) {
+    return this.service.detailBySlug(slug, user);
+  }
 }

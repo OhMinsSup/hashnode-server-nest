@@ -190,6 +190,28 @@ export class TagsService {
   }
 
   /**
+   * @description 태그 상세 정보 (slug)
+   * @param {string} slug 태그 슬러그
+   * @param {UserWithInfo} user 유저 정보
+   */
+  async detailBySlug(slug: string, user?: UserWithInfo) {
+    const tagInfo = await this.prisma.tag.findFirst({
+      where: {
+        name: slug,
+      },
+    });
+
+    assertNotFound(!tagInfo, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '태그를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    return this.detail(tagInfo.id, user);
+  }
+
+  /**
    * @description 태그 상세 정보
    * @param {string} tagId 태그 아이디
    * @param {UserWithInfo} user 유저 정보
