@@ -542,7 +542,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this._serializes(list),
+        list: this.serialize.getPosts(list),
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -647,6 +647,7 @@ export class PostsService {
       ],
       where: {
         isDeleted: false,
+        isDraft: false,
         publishingDate: {
           lte: now,
         },
@@ -697,6 +698,7 @@ export class PostsService {
       this.prisma.post.count({
         where: {
           isDeleted: false,
+          isDraft: false,
           publishingDate: {
             lte: now,
           },
@@ -722,6 +724,7 @@ export class PostsService {
               }
             : undefined,
           isDeleted: false,
+          isDraft: false,
           publishingDate: {
             lte: now,
           },
@@ -746,6 +749,7 @@ export class PostsService {
               lt: endCursor,
             },
             isDeleted: false,
+            isDraft: false,
             publishingDate: {
               lte: now,
             },
