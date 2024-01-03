@@ -16,8 +16,10 @@ import { HealthModule } from './health/health.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { AuthenticationGuardModule } from './guards/authentication.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
+import { AppController } from './app.controller';
 
 @Module({
+  controllers: [AppController],
   imports: [
     IntegrationsModule,
     JwtModule.register({
