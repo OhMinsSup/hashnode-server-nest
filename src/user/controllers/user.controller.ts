@@ -101,19 +101,19 @@ export class UserController {
     return this.service.getOwnerPostById(user, postId);
   }
 
-  @Get(':userId')
+  @Get(':username')
   @ApiOperation({ summary: '사용자 정보' })
-  getUserInfo(@Param('userId') userId: string) {
-    return this.service.getUserInfoById(userId);
+  getUserInfo(@Param('username') username: string) {
+    return this.service.getUserInfoByUsername(username);
   }
 
-  @Get(':userId/histories')
+  @Get(':username/histories')
   @ApiOperation({ summary: '사용자의 기록' })
-  getUserHistories(@Param('userId') userId: string) {
-    return this.service.getUserHistories(userId);
+  getUserHistories(@Param('username') username: string) {
+    return this.service.getUserHistories(username);
   }
 
-  @Get(':userId/posts')
+  @Get(':username/posts')
   @ApiOperation({ summary: '사용자가 쓴 글' })
   @ApiQuery({
     name: 'query',
@@ -122,9 +122,9 @@ export class UserController {
     description: '페이지네이션',
   })
   getUserPosts(
-    @Param('userId') userId: string,
+    @Param('username') username: string,
     @Query() query: MyPostListQuery,
   ) {
-    return this.service.getUserPosts(userId, query);
+    return this.service.getUserPosts(username, query);
   }
 }

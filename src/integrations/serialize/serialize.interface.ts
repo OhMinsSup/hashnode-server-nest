@@ -21,12 +21,12 @@ export type SerializeUserSocial = {
 };
 
 export type SerializeUserTag = {
-  id: number;
+  id: string;
   name: string;
 };
 
 export type SerializeUser = {
-  id: number;
+  id: string;
   email: string;
   createdAt: string;
   userProfile: SerializeUserProfile;
@@ -72,7 +72,7 @@ export type SerializePostSeo = {
 };
 
 export type SerializePostTag = {
-  id: number;
+  id: string;
   name: string;
 };
 

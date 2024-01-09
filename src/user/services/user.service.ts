@@ -39,21 +39,22 @@ export class UserService {
 
   /**
    * @description 유저가 작성한 포스트 리스트
-   * @param {UserWithInfo} userId 유저 정보
+   * @param {string} username 유저 정보
    * @param {MyPostListQuery} param 쿼리 */
-  async getUserPosts(userId: string, { cursor, limit }: MyPostListQuery) {
-    const { result } = await this.getUserInfoById(userId);
+  async getUserPosts(username: string, { cursor, limit }: MyPostListQuery) {
+    const { result } = await this.getUserInfoByUsername(username);
     // @ts-ignore - result가 UserWithInfo 타입이 아닌 경우
     return this.getMyPosts(result, { cursor, limit });
   }
 
   /**
    * @description 유저명으로 유저 기록을 가져온다.
-   * @param {string} userId 유저명 */
-  async getUserHistories(userId: string) {
+   * @param {string} username 유저명 */
+  async getUserHistories(username: string) {
+    const { result } = await this.getUserInfoByUsername(username);
     const data = await this.prisma.history.findMany({
       where: {
-        fk_user_id: userId,
+        fk_user_id: result.id,
       },
       orderBy: {
         createdAt: 'desc',
@@ -88,11 +89,24 @@ export class UserService {
 
   /**
    * @description 유저명으로 유저 정보를 가져온다.
-   * @param {string} userId 유저명 */
-  async getUserInfoById(userId: string) {
+   * @param {string} username 유저명 */
+  async getUserInfoByUsername(username: string) {
+    const profile = await this.prisma.userProfile.findUnique({
+      where: {
+        username,
+      },
+    });
+
+    assertNotFound(!profile, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '존재하지 않는 사용자입니다.',
+      error: 'username',
+      result: null,
+    });
+
     const data = await this.prisma.user.findUnique({
       where: {
-        id: userId,
+        id: profile.fk_user_id,
       },
       select: {
         id: true,

@@ -61,7 +61,7 @@ export class TagsService {
   async follow(user: UserWithInfo, input: TagFollowBody) {
     const tagInfo = await this.prisma.tag.findUnique({
       where: {
-        id: input.tagId,
+        name: input.slug,
       },
       select: {
         id: true,
