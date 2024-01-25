@@ -54,6 +54,22 @@ export class PostsController {
     return this.service.list(query);
   }
 
+  @Get('get-following-posts')
+  @ApiOperation({ summary: '팔로잉한 유저의 게시물 리스트' })
+  @ApiQuery({
+    name: 'query',
+    type: PostListQuery,
+    required: false,
+    description: '페이지네이션',
+  })
+  @UseGuards(LoggedInGuard)
+  getFollowingPosts(
+    @AuthUser() user: UserWithInfo,
+    @Query() query: PostListQuery,
+  ) {
+    return this.service.getFollowing(user, query);
+  }
+
   @Get('get-likes')
   @ApiOperation({ summary: '좋아요한 게시물 리스트' })
   @ApiQuery({

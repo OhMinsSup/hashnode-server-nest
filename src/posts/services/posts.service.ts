@@ -567,7 +567,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list,
+        list: this.serialize.getPosts(list),
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -592,7 +592,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this._serializes(list),
+        list: this.serialize.getPosts(list),
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -617,7 +617,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this._serializes(list),
+        list: this.serialize.getPosts(list),
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -662,6 +662,26 @@ export class PostsService {
       error: null,
       result: {
         posts: this.serialize.getPosts(list),
+      },
+    };
+  }
+
+  async getFollowing(user: UserWithInfo, query: PostListQuery) {
+    const result = await this._getFollowingItems(query, user);
+
+    const { list, totalCount, endCursor, hasNextPage } = result;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        list: this.serialize.getPosts(list),
+        totalCount,
+        pageInfo: {
+          endCursor: hasNextPage ? endCursor : null,
+          hasNextPage,
+        },
       },
     };
   }
@@ -1279,7 +1299,98 @@ export class PostsService {
     };
   }
 
+  private async _getFollowingItems(
+    { cursor, limit }: PostListQuery,
+    user: UserWithInfo,
+  ) {
+    if (isString(limit)) {
+      limit = Number(limit);
+    }
+
+    const now = new Date();
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
+          user: {
+            followers: {
+              some: {
+                fk_follower_user_id: user.id,
+              },
+            },
+          },
+        },
+      }),
+      this.prisma.post.findMany({
+        orderBy: [
+          {
+            id: 'desc',
+          },
+        ],
+        where: {
+          id: cursor
+            ? {
+                lt: cursor,
+              }
+            : undefined,
+          isDeleted: false,
+          publishingDate: {
+            lte: now,
+          },
+          user: {
+            followers: {
+              some: {
+                fk_follower_user_id: user.id,
+              },
+            },
+          },
+        },
+        select: POSTS_SELECT,
+        take: limit,
+      }),
+    ]);
+
+    const endCursor = list.at(-1)?.id ?? null;
+    const hasNextPage = endCursor
+      ? (await this.prisma.post.count({
+          where: {
+            id: {
+              lt: endCursor,
+            },
+            isDeleted: false,
+            publishingDate: {
+              lte: now,
+            },
+            user: {
+              followers: {
+                some: {
+                  fk_follower_user_id: user.id,
+                },
+              },
+            },
+          },
+          orderBy: [
+            {
+              id: 'desc',
+            },
+          ],
+        })) > 0
+      : false;
+
+    return {
+      totalCount,
+      list,
+      endCursor,
+      hasNextPage,
+    };
+  }
+
   /**
+   * @deprecated
    * @description 리스트 데이터 serialize
    * @param list
    */
@@ -1288,6 +1399,7 @@ export class PostsService {
   }
 
   /**
+   * @deprecated
    * @description 리스트 데이터 serialize
    * @param list
    */
