@@ -100,7 +100,7 @@ export class SerializeService {
     return {
       id: data.id,
       name: data.name,
-      isFollow: isEmpty(data?.tagFollow ?? []) ? false : true,
+      isFollowing: isEmpty(data?.tagFollow ?? []) ? false : true,
       postCount: data?._count?.postTags ?? 0,
     } as SerializeTag;
   }

@@ -714,6 +714,8 @@ export class PostsService {
       tagId = data.id;
     }
 
+    console.log('tagIDDDDDDD+>', tagId);
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -723,9 +725,9 @@ export class PostsService {
             lte: now,
           },
           ...(tagId && {
-            postsTags: {
+            postTags: {
               some: {
-                tagId: tagId,
+                fk_tag_id: tagId,
               },
             },
           }),
@@ -749,9 +751,9 @@ export class PostsService {
             lte: now,
           },
           ...(tagId && {
-            postsTags: {
+            postTags: {
               some: {
-                tagId: tagId,
+                fk_tag_id: tagId,
               },
             },
           }),
@@ -774,9 +776,9 @@ export class PostsService {
               lte: now,
             },
             ...(tagId && {
-              postsTags: {
+              postTags: {
                 some: {
-                  tagId: tagId,
+                  fk_tag_id: tagId,
                 },
               },
             }),
@@ -1162,6 +1164,7 @@ export class PostsService {
         },
         post: {
           isDeleted: false,
+          isDraft: false,
           publishingDate: {
             lte: now,
           },
