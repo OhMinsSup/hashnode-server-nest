@@ -189,6 +189,8 @@ export class PostsService {
       select: POSTS_SELECT,
     });
 
+    console.log('post', post);
+
     assertNotFound(!post, {
       resultCode: EXCEPTION_CODE.NOT_EXIST,
       message: '게시물을 찾을 수 없습니다.',
@@ -542,7 +544,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this.serialize.getPosts(list),
+        list,
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -592,7 +594,7 @@ export class PostsService {
       message: null,
       error: null,
       result: {
-        list: this.serialize.getPosts(list),
+        list,
         totalCount,
         pageInfo: {
           endCursor: hasNextPage ? endCursor : null,
@@ -714,8 +716,6 @@ export class PostsService {
       tagId = data.id;
     }
 
-    console.log('tagIDDDDDDD+>', tagId);
-
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -793,7 +793,7 @@ export class PostsService {
 
     return {
       totalCount,
-      list,
+      list: this.serialize.getPosts(list),
       endCursor,
       hasNextPage,
     };
@@ -1123,7 +1123,7 @@ export class PostsService {
 
     return {
       totalCount,
-      list,
+      list: this.serialize.getPosts(list),
       endCursor,
       hasNextPage,
     };
@@ -1296,7 +1296,7 @@ export class PostsService {
 
     return {
       totalCount,
-      list,
+      list: this.serialize.getPosts(list),
       endCursor,
       hasNextPage,
     };

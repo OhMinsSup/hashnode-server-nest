@@ -178,4 +178,14 @@ export class PostsController {
   unlike(@AuthUser() user: UserWithInfo, @Param('id') id: string) {
     return this.service.unlike(user, id);
   }
+
+  @Get(':id/owner')
+  @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
+  @UseGuards(LoggedInGuard)
+  getOwnerPostById(
+    @AuthUser() user: UserWithInfo,
+    @Param('postId') postId: string,
+  ) {
+    return this.service.getOwnerPostById(user, postId);
+  }
 }

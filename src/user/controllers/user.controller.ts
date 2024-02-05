@@ -91,16 +91,6 @@ export class UserController {
     return this.service.getFollowTags(user);
   }
 
-  @Get('owner-posts/:postId')
-  @ApiOperation({ summary: '작성자만 볼 수 있는 포스트 상세 조회' })
-  @UseGuards(LoggedInGuard)
-  getOwnerPostById(
-    @AuthUser() user: UserWithInfo,
-    @Param('postId') postId: string,
-  ) {
-    return this.service.getOwnerPostById(user, postId);
-  }
-
   @Get(':username')
   @ApiOperation({ summary: '사용자 정보' })
   getUserInfo(@Param('username') username: string) {
