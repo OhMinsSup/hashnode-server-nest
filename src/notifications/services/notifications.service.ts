@@ -344,10 +344,17 @@ export class NotificationsService {
   }
 
   /**
-   * @description 유저의 알림 카운트 값을 가져온다.
-   * @param {UserWithInfo} user
-   */
-  async count(user: UserWithInfo) {
+   * @description 유저의 알림 카운트 값을 가져온다. */
+  async count(user?: UserWithInfo) {
+    if (!user) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: 0,
+      };
+    }
+
     const now = new Date();
     // 알림 생성 시간이 1달 이내인 알림의 갯수를 가져온다.
     const time = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());

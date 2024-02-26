@@ -78,7 +78,6 @@ export class PostsController {
     required: false,
     description: '페이지네이션',
   })
-  @UseGuards(LoggedInGuard)
   getLikes(@AuthUser() user: UserWithInfo, @Query() query: PostListQuery) {
     return this.service.getLikes(user, query);
   }
@@ -103,7 +102,6 @@ export class PostsController {
     required: false,
     description: '페이지네이션',
   })
-  @UseGuards(LoggedInGuard)
   getDraftPosts(@AuthUser() user: UserWithInfo, @Query() query: PostListQuery) {
     return this.service.getDrafts(user, query);
   }

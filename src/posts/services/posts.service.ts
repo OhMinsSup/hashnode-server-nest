@@ -555,12 +555,9 @@ export class PostsService {
   }
 
   /**
-   * @description 게시물 좋아요 리스트
-   * @param {UserWithInfo} user
-   * @param {PostListQuery} query
-   */
+   * @description 게시물 좋아요 리스트 */
   async getLikes(user: UserWithInfo, query: PostListQuery) {
-    const result = await this._getLikeItems(user, query);
+    const result = await this._getLikeItems(query, user);
 
     const { list, totalCount, endCursor, hasNextPage } = result;
 
@@ -580,10 +577,7 @@ export class PostsService {
   }
 
   /**
-   * @description 임시 저장 게시물 목록
-   * @param {UserWithInfo} user
-   * @param {PostListQuery} query
-   */
+   * @description 임시 저장 게시물 목록 */
   async getDrafts(user: UserWithInfo, query: PostListQuery) {
     const result = await this._getDraftItems(query, user);
 
@@ -652,6 +646,7 @@ export class PostsService {
         isDraft: false,
         publishingDate: {
           lte: now,
+          gte: date,
         },
       },
       select: POSTS_SELECT,
@@ -816,7 +811,7 @@ export class PostsService {
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
-          fk_user_id: user.id,
+          fk_user_id: user?.id,
           isDraft: true,
           isDeleted: false,
         },
@@ -828,7 +823,7 @@ export class PostsService {
           },
         ],
         where: {
-          fk_user_id: user.id,
+          fk_user_id: user?.id,
           isDraft: true,
           isDeleted: false,
           id: cursor
@@ -851,7 +846,7 @@ export class PostsService {
             },
             isDraft: true,
             isDeleted: false,
-            fk_user_id: user.id,
+            fk_user_id: user?.id,
           },
           orderBy: [
             {
@@ -938,12 +933,12 @@ export class PostsService {
 
   /**
    * @description 좋아요한 게시물 리스트
-   * @param {UserWithInfo} user
    * @param {PostListQuery} query
+   * @param {UserWithInfo} user
    */
   private async _getLikeItems(
-    user: UserWithInfo,
     { cursor, limit }: PostListQuery,
+    user?: UserWithInfo,
   ) {
     if (isString(limit)) {
       limit = Number(limit);
@@ -957,7 +952,7 @@ export class PostsService {
         where: {
           postLike: {
             some: {
-              fk_user_id: user.id,
+              fk_user_id: user?.id,
               post: {
                 isDeleted: false,
                 publishingDate: {
@@ -982,7 +977,7 @@ export class PostsService {
             : undefined,
           postLike: {
             some: {
-              fk_user_id: user.id,
+              fk_user_id: user?.id,
               post: {
                 isDeleted: false,
                 publishingDate: {
@@ -1006,7 +1001,7 @@ export class PostsService {
             },
             postLike: {
               some: {
-                fk_user_id: user.id,
+                fk_user_id: user?.id,
                 post: {
                   isDeleted: false,
                   publishingDate: {

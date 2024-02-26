@@ -28,7 +28,6 @@ export class NotificationsController {
   // 유저의 알림 카운트 값을 가져온다.
   @Get('count')
   @ApiOperation({ summary: '알림 카운트' })
-  @UseGuards(LoggedInGuard)
   count(@AuthUser() user: UserWithInfo) {
     return this.service.count(user);
   }
