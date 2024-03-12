@@ -1152,25 +1152,36 @@ export class PostsService {
 
     const now = new Date();
 
-    const totalCount = await this.prisma.postStats.count({
+    const totalCount = await this.prisma.post.count({
       where: {
-        score: {
-          gte: 0.001,
-        },
-        post: {
-          isDeleted: false,
-          isDraft: false,
-          publishingDate: {
-            lte: now,
-          },
-          ...(tagId && {
-            postsTags: {
-              some: {
-                tagId: tagId,
+        ...(cursor
+          ? {
+              id: {
+                lt: cursor,
               },
-            },
-          }),
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
+            }
+          : {
+              isDeleted: false,
+              publishingDate: {
+                lte: now,
+              },
+            }),
+        postStats: {
+          score: {
+            gte: 0.001,
+          },
         },
+        ...(tagId && {
+          postTags: {
+            some: {
+              fk_tag_id: tagId,
+            },
+          },
+        }),
       },
     });
 
@@ -1183,9 +1194,9 @@ export class PostsService {
               lte: now,
             },
             ...(tagId && {
-              postsTags: {
+              postTags: {
                 some: {
-                  tagId: tagId,
+                  fk_tag_id: tagId,
                 },
               },
             }),
@@ -1225,9 +1236,9 @@ export class PostsService {
           },
         },
         ...(tagId && {
-          postsTags: {
+          postTags: {
             some: {
-              tagId: tagId,
+              fk_tag_id: tagId,
             },
           },
         }),
@@ -1267,9 +1278,9 @@ export class PostsService {
               lte: now,
             },
             ...(tagId && {
-              postsTags: {
+              postTags: {
                 some: {
-                  tagId: tagId,
+                  fk_tag_id: tagId,
                 },
               },
             }),
