@@ -1308,6 +1308,11 @@ export class PostsService {
     };
   }
 
+  /**
+   * @description 팔로잉 게시물 리스트
+   * @param {PostListQuery} query
+   * @param {UserWithInfo} user
+   */
   private async _getFollowingItems(
     { cursor, limit }: PostListQuery,
     user: UserWithInfo,
