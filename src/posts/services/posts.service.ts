@@ -1154,26 +1154,19 @@ export class PostsService {
 
     const totalCount = await this.prisma.post.count({
       where: {
-        ...(cursor
-          ? {
-              id: {
-                lt: cursor,
-              },
-              isDeleted: false,
-              publishingDate: {
-                lte: now,
-              },
-            }
-          : {
-              isDeleted: false,
-              publishingDate: {
-                lte: now,
-              },
-            }),
+        ...(cursor && {
+          id: {
+            lt: cursor,
+          },
+        }),
+        isDeleted: false,
         postStats: {
           score: {
             gte: 0.001,
           },
+        },
+        publishingDate: {
+          lte: now,
         },
         ...(tagId && {
           postTags: {
@@ -1190,6 +1183,11 @@ export class PostsService {
           where: {
             id: cursor,
             isDeleted: false,
+            postStats: {
+              score: {
+                gte: 0.001,
+              },
+            },
             publishingDate: {
               lte: now,
             },
@@ -1209,22 +1207,15 @@ export class PostsService {
 
     const list = await this.prisma.post.findMany({
       where: {
-        ...(cursor
-          ? {
-              id: {
-                lt: cursor,
-              },
-              isDeleted: false,
-              publishingDate: {
-                lte: now,
-              },
-            }
-          : {
-              isDeleted: false,
-              publishingDate: {
-                lte: now,
-              },
-            }),
+        ...(cursor && {
+          id: {
+            lt: cursor,
+          },
+        }),
+        isDeleted: false,
+        publishingDate: {
+          lte: now,
+        },
         postStats: {
           score: {
             gte: 0.001,
