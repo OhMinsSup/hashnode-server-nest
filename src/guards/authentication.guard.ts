@@ -12,9 +12,7 @@ import { differenceInMilliseconds, subMinutes } from 'date-fns';
 import { EnvironmentService } from '../integrations/environment/environment.service';
 import { TokenService } from '../auth/services/token.service';
 import { PrismaService } from '../modules/database/prisma.service';
-
-// constants
-import { USER_SELECT } from '../auth/select/user.select';
+import { getUserExternalFullSelector } from '../modules/database/selectors/user';
 
 // types
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
@@ -85,7 +83,9 @@ export class AuthenticationGuard implements CanActivate {
 
     const { authId, id, exp } = payload;
 
-    const diff = differenceInMilliseconds(new Date(exp * 1000), new Date());
+    const nowDate = new Date();
+
+    const diff = differenceInMilliseconds(new Date(exp * 1000), nowDate);
     if (diff > 0) {
       const validated = await this.prisma.userAuthentication.findUnique({
         where: {
@@ -98,7 +98,7 @@ export class AuthenticationGuard implements CanActivate {
         return true;
       }
 
-      if (validated.expiresAt.getTime() - Date.now() < 0) {
+      if (validated.expiresAt.getTime() - nowDate.getTime() < 0) {
         request.isExpiredToken = true;
         return true;
       }
@@ -107,12 +107,11 @@ export class AuthenticationGuard implements CanActivate {
         where: {
           id,
         },
-        select: USER_SELECT,
+        select: getUserExternalFullSelector(),
       });
 
       if (
-        validated.lastValidatedAt.getTime() >
-        subMinutes(Date.now(), 5).getTime()
+        validated.lastValidatedAt.getTime() > subMinutes(nowDate, 5).getTime()
       ) {
         try {
           await this.prisma.userAuthentication.update({
@@ -120,7 +119,7 @@ export class AuthenticationGuard implements CanActivate {
               id: authId,
             },
             data: {
-              lastValidatedAt: new Date(),
+              lastValidatedAt: nowDate,
             },
           });
         } catch (error) {

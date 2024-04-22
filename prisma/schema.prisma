@@ -11,7 +11,7 @@ datasource db {
 }
 
 model User {
-  id           String    @id @default(uuid())
+  id           String    @id @default(cuid())
   email        String    @unique
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -21,135 +21,94 @@ model User {
   lastSignInAt DateTime?
   lastSignInIp String?
 
-  userProfile        UserProfile?
-  userSocial         UserSocial?
-  userImage          UserImage?
-  userPassword       UserPassword?
-  files              File[]
-  userAuthentication UserAuthentication[]
-  notification       Notification[]
-  post               Post[]
-  postLike           PostLike[]
-  tagFollow          TagFollow[]
-  userTags           UserTags[]
-  history            History[]
-  followers          FollowUser[]         @relation("follower_relation")
-  following          FollowUser[]         @relation("following_relation")
-  postRead           PostRead[]
+  UserProfile        UserProfile?
+  UserSocial         UserSocial?
+  UserPassword       UserPassword?
+  UserAuthentication UserAuthentication[]
+  UserNotifications  UserNotification[]
+  UserTags           UserTags[]
 
-  @@index([email], map: "users_email")
   @@map("users")
 }
 
 model UserProfile {
-  id            String   @id @default(uuid())
-  username      String   @unique
+  id            String  @id @default(cuid())
+  username      String  @unique
+  image         String?
   nickname      String?
   tagline       String?
   location      String?
   bio           String?
   availableText String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  fk_user_id    String?  @unique
+  fk_user_id    String  @unique
+  User          User    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
-  user User? @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index([username], map: "user_profiles_username")
-  @@index([fk_user_id], map: "user_profiles_fk_user_id")
   @@map("user_profiles")
 }
 
 model UserSocial {
-  id         String   @id @default(uuid())
+  id         String  @id @default(cuid())
   github     String?
   twitter    String?
   facebook   String?
   instagram  String?
   website    String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  fk_user_id String?  @unique
+  fk_user_id String? @unique
+  User       User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
-  user User? @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_user_id], map: "user_socials_fk_user_id")
   @@map("user_socials")
 }
 
-model UserImage {
-  id         String  @id @default(uuid())
-  cfId       String
-  avatarUrl  String
-  filename   String
-  mimeType   String
-  fk_user_id String? @unique
-
-  user User? @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index(cfId)
-  @@index([fk_user_id], map: "user_images_fk_user_id")
-  @@map("user_images")
-}
-
 model UserPassword {
-  id           String   @id @default(uuid())
-  passwordHash String
-  salt         String
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  fk_user_id   String?  @unique
-
-  user User? @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  id         String @id @default(cuid())
+  hash       String
+  salt       String
+  fk_user_id String @unique
+  User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([fk_user_id], map: "user_passwords_fk_user_id")
   @@map("user_passwords")
 }
 
 model UserAuthentication {
-  id              String   @id @default(uuid())
+  id              String   @id @default(cuid())
   lastValidatedAt DateTime
   expiresAt       DateTime
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   fk_user_id      String?
+  User            User?    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
-  user User? @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_user_id], map: "user_authentications_fk_user_id")
   @@map("user_authentications")
 }
 
 model UserTags {
-  id         String @id @default(uuid())
+  id         String @id @default(cuid())
   fk_user_id String
   fk_tag_id  String
-
-  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
+  User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  Tag        Tag    @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
 
   @@index([fk_user_id], map: "user_tags_fk_user_id")
   @@index([fk_tag_id], map: "user_tags_fk_tag_id")
   @@map("user_tags")
 }
 
-model FollowUser {
-  id                   String   @id @default(uuid())
-  fk_following_user_id String
-  fk_follower_user_id  String
-  created_at           DateTime @default(now())
-  updated_at           DateTime @updatedAt
+model UserNotification {
+  id                 String       @id @default(cuid())
+  readAt             DateTime?
+  fk_user_id         String
+  fk_notification_id String
+  User               User         @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  Notification       Notification @relation(fields: [fk_notification_id], references: [id], onDelete: Cascade)
 
-  following User @relation("following_relation", fields: [fk_following_user_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
-  follower  User @relation("follower_relation", fields: [fk_follower_user_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
-
-  @@index([fk_following_user_id])
-  @@index([fk_follower_user_id])
-  @@map("follow_users")
+  @@index([fk_user_id], map: "user_notifications_fk_user_id")
+  @@index([fk_notification_id], map: "user_notifications_fk_notification_id")
+  @@map("user_notifications")
 }
 
 model File {
-  id         String   @id @default(uuid())
+  id         String   @id @default(cuid())
   cfId       String
   publicUrl  String
   filename   String
@@ -158,215 +117,34 @@ model File {
   mediaType  String //  IMAGE | VIDEO | AUDIO
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  fk_user_id String?
 
-  user      User?       @relation(fields: [fk_user_id], references: [id], onDelete: SetNull)
-  postSeo   PostSeo[]
-  postImage PostImage[]
-
-  @@index(cfId)
   @@index([uploadType, mediaType], map: "files_uploadType_mediaType")
   @@map("files")
 }
 
-model Notification {
-  id         String   @id @default(uuid())
-  type       String // LIKE | COMMENT | ARTICLE | WELCOME
-  message    String
-  read       Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  fk_user_id String?
-  fk_post_id String?
-  fk_tag_id  String?
-
-  user User?     @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  post Post?     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  tag  Tag?      @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
-  like PostLike? @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-
-  @@index([createdAt, read], map: "notifications_createdAt_read")
-  @@index([type, read], map: "notifications_type_read")
-  @@map("notifications")
-}
-
-model Post {
-  id              String    @id @default(uuid())
-  title           String
-  subTitle        String?
-  content         String?
-  disabledComment Boolean?  @default(false)
-  isDeleted       Boolean?  @default(false)
-  isDraft         Boolean?  @default(false)
-  publishingDate  DateTime?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  deletedAt       DateTime?
-  fk_user_id      String
-
-  user         User           @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  postSeo      PostSeo?
-  postStats    PostStats?
-  postImage    PostImage?
-  postLike     PostLike[]
-  postTags     PostTags[]
-  notification Notification[]
-  history      History[]
-  postRead     PostRead[]
-
-  @@index([createdAt], map: "posts_createdAt")
-  @@index([fk_user_id], map: "posts_fk_user_id")
-  @@index([isDraft], map: "posts_isDraft")
-  @@map("posts")
-}
-
-model PostRead {
-  id         String   @id @default(uuid())
-  ipHash     String?
-  fk_post_id String
-  fk_user_id String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index([createdAt], map: "post_reads_createdAt_fk_post_id")
-  @@index([fk_post_id], map: "post_reads_fk_post_id")
-  @@index([fk_user_id], map: "post_reads_fk_user_id")
-  @@index([ipHash, fk_post_id], map: "post_reads_ip_hash_fk_post_id")
-  @@map("post_reads")
-}
-
-model PostSeo {
-  id         String  @id @default(uuid())
-  title      String?
-  desc       String?
-  fk_file_id String?
-  fk_post_id String? @unique
-
-  file File? @relation(fields: [fk_file_id], references: [id], onDelete: SetNull)
-  post Post? @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-
-  @@map("post_seo")
-}
-
-model PostStats {
-  id            String   @id @default(uuid())
-  likes         Int      @default(0)
-  clicks        Int      @default(0)
-  score         Float    @default(0)
-  commentsCount Int      @default(0)
-  updatedAt     DateTime @default(now()) @updatedAt
-  fk_post_id    String   @unique
-
-  post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-
-  @@index([score(sort: Desc), fk_post_id(sort: Desc)])
-  @@index([likes(sort: Desc), fk_post_id(sort: Desc)])
-  @@map("post_stats")
-}
-
-model PostLike {
-  id         String @id @default(uuid())
-  fk_post_id String
-  fk_user_id String
-
-  post         Post           @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  user         User           @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  notification Notification[]
-
-  @@index([fk_post_id], map: "post_likes_fk_post_id")
-  @@index([fk_user_id], map: "post_likes_fk_user_id")
-  @@map("post_likes")
-}
-
-model PostTags {
-  id         String @id @default(uuid())
-  fk_post_id String
-  fk_tag_id  String
-
-  post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  tag  Tag  @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_post_id], map: "post_tags_fk_post_id")
-  @@index([fk_tag_id], map: "post_tags_fk_tag_id")
-  @@map("post_tags")
-}
-
-model PostImage {
-  id         String @id @default(uuid())
-  fk_file_id String
-  fk_post_id String @unique
-
-  post Post @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  file File @relation(fields: [fk_file_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_file_id], map: "post_images_fk_file_id")
-  @@index([fk_post_id], map: "post_images_fk_post_id")
-  @@map("post_images")
-}
-
 model Tag {
-  id          String   @id @default(uuid())
-  name        String   @unique
+  id          String     @id @default(cuid())
+  name        String     @unique
   description String?
   image       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  UserTags    UserTags[]
 
-  postTags     PostTags[]
-  tagStats     TagStats?
-  tagFollow    TagFollow[]
-  notification Notification[]
-  userTags     UserTags[]
-
-  @@index([createdAt], map: "tags_createdAt")
   @@index([name], map: "tags_name")
   @@map("tags")
 }
 
-model TagStats {
-  id         String   @id @default(uuid())
-  followings Int      @default(0)
-  clicks     Int      @default(0)
-  score      Float    @default(0)
-  updatedAt  DateTime @default(now()) @updatedAt
-  fk_tag_id  String   @unique
-  tag        Tag      @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
+model Notification {
+  id        String             @id @default(cuid())
+  type      String // LIKE | COMMENT | ARTICLE | WELCOME
+  title     String
+  body      String
+  image     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  Users     UserNotification[]
 
-  @@index([score(sort: Desc), fk_tag_id(sort: Desc)])
-  @@index([followings(sort: Desc), fk_tag_id(sort: Desc)])
-  @@map("tag_stats")
-}
-
-model TagFollow {
-  id         String @id @default(uuid())
-  fk_tag_id  String
-  fk_user_id String
-
-  tag  Tag  @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
-  user User @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@unique([fk_tag_id, fk_user_id])
-  @@index([fk_tag_id], map: "tag_follows_fk_tag_id")
-  @@index([fk_user_id], map: "tag_follows_fk_user_id")
-  @@map("tag_follows")
-}
-
-model History {
-  id          String   @id @default(uuid())
-  text        String
-  itemType    String
-  isActive    Boolean  @default(true)
-  fk_user_id  String
-  fk_post_id  String?
-  dateAddedAt DateTime
-  createdAt   DateTime @default(now())
-
-  user User  @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  post Post? @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-
-  @@index([createdAt(sort: Desc)])
-  @@map("histories")
+  @@index([type], map: "notifications_type")
+  @@map("notifications")
 }

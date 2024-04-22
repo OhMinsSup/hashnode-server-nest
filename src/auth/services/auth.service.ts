@@ -36,9 +36,9 @@ export class AuthService {
       select: {
         id: true,
         email: true,
-        userPassword: {
+        UserPassword: {
           select: {
-            passwordHash: true,
+            hash: true,
           },
         },
       },
@@ -53,7 +53,7 @@ export class AuthService {
 
     const passwordMatch = await bcrypt.compare(
       input.password,
-      user.userPassword.passwordHash,
+      user.UserPassword.hash,
     );
 
     assertIncorrectPassword(!passwordMatch, {
@@ -99,7 +99,7 @@ export class AuthService {
               email: input.email,
             },
             {
-              userProfile: {
+              UserProfile: {
                 username: input.username,
               },
             },
@@ -108,7 +108,7 @@ export class AuthService {
         select: {
           id: true,
           email: true,
-          userProfile: {
+          UserProfile: {
             select: {
               username: true,
             },
@@ -139,19 +139,30 @@ export class AuthService {
       const user = await tx.user.create({
         data: {
           email: input.email,
-          userPassword: {
+          UserPassword: {
             create: {
-              passwordHash: hash,
+              hash,
               salt,
             },
           },
-          userProfile: {
+          UserProfile: {
             create: {
               username: input.username,
               nickname: input.nickname,
             },
           },
-          userSocial: {
+          UserNotifications: {
+            create: {
+              Notification: {
+                create: {
+                  type: 'WELCOME',
+                  title: 'Welcome to Hashnode!',
+                  body: 'Welcome to Hashnode! Click here to understand Hashnode better',
+                },
+              },
+            },
+          },
+          UserSocial: {
             create: {
               github: null,
               twitter: null,
@@ -160,28 +171,17 @@ export class AuthService {
               website: null,
             },
           },
-          notification: {
-            create: {
-              type: 'WELCOME',
-              message: `${input.nickname}님 환영합니다.`,
-            },
-          },
-          history: {
-            create: {
-              itemType: 'JOIN_HASHNODE',
-              text: 'Joined Hashnode',
-              dateAddedAt: new Date(),
-            },
-          },
         },
       });
 
       const expiresAt = this.env.getAuthTokenExpiresAt();
 
+      const now = new Date();
+
       const auth = await tx.userAuthentication.create({
         data: {
           fk_user_id: user.id,
-          lastValidatedAt: new Date(),
+          lastValidatedAt: now,
           expiresAt: expiresAt,
         },
       });

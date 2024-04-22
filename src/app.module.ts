@@ -5,10 +5,6 @@ import { CacheModule } from '@nestjs/cache-manager';
 
 import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
-import { PostsModule } from './posts/posts.module';
-import { FileModule } from './file/file.module';
-import { TagsModule } from './tags/tags.module';
-import { NotificationsModule } from './notifications/notifications.module';
 import { TasksModule } from './modules/jobs/tasks.module';
 import { PrismaModule } from './modules/database/prisma.module';
 
@@ -32,10 +28,6 @@ import { AppController } from './app.controller';
     TasksModule,
     AuthModule,
     UserModule,
-    PostsModule,
-    FileModule,
-    TagsModule,
-    NotificationsModule,
     HealthModule,
   ],
   providers: [Logger],
