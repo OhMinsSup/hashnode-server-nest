@@ -27,6 +27,8 @@ model User {
   UserAuthentication UserAuthentication[]
   UserNotifications  UserNotification[]
   UserTags           UserTags[]
+  File               File[]
+  PostRead           PostRead[]
 
   @@map("users")
 }
@@ -107,6 +109,91 @@ model UserNotification {
   @@map("user_notifications")
 }
 
+model Post {
+  id         String      @id @default(cuid())
+  urlSlug    String
+  title      String
+  subTitle   String?
+  content    String
+  jsonString String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  deletedAt  DateTime?
+  PostConfig PostConfig?
+  PostSeo    PostSeo?
+  PostRead   PostRead[]
+  PostTags   PostTags[]
+  PostStats  PostStats?
+
+  @@map("posts")
+}
+
+model PostSeo {
+  id          String  @id @default(cuid())
+  title       String?
+  description String?
+  image       String?
+  fk_post_id  String  @unique
+  Post        Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+
+  @@map("post_seos")
+}
+
+model PostRead {
+  id         String  @id @default(cuid())
+  ipHash     String?
+  fk_post_id String
+  Post       Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+  fk_user_id String
+  User       User    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@index([fk_post_id], map: "post_reads_fk_post_id")
+  @@index([ipHash, fk_post_id], map: "post_reads_ipHash_fk_post_id")
+  @@map("post_reads")
+}
+
+model PostConfig {
+  id                 String    @id @default(cuid())
+  disabledComment    Boolean?
+  hiddenArticle      Boolean?
+  hasTableOfContents Boolean?
+  isDraft            Boolean?
+  isMarkdown         Boolean?
+  publishedAt        DateTime?
+  fk_post_id         String    @unique
+  Post               Post      @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+
+  @@map("post_configs")
+}
+
+model PostTags {
+  id         String @id @default(cuid())
+  fk_post_id String
+  fk_tag_id  String
+  Post       Post   @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+  Tag        Tag    @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
+
+  @@index([fk_post_id], map: "post_tags_fk_post_id")
+  @@index([fk_tag_id], map: "post_tags_fk_tag_id")
+  @@map("post_tags")
+}
+
+model PostStats {
+  id         String   @id @default(cuid())
+  likes      Int      @default(0)
+  clicks     Int      @default(0)
+  score      Float    @default(0)
+  comments   Int      @default(0)
+  updatedAt  DateTime @default(now()) @updatedAt
+  fk_post_id String   @unique
+  Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+
+  @@index([score(sort: Desc), fk_post_id(sort: Desc)])
+  @@index([likes(sort: Desc), fk_post_id(sort: Desc)])
+  @@index([comments(sort: Desc), fk_post_id(sort: Desc)])
+  @@map("post_stats")
+}
+
 model File {
   id         String   @id @default(cuid())
   cfId       String
@@ -117,6 +204,8 @@ model File {
   mediaType  String //  IMAGE | VIDEO | AUDIO
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  fk_user_id String
+  User       User     @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
   @@index([uploadType, mediaType], map: "files_uploadType_mediaType")
   @@map("files")
@@ -130,6 +219,7 @@ model Tag {
   createdAt   DateTime   @default(now())
   updatedAt   DateTime   @updatedAt
   UserTags    UserTags[]
+  PostTags    PostTags[]
 
   @@index([name], map: "tags_name")
   @@map("tags")
