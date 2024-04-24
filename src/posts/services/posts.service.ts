@@ -134,6 +134,9 @@ export class PostsService {
         meta,
         image: input.image ?? null,
         fk_user_id: user.id,
+        PostSeo: {
+          create: {},
+        },
         PostConfig: {
           create: {
             disabledComment: input.config.disabledComment,
@@ -195,6 +198,9 @@ export class PostsService {
         meta: JSON.parse('{}'),
         image: null,
         fk_user_id: user.id,
+        PostSeo: {
+          create: {},
+        },
         PostConfig: {
           create: {
             disabledComment: false,
