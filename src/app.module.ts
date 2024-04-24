@@ -15,6 +15,7 @@ import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppController } from './app.controller';
 import { PostsModule } from './posts/posts.module';
 import { TagsModule } from './tags/tags.module';
+import { DraftsModule } from './drafts/drafts.module';
 
 @Module({
   controllers: [AppController],
@@ -33,6 +34,7 @@ import { TagsModule } from './tags/tags.module';
     HealthModule,
     PostsModule,
     TagsModule,
+    DraftsModule,
   ],
   providers: [Logger],
 })

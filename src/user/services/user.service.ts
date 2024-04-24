@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
+
+// service
 import { PrismaService } from '../../modules/database/prisma.service';
 import { SerializeService } from '../../integrations/serialize/serialize.service';
-import { SerializeUser } from '../../integrations/serialize/serialize.interface';
+
+// utils
 import { EXCEPTION_CODE } from '../../constants/exception.code';
+
+// types
+import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
 
 @Injectable()
 export class UserService {

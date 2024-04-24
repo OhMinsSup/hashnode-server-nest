@@ -115,7 +115,7 @@ async function bootstrap() {
     .setDescription('API Document')
     .setVersion('1.0')
     .addBearerAuth()
-    .addCookieAuth('access_token')
+    .addCookieAuth(config.get('COOKIE_TOKEN_NAME') ?? 'access_token')
     .build();
 
   const document = SwaggerModule.createDocument(app, swagger);

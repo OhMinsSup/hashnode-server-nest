@@ -123,7 +123,7 @@ export class AuthenticationGuard implements CanActivate {
             },
           });
         } catch (error) {
-          console.log('error', error);
+          console.error(error);
         }
       }
 

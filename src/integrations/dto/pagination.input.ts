@@ -1,9 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString } from 'class-validator';
+import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
 
 export class PaginationInput {
-  @IsString()
-  @IsOptional()
+  @IsOptionalString()
   @ApiProperty({
     name: 'limit',
     type: 'string',
@@ -13,8 +12,7 @@ export class PaginationInput {
   })
   limit?: number;
 
-  @IsString()
-  @IsOptional()
+  @IsOptionalString()
   @ApiProperty({
     name: 'cursor',
     type: 'string',

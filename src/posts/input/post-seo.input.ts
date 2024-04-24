@@ -10,7 +10,7 @@ export class PostSeoInput {
     description: 'SEO 제목',
     maxLength: 70,
     type: 'string',
-    required: true,
+    required: false,
   })
   title?: string;
 

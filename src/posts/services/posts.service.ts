@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
-import { omit } from 'lodash';
+import { omit, difference } from 'lodash';
 
 // services
 import { PrismaService } from '../../modules/database/prisma.service';
@@ -9,7 +9,7 @@ import { SerializeService } from '../../integrations/serialize/serialize.service
 
 // inputs
 import { PostCreateInput } from '../input/post-create.input';
-import { PostDraftInput } from '../input/post-draft.input';
+import { PostDraftInput } from '../../drafts/input/post-draft.input';
 
 // utils
 import { isEmpty } from '../../libs/assertion';
@@ -38,6 +38,12 @@ export class PostsService {
     const data = await this.prisma.post.findUnique({
       where: {
         id,
+        deletedAt: {
+          equals: null,
+        },
+        PostConfig: {
+          isDraft: false,
+        },
       },
       select: getPostSelector(),
     });
@@ -68,6 +74,9 @@ export class PostsService {
     const data = await this.prisma.post.findUnique({
       where: {
         id,
+        deletedAt: {
+          equals: null,
+        },
       },
       select: {
         fk_user_id: true,
@@ -225,5 +234,61 @@ export class PostsService {
         dataId: data.id,
       },
     };
+  }
+
+  /**
+   * @description 임시 게시물 조회 또는 생성
+   * @param {SerializeUser} user
+   * @param {PostDraftInput} input
+   */
+  async getSyncDraft(user: SerializeUser, input: PostDraftInput) {
+    const now = new Date();
+
+    // 현재시간으로 부터 7일 이내에 작성한 임시 게시물이 있는지 확인
+    const data = await this.prisma.post.findFirst({
+      where: {
+        fk_user_id: user.id,
+        deletedAt: {
+          equals: null,
+        },
+        PostConfig: {
+          isDraft: true,
+        },
+        createdAt: {
+          gte: new Date(now.setDate(now.getDate() - 7)),
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      select: {
+        id: true,
+        PostTags: {
+          select: {
+            Tag: true,
+          },
+        },
+      },
+    });
+
+    if (data) {
+      const currentTags = data.PostTags.map((tag) => tag.Tag.name);
+      const newTags = input.tags ?? [];
+
+      const diff = difference(currentTags, newTags);
+
+      if (!diff.length) {
+        return {
+          resultCode: EXCEPTION_CODE.OK,
+          message: null,
+          error: null,
+          result: {
+            dataId: data.id,
+          },
+        };
+      }
+    }
+
+    return await this.createDraft(user, input);
   }
 }
