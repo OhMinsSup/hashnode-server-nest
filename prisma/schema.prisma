@@ -29,6 +29,7 @@ model User {
   UserTags           UserTags[]
   File               File[]
   PostRead           PostRead[]
+  Post               Post[]
 
   @@map("users")
 }
@@ -110,21 +111,25 @@ model UserNotification {
 }
 
 model Post {
-  id         String      @id @default(cuid())
-  urlSlug    String
-  title      String
-  subTitle   String?
-  content    String
-  jsonString String?
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  deletedAt  DateTime?
-  PostConfig PostConfig?
-  PostSeo    PostSeo?
-  PostRead   PostRead[]
-  PostTags   PostTags[]
-  PostStats  PostStats?
+  id          String        @id @default(cuid())
+  urlSlug     String
+  title       String
+  subTitle    String?
+  content     String
+  meta        String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  deletedAt   DateTime?
+  fk_user_id  String
+  User        User          @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  PostConfig  PostConfig?
+  PostSeo     PostSeo?
+  PostRead    PostRead[]
+  PostTags    PostTags[]
+  PostStats   PostStats?
+  PostHistory PostHistory[]
 
+  @@index([urlSlug], map: "posts_urlSlug")
   @@map("posts")
 }
 
@@ -182,8 +187,8 @@ model PostStats {
   id         String   @id @default(cuid())
   likes      Int      @default(0)
   clicks     Int      @default(0)
-  score      Float    @default(0)
   comments   Int      @default(0)
+  score      Float    @default(0)
   updatedAt  DateTime @default(now()) @updatedAt
   fk_post_id String   @unique
   Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
@@ -192,6 +197,19 @@ model PostStats {
   @@index([likes(sort: Desc), fk_post_id(sort: Desc)])
   @@index([comments(sort: Desc), fk_post_id(sort: Desc)])
   @@map("post_stats")
+}
+
+model PostHistory {
+  id         String   @id @default(cuid())
+  title      String
+  content    String
+  meta       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  fk_post_id String
+  Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+
+  @@map("post_histories")
 }
 
 model File {
