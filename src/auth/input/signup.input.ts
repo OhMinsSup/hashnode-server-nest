@@ -1,6 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
 import { SigninInput } from './signin.input';
+import { IsOptionalString } from 'src/decorators/Is-optional-string.decorator';
 
 export class SignupInput extends SigninInput {
   @IsString()
@@ -8,17 +9,18 @@ export class SignupInput extends SigninInput {
   @MaxLength(20)
   @ApiProperty({
     description: '유저명',
-    maxLength: 20,
+    maxLength: 10,
     minLength: 2,
     type: 'string',
     required: true,
   })
   username: string;
 
-  @IsString()
-  @IsOptional()
+  @IsOptionalString()
+  @MaxLength(40)
   @ApiProperty({
     description: '이름',
+    maxLength: 40,
     type: 'string',
     required: false,
   })

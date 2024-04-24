@@ -16,6 +16,7 @@ import { isNullOrUndefined } from '../../libs/assertion';
 // dto
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
+import { NotificationType } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -155,7 +156,7 @@ export class AuthService {
             create: {
               Notification: {
                 create: {
-                  type: 'WELCOME',
+                  type: NotificationType.WELCOME,
                   title: 'Welcome to Hashnode!',
                   body: 'Welcome to Hashnode! Click here to understand Hashnode better',
                 },
@@ -163,13 +164,7 @@ export class AuthService {
             },
           },
           UserSocial: {
-            create: {
-              github: null,
-              twitter: null,
-              facebook: null,
-              instagram: null,
-              website: null,
-            },
+            create: {},
           },
         },
       });

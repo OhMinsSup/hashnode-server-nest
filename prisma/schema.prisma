@@ -6,21 +6,20 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model User {
-  id           String    @id @default(cuid())
-  email        String    @unique
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  deletedAt    DateTime?
-  lastActiveAt DateTime?
-  lastActiveIp String?
-  lastSignInAt DateTime?
-  lastSignInIp String?
-
+  id                 String               @id @default(cuid())
+  email              String               @unique @db.VarChar(255)
+  createdAt          DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt          DateTime             @updatedAt @db.Timestamptz(6)
+  deletedAt          DateTime?            @db.Timestamptz(6)
+  lastActiveAt       DateTime?            @db.Timestamptz(6)
+  lastActiveIpHash   String?              @db.VarChar(255)
+  lastSignInAt       DateTime?            @db.Timestamptz(6)
+  lastSignInIpHash   String?              @db.VarChar(255)
   UserProfile        UserProfile?
   UserSocial         UserSocial?
   UserPassword       UserPassword?
@@ -36,13 +35,13 @@ model User {
 
 model UserProfile {
   id            String  @id @default(cuid())
-  username      String  @unique
-  image         String?
-  nickname      String?
-  tagline       String?
-  location      String?
-  bio           String?
-  availableText String?
+  username      String  @unique @db.VarChar(50)
+  image         String? @db.VarChar(255)
+  nickname      String? @db.VarChar(50)
+  tagline       String? @db.VarChar(255)
+  location      String? @db.VarChar(255)
+  bio           String? @db.VarChar(255)
+  availableText String? @db.VarChar(140)
   fk_user_id    String  @unique
   User          User    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
@@ -51,11 +50,11 @@ model UserProfile {
 
 model UserSocial {
   id         String  @id @default(cuid())
-  github     String?
-  twitter    String?
-  facebook   String?
-  instagram  String?
-  website    String?
+  github     String  @default("") @db.VarChar(255)
+  twitter    String  @default("") @db.VarChar(255)
+  facebook   String  @default("") @db.VarChar(255)
+  instagram  String  @default("") @db.VarChar(255)
+  website    String  @default("") @db.VarChar(255)
   fk_user_id String? @unique
   User       User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
@@ -64,8 +63,8 @@ model UserSocial {
 
 model UserPassword {
   id         String @id @default(cuid())
-  hash       String
-  salt       String
+  hash       String @db.VarChar(255)
+  salt       String @db.VarChar(255)
   fk_user_id String @unique
   User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
@@ -75,10 +74,10 @@ model UserPassword {
 
 model UserAuthentication {
   id              String   @id @default(cuid())
-  lastValidatedAt DateTime
-  expiresAt       DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  lastValidatedAt DateTime @db.Timestamptz(6)
+  expiresAt       DateTime @db.Timestamptz(6)
+  createdAt       DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
   fk_user_id      String?
   User            User?    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
@@ -99,7 +98,8 @@ model UserTags {
 
 model UserNotification {
   id                 String       @id @default(cuid())
-  readAt             DateTime?
+  readAt             DateTime?    @db.Timestamptz(6)
+  isRead             Boolean      @default(false)
   fk_user_id         String
   fk_notification_id String
   User               User         @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
@@ -112,14 +112,15 @@ model UserNotification {
 
 model Post {
   id          String        @id @default(cuid())
-  urlSlug     String
-  title       String
-  subTitle    String?
+  urlSlug     String        @db.VarChar(255)
+  title       String        @db.VarChar(200)
+  subTitle    String?       @db.VarChar(120)
   content     String
-  meta        String?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-  deletedAt   DateTime?
+  meta        Json          @default("{}")
+  image       String?       @db.VarChar(255)
+  createdAt   DateTime      @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @db.Timestamptz(6)
+  deletedAt   DateTime?     @db.Timestamptz(6)
   fk_user_id  String
   User        User          @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
   PostConfig  PostConfig?
@@ -135,9 +136,9 @@ model Post {
 
 model PostSeo {
   id          String  @id @default(cuid())
-  title       String?
-  description String?
-  image       String?
+  title       String? @db.VarChar(70)
+  description String? @db.VarChar(156)
+  image       String? @db.VarChar(255)
   fk_post_id  String  @unique
   Post        Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
@@ -146,10 +147,10 @@ model PostSeo {
 
 model PostRead {
   id         String  @id @default(cuid())
-  ipHash     String?
+  ipHash     String? @db.VarChar(255)
   fk_post_id String
-  Post       Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
   fk_user_id String
+  Post       Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
   User       User    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
   @@index([fk_post_id], map: "post_reads_fk_post_id")
@@ -159,12 +160,12 @@ model PostRead {
 
 model PostConfig {
   id                 String    @id @default(cuid())
-  disabledComment    Boolean?
-  hiddenArticle      Boolean?
-  hasTableOfContents Boolean?
-  isDraft            Boolean?
-  isMarkdown         Boolean?
-  publishedAt        DateTime?
+  disabledComment    Boolean   @default(false)
+  hiddenArticle      Boolean   @default(false)
+  hasTableOfContents Boolean   @default(false)
+  isDraft            Boolean   @default(true)
+  isMarkdown         Boolean   @default(false)
+  publishedAt        DateTime? @db.Timestamptz(6)
   fk_post_id         String    @unique
   Post               Post      @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
@@ -189,7 +190,7 @@ model PostStats {
   clicks     Int      @default(0)
   comments   Int      @default(0)
   score      Float    @default(0)
-  updatedAt  DateTime @default(now()) @updatedAt
+  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
   fk_post_id String   @unique
   Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
@@ -201,11 +202,11 @@ model PostStats {
 
 model PostHistory {
   id         String   @id @default(cuid())
-  title      String
+  title      String   @db.VarChar(200)
   content    String
-  meta       String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  meta       Json?
+  createdAt  DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
   fk_post_id String
   Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
@@ -213,17 +214,17 @@ model PostHistory {
 }
 
 model File {
-  id         String   @id @default(cuid())
-  cfId       String
-  publicUrl  String
-  filename   String
-  mimeType   String
-  uploadType String // IMAGE | POST_THUMBNAIL | SEO
-  mediaType  String //  IMAGE | VIDEO | AUDIO
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id         String     @id @default(cuid())
+  cfId       String     @db.VarChar(50)
+  publicUrl  String     @db.VarChar(255)
+  filename   String     @db.VarChar(255)
+  mimeType   String     @db.VarChar(50)
+  uploadType UploadType @default(IMAGE)
+  mediaType  MediaType  @default(IMAGE)
+  createdAt  DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime   @updatedAt @db.Timestamptz(6)
   fk_user_id String
-  User       User     @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  User       User       @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
   @@index([uploadType, mediaType], map: "files_uploadType_mediaType")
   @@map("files")
@@ -231,28 +232,64 @@ model File {
 
 model Tag {
   id          String     @id @default(cuid())
-  name        String     @unique
-  description String?
-  image       String?
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
+  name        String     @unique @db.VarChar(255)
+  description String?    @db.VarChar(255)
+  image       String?    @db.VarChar(255)
+  createdAt   DateTime   @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime   @updatedAt @db.Timestamptz(6)
   UserTags    UserTags[]
   PostTags    PostTags[]
+  TagStats    TagStats?
 
   @@index([name], map: "tags_name")
   @@map("tags")
 }
 
+model TagStats {
+  id        String   @id @default(cuid())
+  follow    Int      @default(0)
+  inUse     Int      @default(0)
+  score     Float    @default(0)
+  updatedAt DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  fk_tag_id String   @unique
+  Tag       Tag      @relation(fields: [fk_tag_id], references: [id], onDelete: Cascade)
+
+  @@index([score(sort: Desc), fk_tag_id(sort: Desc)])
+  @@index([follow(sort: Desc), fk_tag_id(sort: Desc)])
+  @@index([inUse(sort: Desc), fk_tag_id(sort: Desc)])
+  @@map("tag_stats")
+}
+
 model Notification {
   id        String             @id @default(cuid())
-  type      String // LIKE | COMMENT | ARTICLE | WELCOME
-  title     String
-  body      String
-  image     String?
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  type      NotificationType
+  title     String             @db.VarChar(255)
+  body      String             @db.VarChar(255)
+  meta      Json               @default("{}")
+  image     String?            @db.VarChar(255)
+  createdAt DateTime           @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime           @updatedAt @db.Timestamptz(6)
   Users     UserNotification[]
 
   @@index([type], map: "notifications_type")
   @@map("notifications")
+}
+
+enum NotificationType {
+  LIKE
+  COMMENT
+  ARTICLE
+  WELCOME
+}
+
+enum UploadType {
+  IMAGE
+  POST_THUMBNAIL
+  SEO
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+  AUDIO
 }
