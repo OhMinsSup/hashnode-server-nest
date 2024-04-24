@@ -13,6 +13,7 @@ import { IntegrationsModule } from './integrations/integrations.module';
 import { AuthenticationGuardModule } from './guards/authentication.module';
 import { LoggerMiddleware } from './middlewares/logger.middleware';
 import { AppController } from './app.controller';
+import { PostsModule } from './posts/posts.module';
 
 @Module({
   controllers: [AppController],
@@ -29,6 +30,7 @@ import { AppController } from './app.controller';
     AuthModule,
     UserModule,
     HealthModule,
+    PostsModule,
   ],
   providers: [Logger],
 })
