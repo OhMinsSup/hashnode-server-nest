@@ -248,6 +248,10 @@ export class PostsService {
    * @param {PostDraftInput} input
    */
   async getSyncDraft(user: SerializeUser, input: PostDraftInput) {
+    if (input.isNewDraft) {
+      return await this.createDraft(user, input);
+    }
+
     const now = new Date();
 
     // 현재시간으로 부터 7일 이내에 작성한 임시 게시물이 있는지 확인

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsOptionalArray } from '../../decorators/is-optional-array.decorator';
-import { MaxLength } from 'class-validator';
+import { IsBoolean, IsOptional, MaxLength } from 'class-validator';
 import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
 
 export class PostDraftInput {
@@ -26,4 +26,13 @@ export class PostDraftInput {
     required: false,
   })
   tags?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  @ApiProperty({
+    description: '새로운 임시 저장 여부',
+    type: 'boolean',
+    required: false,
+  })
+  isNewDraft?: boolean;
 }

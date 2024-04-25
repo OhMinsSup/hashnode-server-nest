@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Scope } from '@nestjs/common';
 import bcrypt from 'bcrypt';
+import { REQUEST } from '@nestjs/core';
 
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
@@ -17,13 +18,17 @@ import { isNullOrUndefined } from '../../libs/assertion';
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
 import { NotificationType } from '@prisma/client';
+import type { Request } from 'express';
 
-@Injectable()
+@Injectable({
+  scope: Scope.REQUEST,
+})
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly token: TokenService,
     private readonly env: EnvironmentService,
+    @Inject(REQUEST) private request: Request,
   ) {}
 
   /**
@@ -65,16 +70,29 @@ export class AuthService {
     });
 
     const expiresAt = this.env.getAuthTokenExpiresAt();
+
+    const now = new Date();
+
     const auth = await this.prisma.userAuthentication.create({
       data: {
         fk_user_id: user.id,
-        lastValidatedAt: new Date(),
+        lastValidatedAt: now,
         expiresAt: expiresAt,
       },
     });
 
     const authToken = this.token.getJwtToken(user.id, {
       authId: auth.id,
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        lastSignInAt: now,
+        lastSignInIpHash: await bcrypt.hash(this.request.ip, 10),
+      },
     });
 
     return {
@@ -183,6 +201,16 @@ export class AuthService {
 
       const authToken = this.token.getJwtToken(user.id, {
         authId: auth.id,
+      });
+
+      await tx.user.update({
+        where: {
+          id: user.id,
+        },
+        data: {
+          lastSignInAt: now,
+          lastSignInIpHash: await bcrypt.hash(this.request.ip, 10),
+        },
       });
 
       return {

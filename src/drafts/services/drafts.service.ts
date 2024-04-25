@@ -27,6 +27,13 @@ export class DraftsService {
    * @param {PostDraftListQuery} query
    */
   async list(user: SerializeUser, query: PostDraftListQuery) {
+    const limit =
+      typeof query.limit === 'number'
+        ? query.limit
+        : query.limit
+          ? parseInt(query.limit, 10)
+          : 20;
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -52,7 +59,7 @@ export class DraftsService {
         orderBy: {
           createdAt: 'desc',
         },
-        take: query.limit ?? 20,
+        take: limit,
         select: getPostSelector(),
       }),
     ]);

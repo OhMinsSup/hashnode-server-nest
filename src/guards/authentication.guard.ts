@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
+import bcrypt from 'bcrypt';
 
 // date-fns
 import { differenceInMilliseconds, subMinutes } from 'date-fns';
@@ -126,6 +127,18 @@ export class AuthenticationGuard implements CanActivate {
           console.error(error);
         }
       }
+
+      try {
+        await this.prisma.user.update({
+          where: {
+            id,
+          },
+          data: {
+            lastActiveAt: nowDate,
+            lastActiveIpHash: await bcrypt.hash(request.ip, 10),
+          },
+        });
+      } catch (error) {}
 
       request.user = user;
     } else {
