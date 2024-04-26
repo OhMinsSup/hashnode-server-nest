@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
-import { omit, difference } from 'lodash';
+import { omit, difference, toFinite } from 'lodash';
 
 // services
 import { PrismaService } from '../../modules/database/prisma.service';
@@ -10,6 +10,7 @@ import { SerializeService } from '../../integrations/serialize/serialize.service
 // inputs
 import { PostCreateInput } from '../input/post-create.input';
 import { PostDraftInput } from '../../drafts/input/post-draft.input';
+import { PostPublishedListQuery } from '../input/post-published-list.query';
 
 // utils
 import { isEmpty } from '../../libs/assertion';
@@ -28,6 +29,71 @@ export class PostsService {
     private readonly tags: TagsService,
     private readonly serialize: SerializeService,
   ) {}
+
+  /**
+   * @description 내가 작성한 게시글 목록 (발행 완료된 게시글)
+   * @param {SerializeUser} user
+   * @param {PostPublishedListQuery} query
+   */
+  async published(user: SerializeUser, query: PostPublishedListQuery) {
+    const limit = query.limit ? toFinite(query.limit) : 20;
+
+    const pageNo = toFinite(query.pageNo);
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          fk_user_id: user.id,
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+            },
+            isDraft: false,
+          },
+        },
+      }),
+      this.prisma.post.findMany({
+        where: {
+          fk_user_id: user.id,
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+            },
+            isDraft: false,
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (pageNo - 1) * limit,
+        take: limit,
+        select: getPostSelector(),
+      }),
+    ]);
+
+    const hasNextPage = totalCount > pageNo * limit;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list,
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
+    };
+  }
 
   /**
    * @description 게시물 조회

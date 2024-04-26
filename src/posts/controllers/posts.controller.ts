@@ -1,11 +1,20 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 
 // services
 import { PostsService } from '../services/posts.service';
 
 // input
 import { PostCreateInput } from '../input/post-create.input';
+import { PostPublishedListQuery } from '../input/post-published-list.query';
 
 // decorators
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
@@ -30,6 +39,22 @@ export class PostsController {
   @UseGuards(LoggedInGuard)
   create(@Body() input: PostCreateInput, @AuthUser() user: SerializeUser) {
     return this.service.create(user, input);
+  }
+
+  @Get('published')
+  @ApiOperation({ summary: '내가 작성한 게시글 목록 (공개)' })
+  @ApiQuery({
+    name: 'query',
+    type: PostPublishedListQuery,
+    required: false,
+    description: '내가 작성한 게시글 목록 (공개)',
+  })
+  @UseGuards(LoggedInGuard)
+  published(
+    @AuthUser() user: SerializeUser,
+    @Query() query: PostPublishedListQuery,
+  ) {
+    return this.service.published(user, query);
   }
 
   @Get(':id')
