@@ -9,6 +9,7 @@ import { getPostSelector } from '../../modules/database/selectors/post';
 // input
 import { PostDraftInput } from '../input/post-draft.input';
 import { PostDraftListQuery } from '../input/post-draft-list.query';
+import { EXCEPTION_CODE } from '../../constants/exception.code';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
@@ -33,6 +34,11 @@ export class DraftsService {
         : query.limit
           ? parseInt(query.limit, 10)
           : 20;
+
+    const pageNo =
+      typeof query.pageNo === 'number'
+        ? query.pageNo
+        : parseInt(query.pageNo, 10);
 
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
@@ -59,34 +65,27 @@ export class DraftsService {
         orderBy: {
           createdAt: 'desc',
         },
+        skip: (pageNo - 1) * limit,
         take: limit,
         select: getPostSelector(),
       }),
     ]);
 
-    const endCursor = list.at(-1)?.id ?? null;
-    const hasNextPage = endCursor
-      ? (await this.prisma.post.count({
-          where: {
-            id: {
-              lt: endCursor,
-            },
-            fk_user_id: user.id,
-            deletedAt: {
-              equals: null,
-            },
-            PostConfig: {
-              isDraft: true,
-            },
-          },
-        })) > 0
-      : false;
+    const hasNextPage = totalCount > pageNo * limit;
 
     return {
-      totalCount,
-      list,
-      endCursor,
-      hasNextPage,
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list,
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
     };
   }
 

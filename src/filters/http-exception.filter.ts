@@ -15,6 +15,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const status = exception.getStatus();
 
+    console.error(exception);
+
     if (exception instanceof CustomBaseError) {
       const data = exception.getData();
       return response.status(status).json(data);
