@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { toFinite } from 'lodash';
 
 // services
 import { SerializeService } from '../../integrations/serialize/serialize.service';
@@ -28,17 +29,9 @@ export class DraftsService {
    * @param {PostDraftListQuery} query
    */
   async list(user: SerializeUser, query: PostDraftListQuery) {
-    const limit =
-      typeof query.limit === 'number'
-        ? query.limit
-        : query.limit
-          ? parseInt(query.limit, 10)
-          : 20;
+    const limit = query.limit ? toFinite(query.limit) : 20;
 
-    const pageNo =
-      typeof query.pageNo === 'number'
-        ? query.pageNo
-        : parseInt(query.pageNo, 10);
+    const pageNo = toFinite(query.pageNo);
 
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
@@ -48,6 +41,9 @@ export class DraftsService {
             equals: null,
           },
           PostConfig: {
+            publishedAt: {
+              equals: null,
+            },
             isDraft: true,
           },
         },
@@ -59,6 +55,74 @@ export class DraftsService {
             equals: null,
           },
           PostConfig: {
+            publishedAt: {
+              equals: null,
+            },
+            isDraft: true,
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (pageNo - 1) * limit,
+        take: limit,
+        select: getPostSelector(),
+      }),
+    ]);
+
+    const hasNextPage = totalCount > pageNo * limit;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list,
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
+    };
+  }
+
+  /**
+   * @description 발행 날짜가 입력된 게시글이면서 임시 저장된 게시글 목록
+   * @param {SerializeUser} user
+   * @param {PostDraftListQuery} query
+   */
+  async submitted(user: SerializeUser, query: PostDraftListQuery) {
+    const limit = query.limit ? toFinite(query.limit) : 20;
+
+    const pageNo = toFinite(query.pageNo);
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          fk_user_id: user.id,
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+            },
+            isDraft: true,
+          },
+        },
+      }),
+      this.prisma.post.findMany({
+        where: {
+          fk_user_id: user.id,
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+            },
             isDraft: true,
           },
         },

@@ -31,6 +31,22 @@ export class DraftsController {
     return this.service.list(user, query);
   }
 
+  @Get('submitted')
+  @ApiOperation({ summary: '발행 날짜가 입력된 게시글 목록' })
+  @ApiQuery({
+    name: 'query',
+    type: PostDraftListQuery,
+    required: false,
+    description: '발행 날짜가 입력된 게시글 목록 API',
+  })
+  @UseGuards(LoggedInGuard)
+  submitted(
+    @AuthUser() user: SerializeUser,
+    @Query() query: PostDraftListQuery,
+  ) {
+    return this.service.submitted(user, query);
+  }
+
   @Post()
   @ApiOperation({ summary: '게시글 임시 저장' })
   @ApiBody({
