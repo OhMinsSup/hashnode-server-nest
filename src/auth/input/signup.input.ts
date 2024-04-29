@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import { IsString, MaxLength, MinLength } from 'class-validator';
 import { SigninInput } from './signin.input';
-import { IsOptionalString } from 'src/decorators/Is-optional-string.decorator';
+import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
 
 export class SignupInput extends SigninInput {
   @IsString()
@@ -24,5 +24,5 @@ export class SignupInput extends SigninInput {
     type: 'string',
     required: false,
   })
-  nickname: string;
+  nickname?: string;
 }

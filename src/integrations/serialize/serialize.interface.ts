@@ -22,6 +22,7 @@ export type SerializeUser = {
   createdAt: string;
   UserProfile: SerializeUserProfile;
   UserSocial: SerializeUserSocial;
+  UserTags: SerializeTag<false>[];
 };
 
 export type SerializeTagStats = {

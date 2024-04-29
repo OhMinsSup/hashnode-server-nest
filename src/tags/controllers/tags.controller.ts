@@ -5,9 +5,9 @@ import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { TagsService } from '../services/tags.service';
 import { GetTagsInput } from '../input/get-tags.input';
 import { GetWidgetTagsInput } from '../input/get-widget-tags.input';
-import { LoggedInGuard } from 'src/decorators/logged-in.decorator';
-import { SerializeUser } from 'src/integrations/serialize/serialize.interface';
-import { AuthUser } from 'src/decorators/get-user.decorator';
+import { LoggedInGuard } from '../../decorators/logged-in.decorator';
+import { SerializeUser } from '../../integrations/serialize/serialize.interface';
+import { AuthUser } from '../../decorators/get-user.decorator';
 
 @ApiTags('태그')
 @Controller('tags')

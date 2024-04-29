@@ -14,6 +14,7 @@ import { EnvironmentService } from '../integrations/environment/environment.serv
 import { TokenService } from '../auth/services/token.service';
 import { PrismaService } from '../modules/database/prisma.service';
 import { getUserExternalFullSelector } from '../modules/database/selectors/user';
+import { SerializeService } from '../integrations/serialize/serialize.service';
 
 // types
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
@@ -30,6 +31,7 @@ export class AuthenticationGuard implements CanActivate {
     private readonly prisma: PrismaService,
     private readonly token: TokenService,
     private readonly env: EnvironmentService,
+    private readonly serialize: SerializeService,
   ) {}
 
   async canActivate(context: ExecutionContext) {
@@ -140,7 +142,7 @@ export class AuthenticationGuard implements CanActivate {
         });
       } catch (error) {}
 
-      request.user = user;
+      request.user = this.serialize.getExternalUser(user);
     } else {
       request.isExpiredToken = true;
     }

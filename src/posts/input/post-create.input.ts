@@ -82,7 +82,6 @@ export class PostCreateInput {
   @ApiProperty({
     description: 'SEO 정보',
     type: PostSeoInput,
-
     required: true,
   })
   seo: PostSeoInput;

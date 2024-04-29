@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { getNotificationSelector } from './notification';
+import { getBaseTagSelector, getTagSelector } from './tag';
 
 export const getUserProfileSelector = () =>
   Prisma.validator<Prisma.UserProfileSelect>()({
@@ -28,6 +29,13 @@ export const getUserSocialSelector = () =>
     facebook: true,
     instagram: true,
     website: true,
+  });
+
+export const getUserTagsSelector = () =>
+  Prisma.validator<Prisma.PostTagsSelect>()({
+    Tag: {
+      select: getBaseTagSelector(),
+    },
   });
 
 export const getUserAuthenticationsSelector = () =>
@@ -79,5 +87,8 @@ export const getUserExternalFullSelector = () =>
     },
     UserSocial: {
       select: getUserSocialSelector(),
+    },
+    UserTags: {
+      select: getUserTagsSelector(),
     },
   });

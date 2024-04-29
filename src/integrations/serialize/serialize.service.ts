@@ -132,6 +132,9 @@ export class SerializeService {
       updatedAt: data.updatedAt,
       UserProfile: this.getUserProfile(data.UserProfile),
       UserSocial: this.getUserSocial(data.UserSocial),
+      UserTags: data.UserTags
+        ? data.UserTags.map((tag: any) => this.getTag<false>(tag.Tag))
+        : [],
     } as SerializeUser;
   }
 
