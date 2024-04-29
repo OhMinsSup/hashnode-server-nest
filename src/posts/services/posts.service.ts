@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
-import { omit, difference, toFinite } from 'lodash';
+import { omit, difference, toFinite, isEqual } from 'lodash';
 
 // services
 import { PrismaService } from '../../modules/database/prisma.service';
@@ -11,6 +11,7 @@ import { SerializeService } from '../../integrations/serialize/serialize.service
 import { PostCreateInput } from '../input/post-create.input';
 import { PostDraftInput } from '../../drafts/input/post-draft.input';
 import { PostPublishedListQuery } from '../input/post-published-list.query';
+import { PostUpdateInput } from '../input/post-update.input';
 
 // utils
 import { isEmpty } from '../../libs/assertion';
@@ -169,6 +170,169 @@ export class PostsService {
       message: null,
       error: null,
       result: omit(data, ['fk_user_id']),
+    };
+  }
+
+  /**
+   * @description 게시물 수정
+   * @param {SerializeUser} user
+   * @param {string} id
+   * @param {PostUpdateInput} input
+   */
+  async update(user: SerializeUser, id: string, input: PostUpdateInput) {
+    const post = await this.prisma.post.findFirst({
+      where: {
+        id: id,
+        fk_user_id: user.id,
+      },
+      select: getPostSelector(),
+    });
+
+    assertNotFound(!post, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '게시물이 존재하지 않습니다.',
+      error: null,
+      result: null,
+    });
+
+    const newData = {} as Parameters<
+      typeof this.prisma.post.update
+    >['0']['data'];
+
+    if (input.title && !isEqual(post.title, input.title)) {
+      newData.title = input.title;
+    }
+
+    if (input.subTitle && !isEqual(post.subTitle, input.subTitle)) {
+      newData.subTitle = input.subTitle;
+    }
+
+    if (input.content && !isEqual(post.content, input.content)) {
+      newData.content = input.content;
+    }
+
+    if (input.meta) {
+      newData.meta = input.meta;
+    }
+
+    if (input.image && !isEqual(post.image, input.image)) {
+      newData.image = input.image;
+    }
+
+    const postConfigUpdate = {} as Parameters<
+      typeof this.prisma.post.update
+    >['0']['data']['PostConfig']['update'];
+
+    if (
+      typeof input.config.disabledComment === 'boolean' &&
+      post.PostConfig.disabledComment !== input.config.disabledComment
+    ) {
+      postConfigUpdate.disabledComment = input.config.disabledComment;
+    }
+
+    if (
+      typeof input.config.hiddenArticle === 'boolean' &&
+      post.PostConfig.hiddenArticle !== input.config.hiddenArticle
+    ) {
+      postConfigUpdate.hiddenArticle = input.config.hiddenArticle;
+    }
+
+    if (
+      typeof input.config.hasTableOfContents === 'boolean' &&
+      post.PostConfig.hasTableOfContents !== input.config.hasTableOfContents
+    ) {
+      postConfigUpdate.hasTableOfContents = input.config.hasTableOfContents;
+    }
+
+    if (
+      typeof input.config.isDraft === 'boolean' &&
+      post.PostConfig.isDraft !== input.config.isDraft
+    ) {
+      postConfigUpdate.isDraft = input.config.isDraft;
+    }
+
+    if (
+      typeof input.config.isMarkdown === 'boolean' &&
+      post.PostConfig.isMarkdown !== input.config.isMarkdown
+    ) {
+      postConfigUpdate.isMarkdown = input.config.isMarkdown;
+    }
+
+    if (
+      input.config.publishedAt &&
+      !isEqual(post.PostConfig.publishedAt, input.config.publishedAt)
+    ) {
+      postConfigUpdate.publishedAt = input.config.publishedAt;
+    }
+
+    if (!isEmpty(postConfigUpdate)) {
+      newData.PostConfig = {
+        update: postConfigUpdate,
+      };
+    }
+
+    const postSeoUpdate = {} as Parameters<
+      typeof this.prisma.post.update
+    >['0']['data']['PostSeo']['update'];
+
+    if (input.seo.title && !isEqual(post.PostSeo.title, input.seo.title)) {
+      postSeoUpdate.title = input.seo.title;
+    }
+
+    if (
+      input.seo.description &&
+      !isEqual(post.PostSeo.description, input.seo.description)
+    ) {
+      postSeoUpdate.description = input.seo.description;
+    }
+
+    if (input.seo.image && !isEqual(post.PostSeo.image, input.seo.image)) {
+      postSeoUpdate.image = input.seo.image;
+    }
+
+    if (!isEmpty(postSeoUpdate)) {
+      newData.PostSeo = {
+        update: postSeoUpdate,
+      };
+    }
+
+    if (input.tags) {
+      const prevTags = post.PostTags.map((item) => item.Tag);
+
+      const newTags = input.tags.filter(
+        (tag) => !prevTags.find((t) => t.name === tag),
+      );
+      const deleteTags = prevTags.filter(
+        (tag) => !input.tags.find((t) => t === tag.name),
+      );
+
+      const ids = await this.tags.findOrCreateByMany(newTags);
+
+      newData.PostTags = {
+        deleteMany: {
+          fk_post_id: post.id,
+          fk_tag_id: {
+            in: deleteTags.map((tag) => tag.id),
+          },
+        },
+        create: ids.map((id) => ({
+          fk_tag_id: id,
+        })),
+      };
+    }
+
+    await this.prisma.post.update({
+      where: {
+        id: post.id,
+      },
+      data: newData,
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
     };
   }
 

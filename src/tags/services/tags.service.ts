@@ -48,6 +48,10 @@ export class TagsService {
     });
   }
 
+  /**
+   * @description 태그가 존재하면 태그 정보를 반환하고, 존재하지 않으면 태그를 생성한다.
+   * @param {string[]} tags
+   */
   async findOrCreateByMany(tags: string[]) {
     await this.prisma.tag.createMany({
       data: tags.map((tag) => ({
