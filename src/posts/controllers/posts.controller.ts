@@ -43,22 +43,6 @@ export class PostsController {
     return this.service.create(user, input);
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: '게시글 수정' })
-  @ApiBody({
-    required: true,
-    description: '게시글 수정 API',
-    type: PostUpdateInput,
-  })
-  @UseGuards(LoggedInGuard)
-  update(
-    @Param('id') id: string,
-    @Body() input: PostUpdateInput,
-    @AuthUser() user: SerializeUser,
-  ) {
-    return this.service.update(user, id, input);
-  }
-
   @Get('published')
   @ApiOperation({ summary: '내가 작성한 게시글 목록 (공개)' })
   @ApiQuery({
@@ -80,6 +64,22 @@ export class PostsController {
   @UseGuards(NotLoggedInGuard)
   byId(@Param('id') id: string, @AuthUser() user: SerializeUser) {
     return this.service.byId(user, id);
+  }
+
+  @Put(':id')
+  @ApiOperation({ summary: '게시글 수정' })
+  @ApiBody({
+    required: true,
+    description: '게시글 수정 API',
+    type: PostUpdateInput,
+  })
+  @UseGuards(LoggedInGuard)
+  update(
+    @Param('id') id: string,
+    @Body() input: PostUpdateInput,
+    @AuthUser() user: SerializeUser,
+  ) {
+    return this.service.update(user, id, input);
   }
 
   @Get('by-owner/:id')
