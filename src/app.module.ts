@@ -25,6 +25,7 @@ import {
 import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { dailyOption } from './modules/logging/winston';
+import { FilesModule } from './files/files.module';
 
 @Module({
   controllers: [AppController],
@@ -64,6 +65,7 @@ import { dailyOption } from './modules/logging/winston';
     PostsModule,
     TagsModule,
     DraftsModule,
+    FilesModule,
   ],
   providers: [
     Logger,

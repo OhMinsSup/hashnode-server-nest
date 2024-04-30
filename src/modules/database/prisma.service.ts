@@ -13,7 +13,7 @@ export type QueryEvent = {
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit {
-  private _contextName = 'DB';
+  private _contextName = 'prisma - database';
 
   constructor(private readonly logger: Logger) {
     super({
