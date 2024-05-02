@@ -25,14 +25,12 @@ import { NotLoggedInGuard } from '../../decorators/not-logged-in.decorator';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
-import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('게시글')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly service: PostsService) {}
 
-  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post()
   @ApiOperation({ summary: '게시글 생성' })
   @ApiBody({
@@ -68,7 +66,6 @@ export class PostsController {
     return this.service.byId(user, id);
   }
 
-  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Put(':id')
   @ApiOperation({ summary: '게시글 수정' })
   @ApiBody({
