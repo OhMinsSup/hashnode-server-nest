@@ -106,4 +106,15 @@ export class EnvironmentService {
   getHashSecret(): string {
     return this.configService.get<string>('HASH_SECRET');
   }
+
+  // -----------------------------------------------------------------------------
+  // throttle
+  // -----------------------------------------------------------------------------
+  getThrottleConfig() {
+    return {
+      ttl: 10,
+      limit: 60000,
+      ignoreUserAgents: [],
+    };
+  }
 }

@@ -10,12 +10,14 @@ import { CookiInterceptor } from '../../interceptors/cookie.interceptor';
 // input
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('인증')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly service: AuthService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post('signup')
   @ApiOperation({ summary: '회원가입' })
   @ApiBody({
@@ -28,6 +30,7 @@ export class AuthController {
     return this.service.signup(input);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post('signin')
   @ApiOperation({ summary: '로그인' })
   @ApiBody({

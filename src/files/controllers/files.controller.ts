@@ -5,12 +5,14 @@ import { FileCreateInput } from '../input/file-create.input';
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { AuthUser } from '../../decorators/get-user.decorator';
 import { SerializeUser } from '../../integrations/serialize/serialize.interface';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('파일')
 @Controller('files')
 export class FilesController {
   constructor(private readonly service: FilesService) {}
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post()
   @ApiOperation({ summary: '업로드한 파일 저장' })
   @ApiBody({

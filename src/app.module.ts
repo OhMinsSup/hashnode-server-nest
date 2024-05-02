@@ -7,7 +7,7 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { TasksModule } from './modules/jobs/tasks.module';
 import { PrismaModule } from './modules/database/prisma.module';
-
+import { ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 import { IntegrationsModule } from './integrations/integrations.module';
 import { AuthenticationGuardModule } from './guards/authentication.module';
@@ -26,6 +26,7 @@ import * as winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
 import { dailyOption } from './modules/logging/winston';
 import { FilesModule } from './files/files.module';
+import { EnvironmentService } from './integrations/environment/environment.service';
 
 @Module({
   controllers: [AppController],
@@ -56,6 +57,18 @@ import { FilesModule } from './files/files.module';
     }),
     PrismaModule,
     ScheduleModule.forRoot(),
+    ThrottlerModule.forRootAsync({
+      inject: [EnvironmentService],
+      // @ts-expect-error - ignore
+      useFactory: async (environmentService: EnvironmentService) => {
+        const throttleConfig = environmentService.getThrottleConfig();
+        return {
+          ttl: throttleConfig.ttl,
+          limit: throttleConfig.limit,
+          ignoreUserAgents: throttleConfig.ignoreUserAgents,
+        };
+      },
+    }),
     CacheModule.register(),
     AuthenticationGuardModule,
     TasksModule,

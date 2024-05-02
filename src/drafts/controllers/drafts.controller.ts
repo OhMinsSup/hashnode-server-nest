@@ -12,6 +12,7 @@ import { PostDraftListQuery } from '../input/post-draft-list.query';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('임시 저장')
 @Controller('drafts')
@@ -47,6 +48,7 @@ export class DraftsController {
     return this.service.submitted(user, query);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post()
   @ApiOperation({ summary: '게시글 임시 저장' })
   @ApiBody({
@@ -59,6 +61,7 @@ export class DraftsController {
     return this.service.createDraft(user, input);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post('sync')
   @ApiOperation({ summary: '게시글 임시 저장 or 조회' })
   @ApiBody({
