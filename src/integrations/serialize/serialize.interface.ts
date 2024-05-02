@@ -1,3 +1,5 @@
+import type { MediaType, UploadType } from '@prisma/client';
+
 export type SerializeUserProfile = {
   username: string;
   nickname: string | undefined;
@@ -84,4 +86,14 @@ export type SerializePost<IncludeStats = true> = {
   PostSeo: Partial<SerializePostSeo>;
   PostStats: IncludeStats extends true ? SerializePostStats : undefined;
   count: SerializePostCount;
+};
+
+export type SerializeFile = {
+  id: string;
+  cfId: string;
+  publicUrl: string;
+  filename: string;
+  mimeType: string;
+  uploadType: UploadType;
+  mediaType: MediaType;
 };

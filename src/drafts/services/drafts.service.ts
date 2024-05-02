@@ -78,7 +78,7 @@ export class DraftsService {
       error: null,
       result: {
         totalCount,
-        list,
+        list: list.map((post) => this.serialize.getPost(post)),
         pageInfo: {
           currentPage: pageNo,
           hasNextPage,
@@ -143,7 +143,7 @@ export class DraftsService {
       error: null,
       result: {
         totalCount,
-        list,
+        list: list.map((post) => this.serialize.getPost(post)),
         pageInfo: {
           currentPage: pageNo,
           hasNextPage,

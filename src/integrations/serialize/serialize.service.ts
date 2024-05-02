@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { isEmpty } from '../../libs/assertion';
 import type {
+  SerializeFile,
   SerializePost,
   SerializePostConfig,
   SerializePostCount,
@@ -136,6 +137,15 @@ export class SerializeService {
         ? data.UserTags.map((tag: any) => this.getTag<false>(tag.Tag))
         : [],
     } as SerializeUser;
+  }
+
+  getFile(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const file = clone as SerializeFile;
+    Object.keys(file).forEach((key) => {
+      file[key] = this.transformDataToUndefined(file?.[key]);
+    });
+    return file;
   }
 
   transformDataToUndefined(data: any) {
