@@ -1,9 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNumber, IsOptional, IsString } from 'class-validator';
+import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
+import { IsOptionalNumber } from '../../decorators/Is-optional-number.decorator';
 
-export class GetWidgetTagsInput {
-  @IsString()
-  @IsOptional()
+export class GetWidgetTagsQuery {
+  @IsOptionalString()
   @ApiProperty({
     name: 'keyword',
     type: 'string',
@@ -12,8 +12,7 @@ export class GetWidgetTagsInput {
   })
   keyword?: string;
 
-  @IsNumber()
-  @IsOptional()
+  @IsOptionalNumber()
   @ApiProperty({
     name: 'limit',
     type: 'number',

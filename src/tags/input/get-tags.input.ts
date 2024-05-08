@@ -1,10 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsIn, IsOptional } from 'class-validator';
 import { PaginationInput } from '../../integrations/dto/pagination.input';
+import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
 
 export class GetTagsInput extends PaginationInput {
-  @IsString()
-  @IsOptional()
+  @IsOptionalString()
   @ApiProperty({
     name: 'name',
     type: 'string',
@@ -13,9 +13,8 @@ export class GetTagsInput extends PaginationInput {
   })
   name?: string;
 
-  @IsString()
-  @IsEnum(['recent', 'popular', 'new', 'trending'])
   @IsOptional()
+  @IsEnum(['recent', 'popular', 'new', 'trending'])
   @ApiProperty({
     name: 'type',
     type: 'string',

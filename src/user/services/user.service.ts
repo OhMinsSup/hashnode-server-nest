@@ -8,6 +8,7 @@ import { TagsService } from '../../tags/services/tags.service';
 // utils
 import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { UserUpdateInput } from '../input/user-update.input';
+import { GetWidgetUserQuery } from '../input/get-widget-users.query';
 import { getUserExternalFullSelector } from '../../modules/database/selectors/user';
 import { assertNotFound } from '../../errors/not-found.error';
 import { isEmpty, isEqual } from 'lodash';
@@ -35,6 +36,54 @@ export class UserService {
     };
   }
 
+  /**
+   * @description 위젯 사용자 목록 조회
+   * @param {SerializeUser} user 사용자 정보
+   * @param {GetWidgetUserQuery} input 위젯 사용자 목록 조회 입력 */
+  async getWidgetUsers(user: SerializeUser, input: GetWidgetUserQuery) {
+    try {
+      const data = await this.prisma.user.findMany({
+        where: {
+          id: {
+            not: user.id,
+          },
+          ...(input.keyword && {
+            UserProfile: {
+              username: {
+                contains: input.keyword,
+              },
+            },
+          }),
+        },
+        take: input.limit ?? 5,
+        select: getUserExternalFullSelector(),
+        orderBy: {
+          UserProfile: {
+            username: 'desc',
+          },
+        },
+      });
+
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: data.map((user) => this.serialize.getExternalUser(user)),
+      };
+    } catch (error) {
+      return {
+        resultCode: EXCEPTION_CODE.OK,
+        message: null,
+        error: null,
+        result: [],
+      };
+    }
+  }
+
+  /**
+   * @description 사용자 정보 수정
+   * @param {SerializeUser} user 사용자 정보
+   * @param {UserUpdateInput} input 사용자 정보 수정 입력 */
   async update(user: SerializeUser, input: UserUpdateInput) {
     const userInfo = await this.prisma.user.findUnique({
       where: {

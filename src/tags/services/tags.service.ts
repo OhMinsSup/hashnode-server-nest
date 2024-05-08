@@ -10,7 +10,7 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { getTagWithStatsSelector } from '../../modules/database/selectors/tag';
 
 // input
-import { GetWidgetTagsInput } from '../input/get-widget-tags.input';
+import { GetWidgetTagsQuery } from '../input/get-widget-tags.query';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
@@ -83,10 +83,10 @@ export class TagsService {
 
   /**
    * @description 게시물 작성시 태그 선택 목록에서 노출될 태그 목록
-   * @param {GetWidgetTagsInput} input
+   * @param {GetWidgetTagsQuery} input
    * @param {SerializeUser} _
    */
-  async getWidgetTags(input: GetWidgetTagsInput, _: SerializeUser) {
+  async getWidgetTags(input: GetWidgetTagsQuery, _: SerializeUser) {
     try {
       const data = await this.prisma.tag.findMany({
         where: {

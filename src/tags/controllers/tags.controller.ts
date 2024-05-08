@@ -4,7 +4,7 @@ import { ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 // service
 import { TagsService } from '../services/tags.service';
 import { GetTagsInput } from '../input/get-tags.input';
-import { GetWidgetTagsInput } from '../input/get-widget-tags.input';
+import { GetWidgetTagsQuery } from '../input/get-widget-tags.query';
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
 import { SerializeUser } from '../../integrations/serialize/serialize.interface';
 import { AuthUser } from '../../decorators/get-user.decorator';
@@ -30,14 +30,14 @@ export class TagsController {
   })
   @ApiQuery({
     name: 'query',
-    type: GetWidgetTagsInput,
+    type: GetWidgetTagsQuery,
     required: false,
     description: 'widget 목록에서 검색시 필요한 쿼리',
   })
   @UseGuards(LoggedInGuard)
   getWidgetTags(
     @AuthUser() user: SerializeUser,
-    @Query() input: GetWidgetTagsInput,
+    @Query() input: GetWidgetTagsQuery,
   ) {
     return this.service.getWidgetTags(input, user);
   }
