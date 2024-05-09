@@ -7,6 +7,7 @@ import type {
   SerializePostCount,
   SerializePostSeo,
   SerializePostStats,
+  SerializeSimepleUser,
   SerializeTag,
   SerializeTagCount,
   SerializeTagStats,
@@ -61,6 +62,12 @@ export class SerializeService {
     return tags.map((tag) => this.getTag(tag, false));
   }
 
+  getPostCoAuthors(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const coAuthors = clone as SerializeSimepleUser[];
+    return coAuthors.map((author) => this.getSimpleUser(author));
+  }
+
   getPost(data: any) {
     return {
       id: data.id,
@@ -73,6 +80,11 @@ export class SerializeService {
       PostConfig: this.getPostConfig(data.PostConfig),
       PostTags: data.PostTags
         ? data.PostTags.map((tag: any) => this.getTag<false>(tag.Tag))
+        : [],
+      PostCoAuthor: data.PostCoAuthor
+        ? data.PostCoAuthor.map((author: any) =>
+            this.getSimpleUser(author.User),
+          )
         : [],
       PostSeo: this.getPostSeo(data.PostSeo),
       count: this.getPostCount(data._count),
@@ -123,6 +135,20 @@ export class SerializeService {
       userSocial[key] = this.transformDataToUndefined(userSocial?.[key]);
     });
     return userSocial;
+  }
+
+  getSimpleUser(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const simpleUser = clone as SerializeSimepleUser;
+    Object.keys(simpleUser).forEach((key) => {
+      simpleUser[key] = this.transformDataToUndefined(simpleUser?.[key]);
+    });
+    Object.keys(simpleUser.UserProfile).forEach((key) => {
+      simpleUser['UserProfile'][key] = this.transformDataToUndefined(
+        simpleUser['UserProfile'][key],
+      );
+    });
+    return simpleUser;
   }
 
   getExternalUser(data: any) {

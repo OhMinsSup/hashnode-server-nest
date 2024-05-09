@@ -27,6 +27,10 @@ export type SerializeUser = {
   UserTags: SerializeTag<false>[];
 };
 
+export type SerializeSimepleUser = {
+  UserProfile: Pick<SerializeUserProfile, 'username' | 'image'>;
+} & Pick<SerializeUser, 'id' | 'email'>;
+
 export type SerializeTagStats = {
   follow: number;
   inUse: number;
@@ -73,6 +77,8 @@ export type SerializePostConfig = {
   publishedAt: string | Date | undefined;
 };
 
+export type SerializePostCoAuthor = SerializeSimepleUser;
+
 export type SerializePost<IncludeStats = true> = {
   id: string;
   urlSlug: string;
@@ -82,6 +88,7 @@ export type SerializePost<IncludeStats = true> = {
   meta: Record<string, any> | undefined;
   image: string | undefined;
   PostConfig: SerializePostConfig;
+  PostCoAuthor: SerializePostCoAuthor[];
   PostTags: SerializeTag<false>[];
   PostSeo: Partial<SerializePostSeo>;
   PostStats: IncludeStats extends true ? SerializePostStats : undefined;
