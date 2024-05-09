@@ -321,6 +321,43 @@ export class PostsService {
       };
     }
 
+    if (input.authors) {
+      const prevAuthors = post.PostCoAuthor.map((item) => item.User);
+
+      const newAuthors = input.authors.filter(
+        (author) => !prevAuthors.find((t) => t.UserProfile.username === author),
+      );
+
+      const deleteAuthors = prevAuthors.filter(
+        (user) => !input.authors.find((t) => t === user.UserProfile.username),
+      );
+
+      const authors = await this.prisma.user.findMany({
+        where: {
+          UserProfile: {
+            username: {
+              in: newAuthors.map((author) => author),
+            },
+          },
+        },
+        select: {
+          id: true,
+        },
+      });
+
+      newData.PostCoAuthor = {
+        deleteMany: {
+          fk_post_id: post.id,
+          fk_user_id: {
+            in: deleteAuthors.map((item) => item.id),
+          },
+        },
+        create: authors.map((author) => ({
+          fk_user_id: author.id,
+        })),
+      };
+    }
+
     await this.prisma.post.update({
       where: {
         id: post.id,

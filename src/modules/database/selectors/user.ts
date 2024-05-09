@@ -65,6 +65,17 @@ export const getUserSelector = () =>
     updatedAt: true,
   });
 
+export const getSimpleUserSelector = () =>
+  Prisma.validator<Prisma.UserSelect>()({
+    ...getUserSelector(),
+    UserProfile: {
+      select: {
+        username: true,
+        image: true,
+      },
+    },
+  });
+
 export const getUserFullSelector = () =>
   Prisma.validator<Prisma.UserSelect>()({
     ...getUserSelector(),

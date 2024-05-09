@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { getBaseTagSelector } from './tag';
+import { getSimpleUserSelector } from './user';
 
 export const getPostConfigSelector = () =>
   Prisma.validator<Prisma.PostConfigSelect>()({
@@ -42,11 +43,20 @@ export const getBasePostSelector = () =>
     content: true,
     meta: true,
     image: true,
+    createdAt: true,
+    updatedAt: true,
   });
 
 export const getPostCountSelector = () =>
   Prisma.validator<Prisma.PostCountOutputTypeSelect>()({
     PostTags: true,
+  });
+
+export const getPostCoAuthorsSelector = () =>
+  Prisma.validator<Prisma.PostCoAuthorSelect>()({
+    User: {
+      select: getSimpleUserSelector(),
+    },
   });
 
 export const getPostSelector = () =>
@@ -57,6 +67,9 @@ export const getPostSelector = () =>
     },
     PostTags: {
       select: getPostTagsSelector(),
+    },
+    PostCoAuthor: {
+      select: getPostCoAuthorsSelector(),
     },
     PostSeo: {
       select: getPostSeoSelector(),

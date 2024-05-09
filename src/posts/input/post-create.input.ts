@@ -79,6 +79,18 @@ export class PostCreateInput {
   })
   tags?: string[];
 
+  @IsOptionalArray()
+  @ApiProperty({
+    description: '공동저자',
+    type: 'array',
+    items: {
+      type: 'string',
+    },
+    nullable: true,
+    required: false,
+  })
+  authors?: string[];
+
   @ApiProperty({
     description: 'SEO 정보',
     type: PostSeoInput,
