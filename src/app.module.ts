@@ -27,6 +27,7 @@ import DailyRotateFile from 'winston-daily-rotate-file';
 import { dailyOption } from './modules/logging/winston';
 import { FilesModule } from './files/files.module';
 import { EnvironmentService } from './integrations/environment/environment.service';
+import { WidgetsModule } from './widgets/widgets.module';
 
 @Module({
   controllers: [AppController],
@@ -79,6 +80,7 @@ import { EnvironmentService } from './integrations/environment/environment.servi
     TagsModule,
     DraftsModule,
     FilesModule,
+    WidgetsModule,
   ],
   providers: [
     Logger,
