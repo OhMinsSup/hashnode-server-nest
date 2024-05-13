@@ -48,7 +48,7 @@ export class UserService {
             not: user.id,
           },
           deletedAt: {
-            not: null,
+            equals: null,
           },
           ...(input.keyword && {
             UserProfile: {
@@ -92,7 +92,7 @@ export class UserService {
       where: {
         id: user.id,
         deletedAt: {
-          not: null,
+          equals: null,
         },
       },
       select: getUserExternalFullSelector(),
@@ -300,7 +300,7 @@ export class UserService {
       where: {
         id: user.id,
         deletedAt: {
-          not: null,
+          equals: null,
         },
       },
     });

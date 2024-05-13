@@ -110,7 +110,7 @@ export class AuthenticationGuard implements CanActivate {
         where: {
           id,
           deletedAt: {
-            not: null,
+            equals: null,
           },
         },
         select: getUserExternalFullSelector(),
