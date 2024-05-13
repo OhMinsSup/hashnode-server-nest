@@ -36,6 +36,30 @@ export class UserSocialsInput {
 
   @IsOptionalUrl()
   @ApiProperty({
+    description: 'Stack Overflow',
+    type: 'string',
+    required: false,
+  })
+  stackoverflow?: string;
+
+  @IsOptionalUrl()
+  @ApiProperty({
+    description: '유튜브',
+    type: 'string',
+    required: false,
+  })
+  youtube?: string;
+
+  @IsOptionalUrl()
+  @ApiProperty({
+    description: '링크드인',
+    type: 'string',
+    required: false,
+  })
+  linkedin?: string;
+
+  @IsOptionalUrl()
+  @ApiProperty({
     description: '웹사이트',
     type: 'string',
     required: false,

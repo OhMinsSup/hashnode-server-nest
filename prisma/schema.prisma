@@ -23,6 +23,7 @@ model User {
   UserProfile        UserProfile?
   UserSocial         UserSocial?
   UserPassword       UserPassword?
+  UserEmail          UserEmail?
   UserAuthentication UserAuthentication[]
   UserNotifications  UserNotification[]
   UserTags           UserTags[]
@@ -51,16 +52,33 @@ model UserProfile {
 }
 
 model UserSocial {
-  id         String  @id @default(cuid())
-  github     String  @default("") @db.VarChar(255)
-  twitter    String  @default("") @db.VarChar(255)
-  facebook   String  @default("") @db.VarChar(255)
-  instagram  String  @default("") @db.VarChar(255)
-  website    String  @default("") @db.VarChar(255)
-  fk_user_id String? @unique
-  User       User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  id            String  @id @default(cuid())
+  github        String  @default("") @db.VarChar(255)
+  twitter       String  @default("") @db.VarChar(255)
+  facebook      String  @default("") @db.VarChar(255)
+  instagram     String  @default("") @db.VarChar(255)
+  website       String  @default("") @db.VarChar(255)
+  stackoverflow String  @default("") @db.VarChar(255)
+  youtube       String  @default("") @db.VarChar(255)
+  linkedin      String  @default("") @db.VarChar(255)
+  fk_user_id    String? @unique
+  User          User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
   @@map("user_socials")
+}
+
+model UserEmail {
+  id                    String  @id @default(cuid())
+  hashnodeWeekly        Boolean @default(false)
+  activityNotifications Boolean @default(false)
+  generalAnnouncements  Boolean @default(false)
+  monthlyBlogStats      Boolean @default(false)
+  referralNotifications Boolean @default(false)
+  newFollowersWeekly    Boolean @default(false)
+  fk_user_id            String? @unique
+  User                  User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@map("user_emails")
 }
 
 model UserPassword {
@@ -321,3 +339,30 @@ enum MediaType {
   VIDEO
   AUDIO
 }
+
+// model Blog {
+//   id          String       @id @default(cuid())
+//   title       String       @unique @db.VarChar(200)
+//   about       String?      @db.VarChar(255)
+//   createdAt   DateTime     @default(now()) @db.Timestamptz(6)
+//   updatedAt   DateTime     @updatedAt @db.Timestamptz(6)
+//   BlogSetting BlogSetting?
+
+//   @@map("blogs")
+// }
+
+// model BlogSetting {
+//   id         String  @id @default(cuid())
+//   github     String? @db.VarChar(255)
+//   twitter    String? @db.VarChar(255)
+//   instagram  String? @db.VarChar(255)
+//   mastodon   String? @db.VarChar(255)
+//   website    String? @db.VarChar(255)
+//   youtube    String? @db.VarChar(255)
+//   linkedin   String? @db.VarChar(255)
+//   dailydev   String? @db.VarChar(255)
+//   fk_blog_id String  @unique
+//   Blog       Blog    @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
+
+//   @@map("blog_settings")
+// }

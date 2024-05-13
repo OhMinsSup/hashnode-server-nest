@@ -184,6 +184,9 @@ export class AuthService {
           UserSocial: {
             create: {},
           },
+          UserEmail: {
+            create: {},
+          },
         },
       });
 

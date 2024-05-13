@@ -109,9 +109,17 @@ export class AuthenticationGuard implements CanActivate {
       const user = await this.prisma.user.findUnique({
         where: {
           id,
+          deletedAt: {
+            not: null,
+          },
         },
         select: getUserExternalFullSelector(),
       });
+
+      if (!user) {
+        request.isExpiredToken = true;
+        return true;
+      }
 
       if (
         validated.lastValidatedAt.getTime() > subMinutes(nowDate, 5).getTime()

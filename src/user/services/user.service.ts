@@ -47,6 +47,9 @@ export class UserService {
           id: {
             not: user.id,
           },
+          deletedAt: {
+            not: null,
+          },
           ...(input.keyword && {
             UserProfile: {
               username: {
@@ -88,6 +91,9 @@ export class UserService {
     const userInfo = await this.prisma.user.findUnique({
       where: {
         id: user.id,
+        deletedAt: {
+          not: null,
+        },
       },
       select: getUserExternalFullSelector(),
     });
@@ -211,6 +217,30 @@ export class UserService {
 
     if (
       input.social &&
+      input.social.stackoverflow &&
+      !isEqual(input.social.stackoverflow, userInfo.UserSocial.stackoverflow)
+    ) {
+      userSocialsUpdate.stackoverflow = input.social.stackoverflow;
+    }
+
+    if (
+      input.social &&
+      input.social.youtube &&
+      !isEqual(input.social.youtube, userInfo.UserSocial.youtube)
+    ) {
+      userSocialsUpdate.youtube = input.social.youtube;
+    }
+
+    if (
+      input.social &&
+      input.social.linkedin &&
+      !isEqual(input.social.linkedin, userInfo.UserSocial.linkedin)
+    ) {
+      userSocialsUpdate.linkedin = input.social.linkedin;
+    }
+
+    if (
+      input.social &&
       input.social.website &&
       !isEqual(input.social.website, userInfo.UserSocial.website)
     ) {
@@ -252,6 +282,43 @@ export class UserService {
         id: user.id,
       },
       data: newData,
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
+  }
+
+  /**
+   * @description 사용자 정보 삭제
+   * @param {SerializeUser} user 사용자 정보  */
+  async delete(user: SerializeUser) {
+    const data = await this.prisma.user.findUnique({
+      where: {
+        id: user.id,
+        deletedAt: {
+          not: null,
+        },
+      },
+    });
+
+    assertNotFound(!data, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '사용자 정보를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
     });
 
     return {

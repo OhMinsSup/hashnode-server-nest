@@ -28,6 +28,9 @@ export const getUserSocialSelector = () =>
     twitter: true,
     facebook: true,
     instagram: true,
+    stackoverflow: true,
+    youtube: true,
+    linkedin: true,
     website: true,
   });
 
