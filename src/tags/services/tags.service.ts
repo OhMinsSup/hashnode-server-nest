@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { difference } from 'lodash';
 
 // service
 import { SerializeService } from '../../integrations/serialize/serialize.service';
@@ -53,32 +54,37 @@ export class TagsService {
    * @param {string[]} tags
    */
   async findOrCreateByMany(tags: string[]) {
-    await this.prisma.tag.createMany({
-      data: tags.map((tag) => ({
-        name: getSlug(tag),
-        TagStats: {
-          create: {
-            follow: 0,
-            inUse: 0,
-            score: 0,
-          },
-        },
-      })),
-      skipDuplicates: true,
-    });
+    const ids: string[] = [];
+    const _tags = tags.map((tag) => getSlug(tag));
 
-    const ids = await this.prisma.tag.findMany({
+    const exitsTags = await this.prisma.tag.findMany({
       where: {
         name: {
-          in: tags.map((tag) => getSlug(tag)),
+          in: _tags,
         },
       },
       select: {
         id: true,
+        name: true,
       },
     });
 
-    return ids.map((tag) => tag.id);
+    for (const tag of exitsTags) {
+      ids.push(tag.id);
+    }
+
+    const newTags = difference(
+      _tags,
+      exitsTags.map((tag) => tag.name),
+    );
+    if (newTags.length > 0) {
+      for (const tag of newTags) {
+        const { id } = await this.upsert(tag);
+        ids.push(id);
+      }
+    }
+
+    return ids;
   }
 
   /**

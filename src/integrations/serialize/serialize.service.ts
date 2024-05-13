@@ -68,7 +68,14 @@ export class SerializeService {
     return coAuthors.map((author) => this.getSimpleUser(author));
   }
 
-  getPost(data: any) {
+  getPost(
+    data: any,
+    {
+      includeTagStats = false,
+    }: {
+      includeTagStats?: boolean;
+    },
+  ) {
     return {
       id: data.id,
       urlSlug: data.urlSlug,
@@ -79,7 +86,9 @@ export class SerializeService {
       image: data.image,
       PostConfig: this.getPostConfig(data.PostConfig),
       PostTags: data.PostTags
-        ? data.PostTags.map((tag: any) => this.getTag<false>(tag.Tag))
+        ? data.PostTags.map((tag: any) =>
+            this.getTag<false>(tag.Tag, includeTagStats),
+          )
         : [],
       PostCoAuthor: data.PostCoAuthor
         ? data.PostCoAuthor.map((author: any) =>
@@ -92,6 +101,7 @@ export class SerializeService {
   }
 
   getTagStats(data: any) {
+    console.log(data);
     return {
       follow: isEmpty(data.follow) ? 0 : data.follow,
       inUse: isEmpty(data.inUse) ? 0 : data.inUse,

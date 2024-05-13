@@ -203,7 +203,11 @@ export class DraftsService {
       error: null,
       result: {
         totalCount,
-        list: list.map((post) => this.serialize.getPost(post)),
+        list: list.map((post) =>
+          this.serialize.getPost(post, {
+            includeTagStats: false,
+          }),
+        ),
         pageInfo: {
           currentPage: pageNo,
           hasNextPage,
@@ -268,7 +272,11 @@ export class DraftsService {
       error: null,
       result: {
         totalCount,
-        list: list.map((post) => this.serialize.getPost(post)),
+        list: list.map((post) =>
+          this.serialize.getPost(post, {
+            includeTagStats: false,
+          }),
+        ),
         pageInfo: {
           currentPage: pageNo,
           hasNextPage,

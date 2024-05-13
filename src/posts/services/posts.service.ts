@@ -111,7 +111,11 @@ export class PostsService {
       error: null,
       result: {
         totalCount,
-        list,
+        list: list.map((item) =>
+          this.serialize.getPost(item, {
+            includeTagStats: false,
+          }),
+        ),
         pageInfo: {
           currentPage: pageNo,
           hasNextPage,
@@ -151,9 +155,9 @@ export class PostsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {
-        dataId: data.id,
-      },
+      result: this.serialize.getPost(data, {
+        includeTagStats: false,
+      }),
     };
   }
 
@@ -194,7 +198,9 @@ export class PostsService {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: omit(data, ['fk_user_id']),
+      result: this.serialize.getPost(data, {
+        includeTagStats: false,
+      }),
     };
   }
 
