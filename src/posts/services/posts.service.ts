@@ -19,6 +19,7 @@ import { EXCEPTION_CODE } from '../../constants/exception.code';
 import { assertNotFound } from '../../errors/not-found.error';
 import { assertNoPermission } from '../../errors/no-permission.error';
 import { getPostSelector } from '../../modules/database/selectors/post';
+import { calculateRankingScore } from '../../libs/utils';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
@@ -598,5 +599,149 @@ export class PostsService {
     }
 
     return await this.createDraft(user, input);
+  }
+
+  /**
+   * @description 게시물 좋아요
+   * @param {SerializeUser} user
+   * @param {string} id
+   */
+  async like(user: SerializeUser, postId: string) {
+    const result = await this._like(user.id, postId);
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        likes: result.likes,
+        isLiked: true,
+      },
+    };
+  }
+
+  /**
+   * @description 게시물 안좋아요
+   * @param {SerializeUser} user
+   * @param {string} postId
+   */
+  async unlike(user: SerializeUser, postId: string) {
+    const result = await this._unlike(user.id, postId);
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        likes: result.likes,
+        isLiked: false,
+      },
+    };
+  }
+
+  /**
+   * @description 게시물 좋아요
+   * @param {string} userId
+   * @param {string} postId
+   */
+  private async _like(userId: string, postId: string) {
+    const alreadyLiked = await this.prisma.postLike.findFirst({
+      where: {
+        fk_post_id: postId,
+        fk_user_id: userId,
+      },
+    });
+
+    if (!alreadyLiked) {
+      try {
+        await this.prisma.postLike.create({
+          data: {
+            fk_post_id: postId,
+            fk_user_id: userId,
+          },
+        });
+      } catch (e) {}
+    }
+    const likes = await this._countLikes(postId);
+    const itemStats = await this._updatePostLikes(postId, likes);
+    this._recalculateRanking(postId, likes).catch(console.error);
+    return itemStats;
+  }
+
+  /**
+   * @description 게시물 좋아요 취소
+   * @param {string} userId
+   * @param {string} postId
+   */
+  private async _unlike(userId: string, postId: string) {
+    const alreadyLiked = await this.prisma.postLike.findFirst({
+      where: {
+        fk_post_id: postId,
+        fk_user_id: userId,
+      },
+    });
+
+    if (alreadyLiked) {
+      try {
+        await this.prisma.postLike.delete({
+          where: {
+            id: alreadyLiked.id,
+          },
+        });
+      } catch (e) {}
+    }
+
+    const likes = await this._countLikes(postId);
+    const itemStats = await this._updatePostLikes(postId, likes);
+    this._recalculateRanking(postId, likes).catch(console.error);
+    return itemStats;
+  }
+
+  /**
+   * @description 게시물의 좋아요 통계값 업데이트
+   * @param {string} postId
+   * @param {number} likes
+   */
+  private async _updatePostLikes(postId: string, likes: number) {
+    return this.prisma.postStats.update({
+      data: {
+        likes,
+      },
+      where: {
+        fk_post_id: postId,
+      },
+    });
+  }
+
+  /**
+   * @description  좋아요 카운트
+   * @param {string} postId
+   */
+  private async _countLikes(postId: string) {
+    return await this.prisma.postLike.count({
+      where: {
+        fk_post_id: postId,
+      },
+    });
+  }
+
+  /**
+   * @description 게시물 통계 - score 업데이트
+   * @param {string} postId 게시물 ID
+   * @param {number?} likesCount 좋아요 수
+   */
+  private async _recalculateRanking(postId: string, likesCount?: number) {
+    const item = await this.prisma.post.findUnique({ where: { id: postId } });
+    if (!item) return;
+    const likes = likesCount ?? (await this._countLikes(postId));
+    const age =
+      (Date.now() - new Date(item.createdAt).getTime()) / 1000 / 60 / 60;
+    const score = calculateRankingScore(likes, age);
+    return this.prisma.postStats.update({
+      where: {
+        fk_post_id: postId,
+      },
+      data: {
+        score,
+      },
+    });
   }
 }

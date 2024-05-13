@@ -90,10 +90,24 @@ export class PostsController {
     return this.service.delete(user, id);
   }
 
-  @Get('by-owner/:id')
+  @Get(':id/by-owner')
   @ApiOperation({ summary: '게시글 조회 (작성자)' })
   @UseGuards(LoggedInGuard)
   byOwner(@Param('id') id: string, @AuthUser() user: SerializeUser) {
     return this.service.byOwner(user, id);
+  }
+
+  @Post(':id/like')
+  @ApiOperation({ summary: '게시글 좋아요' })
+  @UseGuards(LoggedInGuard)
+  like(@Param('id') id: string, @AuthUser() user: SerializeUser) {
+    return this.service.like(user, id);
+  }
+
+  @Delete(':id/like')
+  @ApiOperation({ summary: '게시글 싫어요' })
+  @UseGuards(LoggedInGuard)
+  unlike(@Param('id') id: string, @AuthUser() user: SerializeUser) {
+    return this.service.unlike(user, id);
   }
 }

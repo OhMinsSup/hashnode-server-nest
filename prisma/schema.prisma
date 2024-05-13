@@ -30,6 +30,7 @@ model User {
   PostRead           PostRead[]
   Post               Post[]
   PostCoAuthor       PostCoAuthor[]
+  PostLike           PostLike[]
 
   @@map("users")
 }
@@ -131,6 +132,7 @@ model Post {
   PostStats    PostStats?
   PostHistory  PostHistory[]
   PostCoAuthor PostCoAuthor[]
+  PostLike     PostLike[]
 
   @@index([urlSlug], map: "posts_urlSlug")
   @@map("posts")
@@ -225,6 +227,18 @@ model PostCoAuthor {
   @@index([fk_post_id], map: "post_co_authors_fk_post_id")
   @@index([fk_user_id], map: "post_co_authors_fk_user_id")
   @@map("post_co_authors")
+}
+
+model PostLike {
+  id         String @id @default(cuid())
+  fk_post_id String
+  fk_user_id String
+  Post       Post   @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+  User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@index([fk_post_id], map: "post_likes_fk_post_id")
+  @@index([fk_user_id], map: "post_likes_fk_user_id")
+  @@map("post_likes")
 }
 
 model File {
