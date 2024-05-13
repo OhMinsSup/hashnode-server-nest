@@ -32,6 +32,31 @@ export class PostsService {
   ) {}
 
   /**
+   * @description 게시물 삭제
+   * @param {SerializeUser} user
+   * @param {string} id
+   */
+  async delete(user: SerializeUser, id: string) {
+    const post = await this.byOwner(user, id);
+
+    await this.prisma.post.update({
+      where: {
+        id: post.result.id,
+      },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
+  }
+
+  /**
    * @description 내가 작성한 게시글 목록 (발행 완료된 게시글)
    * @param {SerializeUser} user
    * @param {PostPublishedListQuery} query

@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -80,6 +81,13 @@ export class PostsController {
     @AuthUser() user: SerializeUser,
   ) {
     return this.service.update(user, id, input);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: '게시글 삭제' })
+  @UseGuards(LoggedInGuard)
+  delete(@Param('id') id: string, @AuthUser() user: SerializeUser) {
+    return this.service.delete(user, id);
   }
 
   @Get('by-owner/:id')
