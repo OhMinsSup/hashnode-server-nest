@@ -50,6 +50,7 @@ export const getBasePostSelector = () =>
 export const getPostCountSelector = () =>
   Prisma.validator<Prisma.PostCountOutputTypeSelect>()({
     PostTags: true,
+    PostLike: true,
   });
 
 export const getPostCoAuthorsSelector = () =>

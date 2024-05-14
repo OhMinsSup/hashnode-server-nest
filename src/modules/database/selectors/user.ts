@@ -60,6 +60,17 @@ export const getUserNotificationsSelector = () =>
     },
   });
 
+export const getUserEmailSelector = () =>
+  Prisma.validator<Prisma.UserEmailSelect>()({
+    id: true,
+    hashnodeWeekly: true,
+    activityNotifications: true,
+    generalAnnouncements: true,
+    monthlyBlogStats: true,
+    referralNotifications: true,
+    newFollowersWeekly: true,
+  });
+
 export const getUserSelector = () =>
   Prisma.validator<Prisma.UserSelect>()({
     id: true,
@@ -79,20 +90,6 @@ export const getSimpleUserSelector = () =>
     },
   });
 
-export const getUserFullSelector = () =>
-  Prisma.validator<Prisma.UserSelect>()({
-    ...getUserSelector(),
-    UserProfile: {
-      select: getUserProfileSelector(),
-    },
-    UserSocial: {
-      select: getUserSocialSelector(),
-    },
-    UserPassword: {
-      select: getUserPasswordSelector(),
-    },
-  });
-
 export const getUserExternalFullSelector = () =>
   Prisma.validator<Prisma.UserSelect>()({
     ...getUserSelector(),
@@ -104,5 +101,16 @@ export const getUserExternalFullSelector = () =>
     },
     UserTags: {
       select: getUserTagsSelector(),
+    },
+    UserEmail: {
+      select: getUserEmailSelector(),
+    },
+  });
+
+export const getUserFullSelector = () =>
+  Prisma.validator<Prisma.UserSelect>()({
+    ...getUserExternalFullSelector(),
+    UserPassword: {
+      select: getUserPasswordSelector(),
     },
   });

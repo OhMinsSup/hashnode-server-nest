@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 // service
 import { UserService } from '../services/user.service';
@@ -8,6 +9,7 @@ import { AuthUser } from '../../decorators/get-user.decorator';
 import { UserUpdateInput } from '../input/user-update.input';
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
 import { GetWidgetUserQuery } from '../input/get-widget-users.query';
+import { UserEmailUpdateInput } from '../input/user-email-update.input';
 
 @ApiTags('사용자')
 @Controller('users')
@@ -21,6 +23,7 @@ export class UserController {
     return this.service.getMyInfo(user);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Put()
   @ApiOperation({ summary: '내 정보 수정' })
   @ApiBody({
@@ -52,5 +55,21 @@ export class UserController {
     @Query() input: GetWidgetUserQuery,
   ) {
     return this.service.getWidgetUsers(user, input);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60 } })
+  @Put('email-preferences')
+  @ApiOperation({ summary: '내 정보에서 이메일 설정' })
+  @ApiBody({
+    required: true,
+    description: '내 정보에서 이메일 설정 API',
+    type: UserUpdateInput,
+  })
+  @UseGuards(LoggedInGuard)
+  updateByEmailPreferences(
+    @Body() input: UserEmailUpdateInput,
+    @AuthUser() user: SerializeUser,
+  ) {
+    return this.service.updateByEmailPreferences(user, input);
   }
 }

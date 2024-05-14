@@ -4,7 +4,7 @@ CREATE DATABASE templatedb
   ENCODING 'UTF8'
   TEMPLATE template0;
 
-CREATE USER template WITH ENCRYPTED PASSWORD 'templatepw';
+CREATE USER template WITH PASSWORD 'templatepw';
 
 -- 유저에게 데이터베이스 접근 권한 부여
 GRANT ALL ON DATABASE templatedb to template;

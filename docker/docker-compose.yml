@@ -12,14 +12,25 @@ services:
     volumes:
       - ./data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-  redis:
-    container_name: redis
-    image: redis
-    environment:
-      ALLOW_EMPTY_PASSWORD: yes
-    restart: always
-    ports:
-      - '6379:6379'
-    volumes:
-      - './redis-data:/data'
-      - './redis.conf:/usr/local/etc/redis/redis.conf'
+  # db_shadow:
+  #   container_name: postgres_shadow
+  #   image: postgres:13.1
+  #   environment:
+  #     POSTGRES_DB: shadowdb
+  #     POSTGRES_USER: user
+  #     POSTGRES_PASSWORD: password
+  #   volumes:
+  #     - ./data_shadow:/var/lib/postgresql/data
+  #   depends_on:
+  #     - db
+  # redis:
+  #   container_name: redis
+  #   image: redis
+  #   environment:
+  #     ALLOW_EMPTY_PASSWORD: yes
+  #   restart: always
+  #   ports:
+  #     - '6379:6379'
+  #   volumes:
+  #     - './redis-data:/data'
+  #     - './redis.conf:/usr/local/etc/redis/redis.conf'

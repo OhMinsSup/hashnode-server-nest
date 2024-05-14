@@ -12,6 +12,7 @@ import { GetWidgetUserQuery } from '../input/get-widget-users.query';
 import { getUserExternalFullSelector } from '../../modules/database/selectors/user';
 import { assertNotFound } from '../../errors/not-found.error';
 import { isEmpty, isEqual } from 'lodash';
+import { UserEmailUpdateInput } from '../input/user-email-update.input';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
@@ -280,6 +281,92 @@ export class UserService {
     await this.prisma.user.update({
       where: {
         id: user.id,
+      },
+      data: newData,
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
+    };
+  }
+
+  /**
+   * @description 사용자 이메일 발송 설정 수정
+   * @param {SerializeUser} user 사용자 정보
+   * @param {UserEmailUpdateInput} input 사용자 이메일 발송 설정 수정 입력 */
+  async updateByEmailPreferences(
+    user: SerializeUser,
+    input: UserEmailUpdateInput,
+  ) {
+    const userInfo = await this.prisma.user.findUnique({
+      where: {
+        id: user.id,
+        deletedAt: {
+          equals: null,
+        },
+      },
+      select: getUserExternalFullSelector(),
+    });
+
+    assertNotFound(!userInfo, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '사용자 정보를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    const newData = {} as Parameters<
+      typeof this.prisma.userEmail.update
+    >['0']['data'];
+
+    if (
+      input.hashnodeWeekly !== undefined &&
+      input.hashnodeWeekly !== userInfo.UserEmail.hashnodeWeekly
+    ) {
+      newData.hashnodeWeekly = input.hashnodeWeekly;
+    }
+
+    if (
+      input.activityNotifications !== undefined &&
+      input.activityNotifications !== userInfo.UserEmail.activityNotifications
+    ) {
+      newData.activityNotifications = input.activityNotifications;
+    }
+
+    if (
+      input.generalAnnouncements !== undefined &&
+      input.generalAnnouncements !== userInfo.UserEmail.generalAnnouncements
+    ) {
+      newData.generalAnnouncements = input.generalAnnouncements;
+    }
+
+    if (
+      input.monthlyBlogStats !== undefined &&
+      input.monthlyBlogStats !== userInfo.UserEmail.monthlyBlogStats
+    ) {
+      newData.monthlyBlogStats = input.monthlyBlogStats;
+    }
+
+    if (
+      input.referralNotifications !== undefined &&
+      input.referralNotifications !== userInfo.UserEmail.referralNotifications
+    ) {
+      newData.referralNotifications = input.referralNotifications;
+    }
+
+    if (
+      input.newFollowersWeekly !== undefined &&
+      input.newFollowersWeekly !== userInfo.UserEmail.newFollowersWeekly
+    ) {
+      newData.newFollowersWeekly = input.newFollowersWeekly;
+    }
+
+    await this.prisma.userEmail.update({
+      where: {
+        id: userInfo.UserEmail.id,
       },
       data: newData,
     });

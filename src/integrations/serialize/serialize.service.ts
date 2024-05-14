@@ -12,6 +12,7 @@ import type {
   SerializeTagCount,
   SerializeTagStats,
   SerializeUser,
+  SerializeUserEmail,
   SerializeUserProfile,
   SerializeUserSocial,
 } from './serialize.interface';
@@ -147,6 +148,15 @@ export class SerializeService {
     return userSocial;
   }
 
+  getUserEmail(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const userEmail = clone as SerializeUserEmail;
+    Object.keys(userEmail).forEach((key) => {
+      userEmail[key] = this.transformDataToBoolean(userEmail?.[key]);
+    });
+    return userEmail;
+  }
+
   getSimpleUser(data: any) {
     const clone = isEmpty(data) ? {} : { ...data };
     const simpleUser = clone as SerializeSimepleUser;
@@ -167,6 +177,7 @@ export class SerializeService {
       email: data.email,
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
+      UserEmail: this.getUserEmail(data.UserEmail),
       UserProfile: this.getUserProfile(data.UserProfile),
       UserSocial: this.getUserSocial(data.UserSocial),
       UserTags: data.UserTags
@@ -184,8 +195,36 @@ export class SerializeService {
     return file;
   }
 
+  transformDataToBoolean(data: any) {
+    if (data === null) {
+      return false;
+    }
+
+    if (data === undefined) {
+      return false;
+    }
+
+    if (typeof data === 'string' && data === '') {
+      return false;
+    }
+
+    if (typeof data === 'number' && isNaN(data)) {
+      return false;
+    }
+
+    if (typeof data === 'object' && isEmpty(data)) {
+      return false;
+    }
+
+    return data;
+  }
+
   transformDataToUndefined(data: any) {
     if (data === null) {
+      return undefined;
+    }
+
+    if (data === undefined) {
       return undefined;
     }
 
@@ -205,6 +244,10 @@ export class SerializeService {
   }
 
   transformDataToNull(data: any) {
+    if (data === null) {
+      return null;
+    }
+
     if (data === undefined) {
       return null;
     }
