@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Put, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Put,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
@@ -37,6 +45,14 @@ export class UserController {
     @AuthUser() user: SerializeUser,
   ) {
     return this.service.update(user, input);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60 } })
+  @Delete()
+  @ApiOperation({ summary: '내 정보 삭제' })
+  @UseGuards(LoggedInGuard)
+  deleteMyInfo(@AuthUser() user: SerializeUser) {
+    return this.service.delete(user);
   }
 
   @Get('widget')
