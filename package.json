@@ -23,6 +23,7 @@
     "db:init": "dotenv -e .env prisma generate",
     "db:dev": "dotenv -e .env prisma migrate dev",
     "db:push": "dotenv -e .env prisma db push",
+    "db:reset": "dotenv -e .env prisma migrate reset",
     "postinstall": "prisma generate"
   },
   "dependencies": {
