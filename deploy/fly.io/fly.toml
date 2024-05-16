@@ -1,0 +1,55 @@
+# fly.toml app configuration file generated for nouvelles-cron-silent-lake-699 on 2023-12-26T22:16:16+09:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
+
+app = "hashnode-server-nest"
+primary_region = "nrt"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[experimental]
+  auto_rollback = true
+
+[env]
+  NODE_ENV = "production"
+  PORT = "8080"
+  SERVER_HOSTNAME = "0.0.0.0"
+  TZ = "Asia/Tokyo"
+
+[[services]]
+  protocol = "tcp"
+  internal_port = 8080
+  processes = ["app"]
+
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+    force_https = true
+
+  [[services.ports]]
+    port = 443
+    handlers = ["tls", "http"]
+  [services.concurrency]
+    type = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "1s"
+
+  [[services.http_checks]]
+    interval = "1m"
+    timeout = "10s"
+    grace_period = "5s"
+    method = "get"
+    path = "/api/healthcheck"
+    protocol = "http"
+    tls_skip_verify = false
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 2
+  memory_mb = 512
