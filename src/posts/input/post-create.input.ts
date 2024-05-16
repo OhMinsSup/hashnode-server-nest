@@ -1,15 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsString, MaxLength } from 'class-validator';
 import { IsOptionalUrl } from '../../decorators/Is-optional-url.decorator';
 import { IsOptionalString } from '../../decorators/Is-optional-string.decorator';
 import { IsOptionalJsonStringify } from '../../decorators/is-optional-json-stringify.decorator';
 import { IsOptionalArray } from '../../decorators/is-optional-array.decorator';
 import { PostSeoInput } from './post-seo.input';
 import { PostConfigInput } from './post-config.input';
-import { IsKebabCase } from '../../decorators/is-kebabcase.decorator';
 
 export class PostCreateInput {
-  @IsKebabCase()
+  @IsString()
   @MaxLength(255)
   @ApiProperty({
     description: 'urlSlug',
