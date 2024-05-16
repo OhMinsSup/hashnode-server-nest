@@ -57,7 +57,16 @@ export class SerializeService {
     const clone = isEmpty(data) ? {} : { ...data };
     const member = clone as SerializeBlogMember;
     Object.keys(member).forEach((key) => {
-      member[key] = this.transformDataToUndefined(member?.[key]);
+      switch (key) {
+        case 'User': {
+          member[key] = this.getSimpleUser(member?.[key]);
+          break;
+        }
+        default: {
+          member[key] = this.transformDataToUndefined(member?.[key]);
+          break;
+        }
+      }
     });
     return member;
   }
@@ -67,7 +76,7 @@ export class SerializeService {
       return [] as SerializeBlogMember[];
     }
     return data.map((member: any) =>
-      this.getBlogMember(member.User),
+      this.getBlogMember(member),
     ) as SerializeBlogMember[];
   }
 

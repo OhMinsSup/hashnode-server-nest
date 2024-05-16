@@ -37,6 +37,7 @@ export type SerializeBlogSocial = {
 export type SerializeBlogMember = {
   role: BlogMemberRole;
   visibility: BlogMemberVisibility;
+  User: SerializeSimepleUser;
   createdAt: string;
 };
 

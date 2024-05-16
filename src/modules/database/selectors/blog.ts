@@ -1,9 +1,13 @@
 import { Prisma } from '@prisma/client';
+import { getSimpleUserSelector } from './user';
 
 export const getBlogMemberSelector = () =>
   Prisma.validator<Prisma.BlogMembersSelect>()({
     role: true,
     visibility: true,
+    User: {
+      select: getSimpleUserSelector(),
+    },
     createdAt: true,
   });
 
