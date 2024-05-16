@@ -24,6 +24,7 @@ model User {
   UserSocial         UserSocial?
   UserPassword       UserPassword?
   UserEmail          UserEmail?
+  Blog               Blog?
   UserAuthentication UserAuthentication[]
   UserNotifications  UserNotification[]
   UserTags           UserTags[]
@@ -32,7 +33,6 @@ model User {
   Post               Post[]
   PostCoAuthor       PostCoAuthor[]
   PostLike           PostLike[]
-  Blog               Blog[]
   Series             Series[]
   BlogMembers        BlogMembers[]
 
@@ -155,7 +155,6 @@ model Post {
   PostCoAuthor PostCoAuthor[]
   PostLike     PostLike[]
   SeriesPost   SeriesPost[]
-  BlogPost     BlogPost[]
 
   @@index([urlSlug], map: "posts_urlSlug")
   @@map("posts")
@@ -172,7 +171,6 @@ model Series {
   fk_user_id  String?
   User        User?        @relation(fields: [fk_user_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
   SeriesPost  SeriesPost[]
-  BlogSeries  BlogSeries[]
 
   @@index([createdAt], map: "series_created_at")
   @@index([fk_user_id], map: "series_fk_user_id")
@@ -387,18 +385,27 @@ model Blog {
   about          String?         @db.VarChar(255)
   createdAt      DateTime        @default(now()) @db.Timestamptz(6)
   updatedAt      DateTime        @updatedAt @db.Timestamptz(6)
-  deletedAt      DateTime?       @db.Timestamptz(6)
-  fk_user_id     String
-  Creator        User            @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  fk_user_id     String          @unique
+  User           User            @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
   BlogSocial     BlogSocial?
   BlogAppearance BlogAppearance?
-  BlogPost       BlogPost[]
-  BlogSeries     BlogSeries[]
+  BlogSeo        BlogSeo?
   BlogMembers    BlogMembers[]
 
   @@index([createdAt], map: "blogs_created_at")
   @@index([fk_user_id], map: "blogs_fk_user_id")
   @@map("blogs")
+}
+
+model BlogSeo {
+  id          String  @id @default(cuid())
+  title       String? @db.VarChar(70)
+  description String? @db.VarChar(156)
+  image       String? @db.VarChar(255)
+  fk_blog_id  String  @unique
+  Blog        Blog    @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
+
+  @@map("blog_seos")
 }
 
 model BlogMembers {
@@ -407,11 +414,10 @@ model BlogMembers {
   fk_user_id String
   role       BlogMemberRole @default(EDITOR)
   visibility Boolean        @default(true)
-
-  Blog      Blog     @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
-  User      User     @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  Blog       Blog           @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
+  User       User           @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  createdAt  DateTime       @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime       @updatedAt @db.Timestamptz(6)
 
   @@index([fk_blog_id], map: "blog_members_fk_blog_id")
   @@index([fk_user_id], map: "blog_members_fk_user_id")
@@ -448,34 +454,6 @@ model BlogSocial {
   Blog       Blog    @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
 
   @@map("blog_socials")
-}
-
-model BlogPost {
-  id         String   @id @default(cuid())
-  fk_blog_id String
-  fk_post_id String
-  createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
-  Blog       Blog     @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
-  Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_blog_id], map: "blog_posts_fk_blog_id")
-  @@index([fk_post_id], map: "blog_posts_fk_post_id")
-  @@map("blog_posts")
-}
-
-model BlogSeries {
-  id           String   @id @default(cuid())
-  fk_blog_id   String
-  fk_series_id String
-  createdAt    DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt    DateTime @updatedAt @db.Timestamptz(6)
-  Blog         Blog     @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
-  Series       Series   @relation(fields: [fk_series_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_blog_id], map: "blog_series_fk_blog_id")
-  @@index([fk_series_id], map: "blog_series_fk_series_id")
-  @@map("blog_series")
 }
 
 enum BlogType {

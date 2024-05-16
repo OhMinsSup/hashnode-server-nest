@@ -17,7 +17,7 @@ import { isNullOrUndefined } from '../../libs/assertion';
 // dto
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
-import { NotificationType } from '@prisma/client';
+import { BlogLayoutType, NotificationType } from '@prisma/client';
 import type { Request } from 'express';
 
 @Injectable({
@@ -186,6 +186,27 @@ export class AuthService {
           },
           UserEmail: {
             create: {},
+          },
+          Blog: {
+            create: {
+              title: `${input.username}'s team blog`,
+              BlogSocial: {
+                create: {},
+              },
+              BlogSeo: {
+                create: {},
+              },
+              BlogAppearance: {
+                create: {
+                  layoutType: BlogLayoutType.MAGAZINE,
+                  headerColor: '#2962FF',
+                  subscribeNewsletter: true,
+                },
+              },
+              BlogMembers: {
+                create: [],
+              },
+            },
           },
         },
       });
