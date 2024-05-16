@@ -1,6 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { isEmpty } from '../../libs/assertion';
 import type {
+  SerializeBlog,
+  SerializeBlogAppearance,
+  SerializeBlogMember,
+  SerializeBlogSeo,
+  SerializeBlogSocial,
   SerializeFile,
   SerializePost,
   SerializePostConfig,
@@ -20,6 +25,76 @@ import type {
 @Injectable()
 export class SerializeService {
   constructor() {}
+
+  getBlogSeo(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const seo = clone as SerializeBlogSeo;
+    Object.keys(seo).forEach((key) => {
+      seo[key] = this.transformDataToUndefined(seo?.[key]);
+    });
+    return seo;
+  }
+
+  getBlogAppearance(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const appearance = clone as SerializeBlogAppearance;
+    Object.keys(appearance).forEach((key) => {
+      appearance[key] = this.transformDataToUndefined(appearance?.[key]);
+    });
+    return appearance;
+  }
+
+  getBlogSocial(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const social = clone as SerializeBlogSocial;
+    Object.keys(social).forEach((key) => {
+      social[key] = this.transformDataToUndefined(social?.[key]);
+    });
+    return social;
+  }
+
+  getBlogMember(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const member = clone as SerializeBlogMember;
+    Object.keys(member).forEach((key) => {
+      member[key] = this.transformDataToUndefined(member?.[key]);
+    });
+    return member;
+  }
+
+  getBlogMembers(data: any) {
+    if (isEmpty(data)) {
+      return [] as SerializeBlogMember[];
+    }
+    return data.map((member: any) =>
+      this.getBlogMember(member.User),
+    ) as SerializeBlogMember[];
+  }
+
+  getBlog(data: any) {
+    const clone = isEmpty(data) ? {} : { ...data };
+    const blog = clone as SerializeBlog;
+    Object.keys(blog).forEach((key) => {
+      switch (key) {
+        case 'BlogSeo':
+          blog[key] = this.getBlogSeo(blog?.[key]);
+          break;
+        case 'BlogAppearance':
+          blog[key] = this.getBlogAppearance(blog?.[key]);
+          break;
+        case 'BlogSocial':
+          blog[key] = this.getBlogSocial(blog?.[key]);
+          break;
+        case 'BlogMembers':
+          blog[key] = this.getBlogMembers(blog?.[key]);
+          break;
+        default:
+          blog[key] = this.transformDataToUndefined(blog?.[key]);
+          break;
+      }
+    });
+    return blog;
+  }
 
   getPostStats(data: any) {
     return {
@@ -63,12 +138,6 @@ export class SerializeService {
     return tags.map((tag) => this.getTag(tag, false));
   }
 
-  getPostCoAuthors(data: any) {
-    const clone = isEmpty(data) ? {} : { ...data };
-    const coAuthors = clone as SerializeSimepleUser[];
-    return coAuthors.map((author) => this.getSimpleUser(author));
-  }
-
   getPost(
     data: any,
     {
@@ -89,11 +158,6 @@ export class SerializeService {
       PostTags: data.PostTags
         ? data.PostTags.map((tag: any) =>
             this.getTag<false>(tag.Tag, includeTagStats),
-          )
-        : [],
-      PostCoAuthor: data.PostCoAuthor
-        ? data.PostCoAuthor.map((author: any) =>
-            this.getSimpleUser(author.User),
           )
         : [],
       PostSeo: this.getPostSeo(data.PostSeo),
@@ -161,12 +225,15 @@ export class SerializeService {
     const clone = isEmpty(data) ? {} : { ...data };
     const simpleUser = clone as SerializeSimepleUser;
     Object.keys(simpleUser).forEach((key) => {
-      simpleUser[key] = this.transformDataToUndefined(simpleUser?.[key]);
-    });
-    Object.keys(simpleUser.UserProfile).forEach((key) => {
-      simpleUser['UserProfile'][key] = this.transformDataToUndefined(
-        simpleUser['UserProfile'][key],
-      );
+      switch (key) {
+        case 'UserProfile': {
+          simpleUser[key] = this.getUserProfile(simpleUser?.[key]);
+          break;
+        }
+        default:
+          simpleUser[key] = this.transformDataToUndefined(simpleUser?.[key]);
+          break;
+      }
     });
     return simpleUser;
   }
@@ -183,6 +250,7 @@ export class SerializeService {
       UserTags: data.UserTags
         ? data.UserTags.map((tag: any) => this.getTag<false>(tag.Tag))
         : [],
+      Blog: this.getBlog(data.Blog),
     } as SerializeUser;
   }
 

@@ -38,6 +38,7 @@ export class UserService {
   }
 
   /**
+   * @deprecated
    * @description 위젯 사용자 목록 조회
    * @param {SerializeUser} user 사용자 정보
    * @param {GetWidgetUserQuery} input 위젯 사용자 목록 조회 입력 */

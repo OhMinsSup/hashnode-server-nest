@@ -56,14 +56,14 @@ model UserProfile {
 
 model UserSocial {
   id            String  @id @default(cuid())
-  github        String  @default("") @db.VarChar(255)
-  twitter       String  @default("") @db.VarChar(255)
-  facebook      String  @default("") @db.VarChar(255)
-  instagram     String  @default("") @db.VarChar(255)
-  website       String  @default("") @db.VarChar(255)
-  stackoverflow String  @default("") @db.VarChar(255)
-  youtube       String  @default("") @db.VarChar(255)
-  linkedin      String  @default("") @db.VarChar(255)
+  github        String? @db.VarChar(255)
+  twitter       String? @db.VarChar(255)
+  facebook      String? @db.VarChar(255)
+  instagram     String? @db.VarChar(255)
+  website       String? @db.VarChar(255)
+  stackoverflow String? @db.VarChar(255)
+  youtube       String? @db.VarChar(255)
+  linkedin      String? @db.VarChar(255)
   fk_user_id    String? @unique
   User          User?   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
@@ -273,6 +273,7 @@ model PostHistory {
   @@map("post_histories")
 }
 
+// @deprecated
 model PostCoAuthor {
   id         String @id @default(cuid())
   fk_post_id String
@@ -409,15 +410,15 @@ model BlogSeo {
 }
 
 model BlogMembers {
-  id         String         @id @default(cuid())
+  id         String               @id @default(cuid())
   fk_blog_id String
   fk_user_id String
-  role       BlogMemberRole @default(EDITOR)
-  visibility Boolean        @default(true)
-  Blog       Blog           @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
-  User       User           @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-  createdAt  DateTime       @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime       @updatedAt @db.Timestamptz(6)
+  role       BlogMemberRole       @default(EDITOR)
+  visibility BlogMemberVisibility @default(PUBLIC)
+  Blog       Blog                 @relation(fields: [fk_blog_id], references: [id], onDelete: Cascade)
+  User       User                 @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+  createdAt  DateTime             @default(now()) @db.Timestamptz(6)
+  updatedAt  DateTime             @updatedAt @db.Timestamptz(6)
 
   @@index([fk_blog_id], map: "blog_members_fk_blog_id")
   @@index([fk_user_id], map: "blog_members_fk_user_id")
@@ -469,4 +470,9 @@ enum BlogLayoutType {
 enum BlogMemberRole {
   OWNER
   EDITOR
+}
+
+enum BlogMemberVisibility {
+  PUBLIC
+  PRIVATE
 }

@@ -1,6 +1,12 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
 import bcrypt from 'bcrypt';
 import { REQUEST } from '@nestjs/core';
+import {
+  BlogLayoutType,
+  BlogMemberRole,
+  BlogMemberVisibility,
+  NotificationType,
+} from '@prisma/client';
 
 // service
 import { PrismaService } from '../../modules/database/prisma.service';
@@ -17,7 +23,6 @@ import { isNullOrUndefined } from '../../libs/assertion';
 // dto
 import { SignupInput } from '../input/signup.input';
 import { SigninInput } from '../input/signin.input';
-import { BlogLayoutType, NotificationType } from '@prisma/client';
 import type { Request } from 'express';
 
 @Injectable({
@@ -203,11 +208,25 @@ export class AuthService {
                   subscribeNewsletter: true,
                 },
               },
-              BlogMembers: {
-                create: [],
-              },
             },
           },
+        },
+        select: {
+          id: true,
+          Blog: {
+            select: {
+              id: true,
+            },
+          },
+        },
+      });
+
+      await tx.blogMembers.create({
+        data: {
+          fk_blog_id: user.Blog.id,
+          fk_user_id: user.id,
+          role: BlogMemberRole.OWNER,
+          visibility: BlogMemberVisibility.PUBLIC,
         },
       });
 

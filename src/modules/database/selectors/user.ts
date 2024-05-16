@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { getNotificationSelector } from './notification';
-import { getBaseTagSelector, getTagSelector } from './tag';
+import { getBaseTagSelector } from './tag';
+import { getBlogSelector } from './blog';
 
 export const getUserProfileSelector = () =>
   Prisma.validator<Prisma.UserProfileSelect>()({
@@ -104,6 +105,9 @@ export const getUserExternalFullSelector = () =>
     },
     UserEmail: {
       select: getUserEmailSelector(),
+    },
+    Blog: {
+      select: getBlogSelector(),
     },
   });
 

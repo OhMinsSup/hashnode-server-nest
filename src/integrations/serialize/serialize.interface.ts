@@ -1,4 +1,56 @@
-import type { MediaType, UploadType } from '@prisma/client';
+import type {
+  BlogLayoutType,
+  BlogMemberRole,
+  BlogMemberVisibility,
+  BlogType,
+  MediaType,
+  UploadType,
+} from '@prisma/client';
+
+export type SerializeBlogSeo = {
+  title: string;
+  description: string;
+  image: string;
+};
+
+export type SerializeBlogAppearance = {
+  layoutType: BlogLayoutType;
+  logo: string | undefined;
+  logoDark: string | undefined;
+  favicon: string | undefined;
+  headerColor: string | undefined;
+  displayReadTime: boolean;
+  displayPostViews: boolean;
+  subscribeNewsletter: boolean;
+};
+
+export type SerializeBlogSocial = {
+  github: string | undefined;
+  twitter: string | undefined;
+  instagram: string | undefined;
+  mastodon: string | undefined;
+  youtube: string | undefined;
+  linkedin: string | undefined;
+  dailydev: string | undefined;
+};
+
+export type SerializeBlogMember = {
+  role: BlogMemberRole;
+  visibility: BlogMemberVisibility;
+  createdAt: string;
+};
+
+export type SerializeBlog = {
+  id: string;
+  type: BlogType;
+  title: string;
+  about: string;
+  createdAt: string;
+  BlogMembers: SerializeBlogMember[];
+  BlogSeo: SerializeBlogSeo;
+  BlogAppearance: SerializeBlogAppearance;
+  BlogSocial: SerializeBlogSocial;
+};
 
 export type SerializeUserProfile = {
   username: string;
@@ -36,6 +88,7 @@ export type SerializeUser = {
   UserSocial: SerializeUserSocial;
   UserTags: SerializeTag<false>[];
   UserEmail: SerializeUserEmail;
+  Blog: SerializeBlog;
 };
 
 export type SerializeSimepleUser = {
@@ -99,7 +152,6 @@ export type SerializePost<IncludeStats = true> = {
   meta: Record<string, any> | undefined;
   image: string | undefined;
   PostConfig: SerializePostConfig;
-  PostCoAuthor: SerializePostCoAuthor[];
   PostTags: SerializeTag<false>[];
   PostSeo: Partial<SerializePostSeo>;
   PostStats: IncludeStats extends true ? SerializePostStats : undefined;

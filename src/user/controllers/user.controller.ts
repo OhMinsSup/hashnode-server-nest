@@ -58,11 +58,13 @@ export class UserController {
   @Get('widget')
   @ApiOperation({
     summary: '게시물 작성시 태그 선택 목록에서 노출될 태그 목록',
+    deprecated: true,
   })
   @ApiQuery({
     name: 'query',
     type: GetWidgetUserQuery,
     required: false,
+    deprecated: true,
     description: 'widget 목록에서 검색시 필요한 쿼리',
   })
   @UseGuards(LoggedInGuard)
