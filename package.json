@@ -20,11 +20,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "db:init": "dotenv -e .env prisma generate",
-    "db:dev": "dotenv -e .env prisma migrate dev",
-    "db:push": "dotenv -e .env prisma db push",
-    "db:reset": "dotenv -e .env prisma migrate reset",
-    "postinstall": "prisma generate"
+    "db:init": "prisma generate",
+    "db:dev": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "db:reset": "prisma migrate reset"
   },
   "dependencies": {
     "@nestjs/cache-manager": "^2.2.2",

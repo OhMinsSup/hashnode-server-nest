@@ -1,26 +1,23 @@
 # Adjust NODE_VERSION as desired
-ARG NODE_VERSION=20.10.0
+ARG NODE_VERSION=20
 
 # base node image
-FROM node:${NODE_VERSION}-bookworm-slim as base
-
-# fly.io specific
-LABEL fly_launch_runtime="Node.js"
+FROM node:${NODE_VERSION}-slim as base
 
 # set for base and all layer that inherit from it
 ENV NODE_ENV production
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
-# Install openssl for Prisma
-RUN apt-get update && apt-get install -y openssl ca-certificates
+RUN corepack enable pnpm
 
 # Install all node_modules, including dev dependencies
 FROM base as deps
 
 WORKDIR /myapp
 
-ADD package.json package-lock.json pnpm-lock.yaml .npmrc ./
-RUN corepack enable
-RUN pnpm install
+ADD package.json pnpm-lock.yaml .npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 
 # Setup production node_modules
 FROM base as production-deps
@@ -28,63 +25,37 @@ FROM base as production-deps
 WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
-ADD package.json package-lock.json pnpm-lock.yaml .npmrc ./
-RUN npm prune --omit=dev
+ADD package.json pnpm-lock.yaml .npmrc ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-lockfile
 
-# # Node.js app lives here
-# WORKDIR /app
-# RUN npm install turbo --global
-# RUN npm install puppeteer --global
-# COPY . .
-# RUN turbo prune --scope=nouvelles-cron --docker
+# Build the app
+FROM base AS build
 
-# # remove all empty node_modules folder structure
-# RUN find . -name "node_modules" -type d -prune -exec rm -rf '{}' +
-# # remove apps/nouvelles folder
-# RUN rm -rf apps/nouvelles
 
-# # Add lockfile and package.json's of isolated subworkspace
-# FROM node:${NODE_VERSION}-alpine AS installer
+WORKDIR /myapp
 
-# RUN apk add --no-cache libc6-compat
-# RUN apk update
-# RUN corepack enable
+COPY --from=deps /myapp/node_modules /myapp/node_modules
 
-# WORKDIR /app
+ADD prisma .
+RUN pnpx prisma generate
+ADD . .
+RUN pnpm run build
 
-# # First install dependencies (as they change less often)
-# COPY .gitignore .gitignore
-# COPY --from=builder /app/out/json/ .
-# COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
-# COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
 
-# # Install dependencies
-# RUN pnpm install
+# Finally, build the production image with minimal footprint
+FROM base
 
-# # prisma generate
-# COPY --from=builder /app/out/full/packages/database/prisma/schema.prisma /app/packages/database/prisma/schema.prisma
-# RUN pnpx prisma generate --schema /app/packages/database/prisma/schema.prisma
+ENV NODE_ENV="production"
 
-# # Build the project and its dependencies
-# COPY --from=builder /app/out/full/ .
-# COPY turbo.json turbo.json
-# RUN pnpm run db:generate
-# RUN pnpm turbo run build --filter=nouvelles-cron...
+USER node
+WORKDIR /myapp
 
-# FROM node:${NODE_VERSION}-alpine AS runner
+COPY --from=production-deps --chown=node:node /myapp/node_modules /myapp/node_modules
+COPY --from=build --chown=node:node /myapp/node_modules/.prisma /myapp/node_modules/.prisma
+COPY --from=build --chown=node:node /myapp/package.json /myapp/package.json
+COPY --from=build --chown=node:node /myapp/prisma /myapp/prisma
+COPY --from=build --chown=node:node /myapp/dist /myapp/dist
 
-# RUN corepack enable
+RUN corepack enable pnpm
 
-# WORKDIR /app
-
-# # Don't run production as root
-# RUN addgroup --system --gid 1001 cronfastify
-# RUN adduser --system --uid 1001 cronfastify
-# USER cronfastify
-
-# # Set production environment
-# ENV NODE_ENV="production"
-
-# COPY --from=installer /app .
-
-# CMD node apps/nouvelles-cron/dist/main
+CMD [ "pnpm", "run", "start:prod" ]
