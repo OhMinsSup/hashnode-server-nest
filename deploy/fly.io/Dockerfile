@@ -14,6 +14,7 @@ RUN corepack enable pnpm
 # Install all node_modules, including dev dependencies
 FROM base as deps
 
+RUN mkdir /myapp
 WORKDIR /myapp
 
 ADD package.json pnpm-lock.yaml .npmrc ./
@@ -22,6 +23,7 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
 # Setup production node_modules
 FROM base as production-deps
 
+RUN mkdir /myapp
 WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
@@ -31,13 +33,14 @@ RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --prod --frozen-l
 # Build the app
 FROM base AS build
 
-
+RUN mkdir /myapp
 WORKDIR /myapp
 
 COPY --from=deps /myapp/node_modules /myapp/node_modules
 
 ADD prisma .
 RUN pnpx prisma generate
+
 ADD . .
 RUN pnpm run build
 
@@ -45,17 +48,17 @@ RUN pnpm run build
 # Finally, build the production image with minimal footprint
 FROM base
 
-ENV NODE_ENV="production"
+ENV NODE_ENV production
 
-USER node
+RUN mkdir /myapp
 WORKDIR /myapp
 
-COPY --from=production-deps --chown=node:node /myapp/node_modules /myapp/node_modules
-COPY --from=build --chown=node:node /myapp/node_modules/.prisma /myapp/node_modules/.prisma
-COPY --from=build --chown=node:node /myapp/package.json /myapp/package.json
-COPY --from=build --chown=node:node /myapp/prisma /myapp/prisma
-COPY --from=build --chown=node:node /myapp/dist /myapp/dist
+COPY --from=production-deps /myapp/node_modules /myapp/node_modules
+COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
 
-RUN corepack enable pnpm
+COPY --from=build /myapp/package.json /myapp/package.json
+COPY --from=build /myapp/prisma /myapp/prisma
+COPY --from=build /myapp/dist /myapp/dist
+ADD . .
 
-CMD [ "pnpm", "run", "start:prod" ]
+CMD [ "node", "dist/main" ]
