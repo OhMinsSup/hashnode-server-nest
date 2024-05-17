@@ -4,11 +4,12 @@ services:
     image: postgres:13.1
     restart: always
     environment:
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgrespw
     ports:
-      - '5433:5432'
+      - '5432:5432'
     volumes:
-      - ./deploy/fly.io/data:/var/lib/postgresql/data
+      - ./docker/data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
   server:
     container_name: hashnode-server
@@ -19,7 +20,7 @@ services:
       - .env
     tty: true
     stdin_open: true
-    restart: always
+    # restart: always
     ports:
       - 8080:8080
     depends_on:

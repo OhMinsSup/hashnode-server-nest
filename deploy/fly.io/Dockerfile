@@ -78,4 +78,4 @@ COPY --from=build /myapp/prisma /myapp/prisma
 
 # ADD . .
 
-# CMD [ "node", "dist/main" ]
+CMD [ "node", "dist/main" ]
