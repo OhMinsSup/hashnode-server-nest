@@ -1,5 +1,5 @@
 services:
-  db:
+  server_db:
     container_name: postgres
     image: postgres:13.1
     restart: always
@@ -8,7 +8,7 @@ services:
     ports:
       - '5433:5432'
     volumes:
-      - ./docker/data:/var/lib/postgresql/data
+      - ./deploy/fly.io/data:/var/lib/postgresql/data
       - ./docker/init.sql:/docker-entrypoint-initdb.d/init.sql
   server:
     container_name: hashnode-server
@@ -22,3 +22,5 @@ services:
     restart: always
     ports:
       - 8080:8080
+    depends_on:
+      - server_db

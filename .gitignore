@@ -44,3 +44,11 @@ prisma/dev.db-journal
 
 # logs
 audit.json
+
+# docker
+docker/data
+docker/redis-data
+docker/redis.conf
+
+#deploy
+deploy/fly.io/data
