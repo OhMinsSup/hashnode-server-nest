@@ -4,7 +4,6 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import bcrypt from 'bcrypt';
 
 // date-fns
 import { differenceInMilliseconds, subMinutes } from 'date-fns';
@@ -15,6 +14,7 @@ import { TokenService } from '../auth/services/token.service';
 import { PrismaService } from '../modules/database/prisma.service';
 import { getUserExternalFullSelector } from '../modules/database/selectors/user';
 import { SerializeService } from '../integrations/serialize/serialize.service';
+import { PasswordService } from '../auth/services/password.service';
 
 // types
 import { JwtPayload, TokenExpiredError } from 'jsonwebtoken';
@@ -30,6 +30,7 @@ export class AuthenticationGuard implements CanActivate {
   constructor(
     private readonly prisma: PrismaService,
     private readonly token: TokenService,
+    private readonly password: PasswordService,
     private readonly env: EnvironmentService,
     private readonly serialize: SerializeService,
   ) {}
@@ -139,13 +140,15 @@ export class AuthenticationGuard implements CanActivate {
       }
 
       try {
+        const ipHash = this.password.hash(request.ip);
+
         await this.prisma.user.update({
           where: {
             id,
           },
           data: {
             lastActiveAt: nowDate,
-            lastActiveIpHash: await bcrypt.hash(request.ip, 10),
+            lastActiveIpHash: ipHash,
           },
         });
       } catch (error) {}

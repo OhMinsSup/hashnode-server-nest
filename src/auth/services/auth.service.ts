@@ -1,5 +1,4 @@
 import { Inject, Injectable, Scope } from '@nestjs/common';
-import bcrypt from 'bcrypt';
 import { REQUEST } from '@nestjs/core';
 import {
   BlogLayoutType,
@@ -12,6 +11,7 @@ import {
 import { PrismaService } from '../../modules/database/prisma.service';
 import { TokenService } from './token.service';
 import { EnvironmentService } from '../../integrations/environment/environment.service';
+import { PasswordService } from './password.service';
 
 // constants
 import { EXCEPTION_CODE } from '../../constants/exception.code';
@@ -33,6 +33,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly token: TokenService,
     private readonly env: EnvironmentService,
+    private readonly password: PasswordService,
     @Inject(REQUEST) private request: Request,
   ) {}
 
@@ -50,6 +51,7 @@ export class AuthService {
         UserPassword: {
           select: {
             hash: true,
+            salt: true,
           },
         },
       },
@@ -62,8 +64,9 @@ export class AuthService {
       result: null,
     });
 
-    const passwordMatch = await bcrypt.compare(
+    const passwordMatch = await this.password.verifyPassword(
       input.password,
+      user.UserPassword.salt,
       user.UserPassword.hash,
     );
 
@@ -90,13 +93,15 @@ export class AuthService {
       authId: auth.id,
     });
 
+    const ipHash = this.password.hash(this.request.ip);
+
     await this.prisma.user.update({
       where: {
         id: user.id,
       },
       data: {
         lastSignInAt: now,
-        lastSignInIpHash: await bcrypt.hash(this.request.ip, 10),
+        lastSignInIpHash: ipHash,
       },
     });
 
@@ -156,8 +161,9 @@ export class AuthService {
         result: null,
       });
 
-      const salt = await bcrypt.genSalt(this.env.getSaltRounds());
-      const hash = await bcrypt.hash(input.password, salt);
+      const { hashedPassword, salt } = await this.password.hashPassword(
+        input.password,
+      );
 
       // add user to database
       const user = await tx.user.create({
@@ -165,7 +171,7 @@ export class AuthService {
           email: input.email,
           UserPassword: {
             create: {
-              hash,
+              hash: hashedPassword,
               salt,
             },
           },
@@ -246,13 +252,15 @@ export class AuthService {
         authId: auth.id,
       });
 
+      const ipHash = this.password.hash(this.request.ip);
+
       await tx.user.update({
         where: {
           id: user.id,
         },
         data: {
           lastSignInAt: now,
-          lastSignInIpHash: await bcrypt.hash(this.request.ip, 10),
+          lastSignInIpHash: ipHash,
         },
       });
 
