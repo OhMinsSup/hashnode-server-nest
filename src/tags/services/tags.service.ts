@@ -13,9 +13,6 @@ import { getTagWithStatsSelector } from '../../modules/database/selectors/tag';
 // input
 import { GetWidgetTagsQuery } from '../input/get-widget-tags.query';
 
-// types
-import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
-
 @Injectable()
 export class TagsService {
   constructor(
@@ -92,7 +89,7 @@ export class TagsService {
    * @param {GetWidgetTagsQuery} input
    * @param {SerializeUser} _
    */
-  async getWidgetTags(input: GetWidgetTagsQuery, _: SerializeUser) {
+  async getWidgetTags(input: GetWidgetTagsQuery) {
     try {
       const data = await this.prisma.tag.findMany({
         where: {

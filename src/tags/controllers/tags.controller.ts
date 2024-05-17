@@ -6,8 +6,6 @@ import { TagsService } from '../services/tags.service';
 import { GetTagsInput } from '../input/get-tags.input';
 import { GetWidgetTagsQuery } from '../input/get-widget-tags.query';
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
-import { SerializeUser } from '../../integrations/serialize/serialize.interface';
-import { AuthUser } from '../../decorators/get-user.decorator';
 
 @ApiTags('태그')
 @Controller('tags')
@@ -22,7 +20,9 @@ export class TagsController {
     required: false,
     description: '태그 목록 조회시 필요한 쿼리',
   })
-  getTags(@Query() query: GetTagsInput) {}
+  getTags() {
+    return [];
+  }
 
   @Get('widget')
   @ApiOperation({
@@ -35,10 +35,7 @@ export class TagsController {
     description: 'widget 목록에서 검색시 필요한 쿼리',
   })
   @UseGuards(LoggedInGuard)
-  getWidgetTags(
-    @AuthUser() user: SerializeUser,
-    @Query() input: GetWidgetTagsQuery,
-  ) {
-    return this.service.getWidgetTags(input, user);
+  getWidgetTags(@Query() input: GetWidgetTagsQuery) {
+    return this.service.getWidgetTags(input);
   }
 }

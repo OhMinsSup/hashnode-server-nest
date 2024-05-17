@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptionalUrl } from '../../decorators/Is-optional-url.decorator';
 import { IsBoolean } from 'class-validator';
 
 export class UserEmailUpdateInput {

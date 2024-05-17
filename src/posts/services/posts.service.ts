@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
-import { omit, difference, toFinite, isEqual } from 'lodash';
+import { difference, toFinite, isEqual } from 'lodash';
 
 // services
 import { PrismaService } from '../../modules/database/prisma.service';

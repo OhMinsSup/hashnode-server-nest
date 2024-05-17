@@ -1,6 +1,6 @@
 import * as winston from 'winston';
 import { join } from 'path';
-import { utilities, WinstonModule } from 'nest-winston';
+import { utilities } from 'nest-winston';
 
 export const dailyOption = (level: string) => {
   return {
