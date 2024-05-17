@@ -68,7 +68,9 @@ RUN mkdir /myapp/
 WORKDIR /myapp/
 
 COPY --from=production-deps /myapp/node_modules /myapp/node_modules
-COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
+# COPY --from=build /myapp/node_modules/.prisma /myapp/node_modules/.prisma
+COPY --from=build /myapp/node_modules/@prisma/client /myapp/node_modules/@prisma/client
+COPY --from=build /myapp/node_modules/.pnpm/@prisma+client* /myapp/node_modules/.pnpm/
 
 COPY --from=build /myapp/dist /myapp/dist
 COPY --from=build /myapp/package.json /myapp/package.json
