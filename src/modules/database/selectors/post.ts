@@ -40,7 +40,7 @@ export const getBasePostSelector = () =>
     title: true,
     subTitle: true,
     content: true,
-    meta: true,
+    meta: false,
     image: true,
     createdAt: true,
     updatedAt: true,

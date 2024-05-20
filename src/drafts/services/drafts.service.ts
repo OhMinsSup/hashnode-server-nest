@@ -234,12 +234,32 @@ export class DraftsService {
           deletedAt: {
             equals: null,
           },
-          PostConfig: {
-            publishedAt: {
-              not: null,
+          OR: [
+            {
+              PostConfig: {
+                publishedAt: {
+                  not: null,
+                },
+                isDraft: false,
+              },
             },
-            isDraft: true,
-          },
+            {
+              PostConfig: {
+                publishedAt: {
+                  equals: null,
+                },
+                isDraft: false,
+              },
+            },
+            {
+              PostConfig: {
+                publishedAt: {
+                  not: null,
+                },
+                isDraft: true,
+              },
+            },
+          ],
         },
       }),
       this.prisma.post.findMany({
@@ -248,12 +268,32 @@ export class DraftsService {
           deletedAt: {
             equals: null,
           },
-          PostConfig: {
-            publishedAt: {
-              not: null,
+          OR: [
+            {
+              PostConfig: {
+                publishedAt: {
+                  not: null,
+                },
+                isDraft: false,
+              },
             },
-            isDraft: true,
-          },
+            {
+              PostConfig: {
+                publishedAt: {
+                  equals: null,
+                },
+                isDraft: false,
+              },
+            },
+            {
+              PostConfig: {
+                publishedAt: {
+                  not: null,
+                },
+                isDraft: true,
+              },
+            },
+          ],
         },
         orderBy: {
           createdAt: 'desc',

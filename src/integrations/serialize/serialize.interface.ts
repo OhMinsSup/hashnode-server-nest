@@ -157,6 +157,8 @@ export type SerializePost<IncludeStats = true> = {
   PostSeo: Partial<SerializePostSeo>;
   PostStats: IncludeStats extends true ? SerializePostStats : undefined;
   count: SerializePostCount;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type SerializeFile = {
