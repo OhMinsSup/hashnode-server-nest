@@ -36,6 +36,7 @@ model User {
   PostLike           PostLike[]
   Series             Series[]
   BlogMembers        BlogMembers[]
+  PsotBookmark       PsotBookmark[]
 
   @@map("users")
 }
@@ -156,6 +157,7 @@ model Post {
   PostCoAuthor PostCoAuthor[]
   PostLike     PostLike[]
   SeriesPost   SeriesPost[]
+  PsotBookmark PsotBookmark[]
 
   @@index([urlSlug], map: "posts_urlSlug")
   @@map("posts")
@@ -297,6 +299,18 @@ model PostLike {
   @@index([fk_post_id], map: "post_likes_fk_post_id")
   @@index([fk_user_id], map: "post_likes_fk_user_id")
   @@map("post_likes")
+}
+
+model PsotBookmark {
+  id         String @id @default(cuid())
+  fk_post_id String
+  fk_user_id String
+  Post       Post   @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
+  User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
+
+  @@index([fk_post_id], map: "post_bookmarks_fk_post_id")
+  @@index([fk_user_id], map: "post_bookmarks_fk_user_id")
+  @@map("post_bookmarks")
 }
 
 model File {
