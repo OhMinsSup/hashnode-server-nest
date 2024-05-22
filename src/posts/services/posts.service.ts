@@ -243,6 +243,10 @@ export class PostsService {
       newData.subTitle = input.subTitle;
     }
 
+    if (input.urlSlug && !isEqual(post.urlSlug, input.urlSlug)) {
+      newData.urlSlug = input.urlSlug;
+    }
+
     if (input.content && !isEqual(post.content, input.content)) {
       newData.content = input.content;
     }
