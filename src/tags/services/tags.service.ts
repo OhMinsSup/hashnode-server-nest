@@ -8,7 +8,10 @@ import { PrismaService } from '../../modules/database/prisma.service';
 // utils
 import { getSlug } from '../../libs/utils';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
-import { getTagWithStatsSelector } from '../../modules/database/selectors/tag';
+import {
+  getTagSelector,
+  getTagStatsSelector,
+} from '../../modules/database/selectors/tag';
 
 // input
 import { GetWidgetTagsQuery } from '../input/get-widget-tags.query';
@@ -98,7 +101,12 @@ export class TagsService {
           },
         },
         take: input.limit ?? 5,
-        select: getTagWithStatsSelector(),
+        select: {
+          ...getTagSelector(),
+          TagStats: {
+            select: getTagStatsSelector(),
+          },
+        },
         orderBy: {
           TagStats: {
             score: 'desc',
