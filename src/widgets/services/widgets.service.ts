@@ -70,6 +70,7 @@ export class WidgetsService {
           PostConfig: {
             publishedAt: {
               not: null,
+              lt: new Date(),
             },
             isDraft: false,
           },

@@ -67,6 +67,8 @@ export class PostsService {
 
     const pageNo = toFinite(query.pageNo);
 
+    const now = new Date();
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -77,6 +79,7 @@ export class PostsService {
           PostConfig: {
             publishedAt: {
               not: null,
+              lt: now,
             },
             isDraft: false,
           },
@@ -91,6 +94,7 @@ export class PostsService {
           PostConfig: {
             publishedAt: {
               not: null,
+              lt: now,
             },
             isDraft: false,
           },
