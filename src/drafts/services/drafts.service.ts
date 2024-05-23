@@ -227,6 +227,8 @@ export class DraftsService {
 
     const pageNo = toFinite(query.pageNo);
 
+    const now = new Date();
+
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -239,6 +241,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -247,6 +250,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   equals: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -255,6 +259,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: true,
               },
@@ -273,6 +278,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -281,6 +287,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   equals: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -289,6 +296,7 @@ export class DraftsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: true,
               },

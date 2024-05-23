@@ -12,6 +12,8 @@ export class WidgetsService {
    * @param {SerializeUser} user 사용자 정보
    */
   async getLeftSidePostCount(user: SerializeUser) {
+    const now = new Date();
+
     const [submitted, draft, published] = await Promise.all([
       this.prisma.post.count({
         where: {
@@ -24,6 +26,7 @@ export class WidgetsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -32,6 +35,7 @@ export class WidgetsService {
               PostConfig: {
                 publishedAt: {
                   equals: null,
+                  gte: now,
                 },
                 isDraft: false,
               },
@@ -40,6 +44,7 @@ export class WidgetsService {
               PostConfig: {
                 publishedAt: {
                   not: null,
+                  gte: now,
                 },
                 isDraft: true,
               },
@@ -70,7 +75,7 @@ export class WidgetsService {
           PostConfig: {
             publishedAt: {
               not: null,
-              lt: new Date(),
+              lt: now,
             },
             isDraft: false,
           },
