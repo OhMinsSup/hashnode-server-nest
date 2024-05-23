@@ -171,6 +171,7 @@ export class SerializeService {
         : [],
       PostSeo: this.getPostSeo(data.PostSeo),
       count: this.getPostCount(data._count),
+      User: this.getSimpleUser(data.User),
       createdAt: data.createdAt,
       updatedAt: data.updatedAt,
     } as SerializePost<false>;

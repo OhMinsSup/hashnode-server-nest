@@ -156,6 +156,7 @@ export type SerializePost<IncludeStats = true> = {
   PostTags: SerializeTag<false>[];
   PostSeo: Partial<SerializePostSeo>;
   PostStats: IncludeStats extends true ? SerializePostStats : undefined;
+  User: SerializeSimepleUser;
   count: SerializePostCount;
   createdAt: string;
   updatedAt: string;

@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import { getBaseTagSelector } from './tag';
+import { getSimpleUserSelector } from './user';
 
 export const getPostConfigSelector = () =>
   Prisma.validator<Prisma.PostConfigSelect>()({
@@ -44,6 +45,9 @@ export const getBasePostSelector = () =>
     image: true,
     createdAt: true,
     updatedAt: true,
+    User: {
+      select: getSimpleUserSelector(),
+    },
   });
 
 export const getPostCountSelector = () =>
