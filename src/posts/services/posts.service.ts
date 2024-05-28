@@ -23,6 +23,7 @@ import { calculateRankingScore } from '../../libs/utils';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
+import { PostListQuery } from '../input/post-list.query';
 
 @Injectable()
 export class PostsService {
@@ -714,5 +715,76 @@ export class PostsService {
         score,
       },
     });
+  }
+
+  /**
+   * @description 게시글 목록
+   * @param {SerializeUser} user
+   * @param {PostListQuery} query
+   */
+  async list(user: SerializeUser, query: PostListQuery) {
+    const limit = query.limit ? toFinite(query.limit) : 20;
+
+    const pageNo = toFinite(query.pageNo);
+
+    // const now = new Date();
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          // PostConfig: {
+          //   publishedAt: {
+          //     not: null,
+          //     lt: now,
+          //   },
+          //   isDraft: false,
+          // },
+        },
+      }),
+      this.prisma.post.findMany({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          // PostConfig: {
+          //   publishedAt: {
+          //     not: null,
+          //     lt: now,
+          //   },
+          //   isDraft: false,
+          // },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (pageNo - 1) * limit,
+        take: limit,
+        select: getPostSelector(),
+      }),
+    ]);
+
+    const hasNextPage = totalCount > pageNo * limit;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list: list.map((item) =>
+          this.serialize.getPost(item, {
+            includeTagStats: false,
+          }),
+        ),
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
+    };
   }
 }

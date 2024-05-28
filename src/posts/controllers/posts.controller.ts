@@ -18,6 +18,7 @@ import { PostsService } from '../services/posts.service';
 import { PostCreateInput } from '../input/post-create.input';
 import { PostPublishedListQuery } from '../input/post-published-list.query';
 import { PostUpdateInput } from '../input/post-update.input';
+import { PostListQuery } from '../input/post-list.query';
 
 // decorators
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
@@ -26,12 +27,25 @@ import { NotLoggedInGuard } from '../../decorators/not-logged-in.decorator';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
+import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('게시글')
 @Controller('posts')
 export class PostsController {
   constructor(private readonly service: PostsService) {}
 
+  @Get()
+  @ApiOperation({ summary: '게시글 목록' })
+  @ApiBody({
+    required: true,
+    description: '게시글 생성 API',
+    type: PostListQuery,
+  })
+  list(@AuthUser() user: SerializeUser, @Query() query: PostListQuery) {
+    return this.service.list(user, query);
+  }
+
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post()
   @ApiOperation({ summary: '게시글 생성' })
   @ApiBody({
@@ -67,6 +81,7 @@ export class PostsController {
     return this.service.byId(user, id);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Put(':id')
   @ApiOperation({ summary: '게시글 수정' })
   @ApiBody({
@@ -83,6 +98,7 @@ export class PostsController {
     return this.service.update(user, id, input);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Delete(':id')
   @ApiOperation({ summary: '게시글 삭제' })
   @UseGuards(LoggedInGuard)
@@ -97,6 +113,7 @@ export class PostsController {
     return this.service.byOwner(user, id);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Post(':id/like')
   @ApiOperation({ summary: '게시글 좋아요' })
   @UseGuards(LoggedInGuard)
@@ -104,6 +121,7 @@ export class PostsController {
     return this.service.like(user, id);
   }
 
+  @Throttle({ default: { limit: 10, ttl: 60 } })
   @Delete(':id/like')
   @ApiOperation({ summary: '게시글 싫어요' })
   @UseGuards(LoggedInGuard)
