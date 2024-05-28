@@ -29,6 +29,7 @@ async function bootstrap() {
     }),
   );
 
+  app.setGlobalPrefix('api');
   app.enableVersioning({
     defaultVersion: VersionStrategy.current,
     type: VersioningType.URI,
