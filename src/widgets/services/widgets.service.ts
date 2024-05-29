@@ -125,8 +125,8 @@ export class WidgetsService {
         message: null,
         error: null,
         result: {
-          draft: pick(draft, ['totalCount', 'list']),
-          trending,
+          draft: pick(draft.result, ['totalCount', 'list']),
+          trending: pick(trending.result, ['totalCount', 'list']),
         },
       };
     }
@@ -140,7 +140,7 @@ export class WidgetsService {
           totalCount: 0,
           list: [],
         },
-        trending,
+        trending: pick(trending.result, ['totalCount', 'list']),
       },
     };
   }
