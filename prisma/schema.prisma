@@ -32,7 +32,6 @@ model User {
   File               File[]
   PostRead           PostRead[]
   Post               Post[]
-  PostCoAuthor       PostCoAuthor[]
   PostLike           PostLike[]
   Series             Series[]
   BlogMembers        BlogMembers[]
@@ -154,7 +153,6 @@ model Post {
   PostTags     PostTags[]
   PostStats    PostStats?
   PostHistory  PostHistory[]
-  PostCoAuthor PostCoAuthor[]
   PostLike     PostLike[]
   SeriesPost   SeriesPost[]
   PsotBookmark PsotBookmark[]
@@ -274,19 +272,6 @@ model PostHistory {
   Post       Post     @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
 
   @@map("post_histories")
-}
-
-// @deprecated
-model PostCoAuthor {
-  id         String @id @default(cuid())
-  fk_post_id String
-  fk_user_id String
-  Post       Post   @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  User       User   @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
-
-  @@index([fk_post_id], map: "post_co_authors_fk_post_id")
-  @@index([fk_user_id], map: "post_co_authors_fk_user_id")
-  @@map("post_co_authors")
 }
 
 model PostLike {
