@@ -24,6 +24,7 @@ import { calculateRankingScore } from '../../libs/utils';
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
 import { PostListQuery } from '../input/post-list.query';
+import { PostTrendingListQuery } from '../input/post-trending-list.query';
 
 @Injectable()
 export class PostsService {
@@ -759,6 +760,120 @@ export class PostsService {
         },
         orderBy: {
           createdAt: 'desc',
+        },
+        skip: (pageNo - 1) * limit,
+        take: limit,
+        select: getPostSelector(),
+      }),
+    ]);
+
+    const hasNextPage = totalCount > pageNo * limit;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list: list.map((item) =>
+          this.serialize.getPost(item, {
+            includeTagStats: false,
+          }),
+        ),
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
+    };
+  }
+
+  /**
+   * @description 트렌딩 게시물 조회
+   * @param {PostTrendingListQuery} query - 기간 (1week = 7, 1month = 30, 3month = 90, 6month = 180, 1year = 365)
+   */
+  async getTrendingArticles(query: PostTrendingListQuery) {
+    const limit = query.limit ? toFinite(query.limit) : 20;
+    const pageNo = toFinite(query.pageNo);
+
+    const now = new Date();
+    const time = new Date();
+
+    switch (query.duration) {
+      case 7:
+        time.setDate(time.getDate() - 7);
+        break;
+      case 30:
+        time.setDate(time.getDate() - 30);
+        break;
+      case 90:
+        time.setDate(time.getDate() - 90);
+        break;
+      case 180:
+        time.setDate(time.getDate() - 180);
+        break;
+      case 365:
+        time.setDate(time.getDate() - 365);
+        break;
+      default:
+        time.setDate(time.getDate() - 7);
+        break;
+    }
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
+          PostStats: {
+            score: {
+              gt: 0,
+            },
+            updatedAt: {
+              gte: time,
+            },
+          },
+        },
+        orderBy: {
+          PostStats: {
+            score: 'desc',
+          },
+        },
+      }),
+      this.prisma.post.findMany({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
+          PostStats: {
+            score: {
+              gt: 0,
+            },
+            updatedAt: {
+              gte: time,
+            },
+          },
+        },
+        orderBy: {
+          PostStats: {
+            score: 'desc',
+          },
         },
         skip: (pageNo - 1) * limit,
         take: limit,

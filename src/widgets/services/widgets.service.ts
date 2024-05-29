@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { pick } from 'lodash';
 import { PrismaService } from '../../modules/database/prisma.service';
 import { SerializeUser } from '../../integrations/serialize/serialize.interface';
 import { EXCEPTION_CODE } from '../../constants/exception.code';
@@ -108,8 +109,14 @@ export class WidgetsService {
    * @param {SerializeUser?} user 사용자 정보
    */
   async getMainLayoutWidgets(user?: SerializeUser) {
+    const trending = await this.post.getTrendingArticles({
+      duration: 7,
+      pageNo: 1,
+      limit: 6,
+    });
+
     if (user) {
-      const { result } = await this.draft.list(user, {
+      const draft = await this.draft.list(user, {
         pageNo: 1,
         limit: 5,
       });
@@ -118,10 +125,8 @@ export class WidgetsService {
         message: null,
         error: null,
         result: {
-          draft: {
-            totalCount: result.totalCount,
-            list: result.list,
-          },
+          draft: pick(draft, ['totalCount', 'list']),
+          trending,
         },
       };
     }
@@ -135,6 +140,7 @@ export class WidgetsService {
           totalCount: 0,
           list: [],
         },
+        trending,
       },
     };
   }

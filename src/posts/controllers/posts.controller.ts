@@ -10,6 +10,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 
 // services
 import { PostsService } from '../services/posts.service';
@@ -19,6 +20,7 @@ import { PostCreateInput } from '../input/post-create.input';
 import { PostPublishedListQuery } from '../input/post-published-list.query';
 import { PostUpdateInput } from '../input/post-update.input';
 import { PostListQuery } from '../input/post-list.query';
+import { PostTrendingListQuery } from '../input/post-trending-list.query';
 
 // decorators
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
@@ -27,7 +29,6 @@ import { NotLoggedInGuard } from '../../decorators/not-logged-in.decorator';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
-import { Throttle } from '@nestjs/throttler';
 
 @ApiTags('게시글')
 @Controller('posts')
@@ -72,6 +73,18 @@ export class PostsController {
     @Query() query: PostPublishedListQuery,
   ) {
     return this.service.published(user, query);
+  }
+
+  @Get('trending')
+  @ApiOperation({ summary: '트렌딩 게시글 목록' })
+  @ApiQuery({
+    name: 'query',
+    type: PostTrendingListQuery,
+    required: false,
+    description: '트렌딩 게시글 목록',
+  })
+  trending(@Query() query: PostTrendingListQuery) {
+    return this.service.getTrendingArticles(query);
   }
 
   @Get(':id')
