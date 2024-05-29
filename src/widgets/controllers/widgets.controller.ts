@@ -18,4 +18,10 @@ export class WidgetsController {
   getLeftSidePostCount(@AuthUser() user: SerializeUser) {
     return this.service.getLeftSidePostCount(user);
   }
+
+  @Get('get-main-layout')
+  @ApiOperation({ summary: '메인 레이아웃 위젯 데이터 조회' })
+  getMainLayoutWidgets(@AuthUser() user?: SerializeUser) {
+    return this.service.getMainLayoutWidgets(user);
+  }
 }

@@ -727,7 +727,7 @@ export class PostsService {
 
     const pageNo = toFinite(query.pageNo);
 
-    // const now = new Date();
+    const now = new Date();
 
     const [totalCount, list] = await Promise.all([
       this.prisma.post.count({
@@ -735,13 +735,13 @@ export class PostsService {
           deletedAt: {
             equals: null,
           },
-          // PostConfig: {
-          //   publishedAt: {
-          //     not: null,
-          //     lt: now,
-          //   },
-          //   isDraft: false,
-          // },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
         },
       }),
       this.prisma.post.findMany({
@@ -749,13 +749,13 @@ export class PostsService {
           deletedAt: {
             equals: null,
           },
-          // PostConfig: {
-          //   publishedAt: {
-          //     not: null,
-          //     lt: now,
-          //   },
-          //   isDraft: false,
-          // },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
         },
         orderBy: {
           createdAt: 'desc',
