@@ -1,8 +1,18 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, IntersectionType } from '@nestjs/swagger';
 import { UploadType, MediaType } from '@prisma/client';
 import { IsIn } from 'class-validator';
 
-export class FileUploadInput {
+export class FileInput {
+  @ApiProperty({
+    type: 'string',
+    format: 'binary',
+    required: true,
+    description: '업로드 파일',
+  })
+  file: Express.Multer.File;
+}
+
+export class FileInfoInput {
   @IsIn(Object.values(MediaType))
   @ApiProperty({
     description: '미디어 타입',
@@ -21,3 +31,8 @@ export class FileUploadInput {
   })
   uploadType: UploadType;
 }
+
+export class FileUploadInput extends IntersectionType(
+  FileInfoInput,
+  FileInput,
+) {}

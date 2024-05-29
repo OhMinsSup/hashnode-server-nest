@@ -7,13 +7,15 @@ import { toFinite } from 'lodash';
 import { getFileSelector } from '../../modules/database/selectors/file';
 import { type FileListQuery } from '../input/file-list.query';
 import { SerializeService } from '../../integrations/serialize/serialize.service';
-import { type FileUploadInput } from '../input/file-upload.input';
+import { type FileInfoInput } from '../input/file-upload.input';
+import { CloudflareImagesService } from '../../cloudflare/cloudflare-images.service';
 
 @Injectable()
 export class FilesService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly serialize: SerializeService,
+    private readonly cloudflare: CloudflareImagesService,
   ) {}
 
   /**
@@ -24,15 +26,31 @@ export class FilesService {
    */
   async upload(
     user: SerializeUser,
-    input: FileUploadInput,
+    input: FileInfoInput,
     file: Express.Multer.File,
   ) {
-    console.log('user', user, 'input', input, 'file', file);
+    const { url, id } = await this.cloudflare.uploadImage(file);
+
+    const data = await this.prisma.file.create({
+      data: {
+        cfId: id,
+        filename: file.originalname,
+        publicUrl: url,
+        mimeType: file.mimetype,
+        uploadType: input.uploadType,
+        mediaType: input.mediaType,
+        fk_user_id: user.id,
+      },
+    });
+
     return {
       resultCode: EXCEPTION_CODE.OK,
       message: null,
       error: null,
-      result: {},
+      result: {
+        id: data.id,
+        publicUrl: data.publicUrl,
+      },
     };
   }
 

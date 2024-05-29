@@ -117,4 +117,27 @@ export class EnvironmentService {
       ignoreUserAgents: [],
     };
   }
+
+  // -----------------------------------------------------------------------------
+  // cloudflare
+  // -----------------------------------------------------------------------------
+  getCloudflareAccountId(): string {
+    return this.configService.get<string>('CLOUDFLARE_ID');
+  }
+
+  getCloudflareApiKey(): string {
+    return this.configService.get<string>('CLOUDFLARE_API_TOKEN');
+  }
+
+  getCloudflareR2AccessKey(): string {
+    return this.configService.get<string>('CLOUDFLARE_R2_ACCESS_KEY');
+  }
+
+  getCloudflareR2SecretAccessKey(): string {
+    return this.configService.get<string>('CLOUDFLARE_R2_SECRET_ACCESS_KEY');
+  }
+
+  getCloudflareR2BucketName(): string {
+    return this.configService.get<string>('CLOUDFLARE_R2_BUCKET_NAME');
+  }
 }

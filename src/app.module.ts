@@ -28,6 +28,7 @@ import { dailyOption } from './modules/logging/winston';
 import { FilesModule } from './files/files.module';
 import { EnvironmentService } from './integrations/environment/environment.service';
 import { WidgetsModule } from './widgets/widgets.module';
+import { CloudflareModule } from './cloudflare/cloudflare.module';
 
 @Module({
   controllers: [AppController],
@@ -57,10 +58,11 @@ import { WidgetsModule } from './widgets/widgets.module';
       global: true,
     }),
     PrismaModule,
+    CloudflareModule,
     ScheduleModule.forRoot(),
     ThrottlerModule.forRootAsync({
       inject: [EnvironmentService],
-      // @ts-expect-error - ignore
+      // @ts-expect-error - ignoreUserAgents is not defined in ThrottlerModuleOptions
       useFactory: async (environmentService: EnvironmentService) => {
         const throttleConfig = environmentService.getThrottleConfig();
         return {
