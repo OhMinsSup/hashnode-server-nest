@@ -1,17 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { Post } from '@prisma/client';
 import { difference, toFinite, isEqual } from 'lodash';
+import { REQUEST } from '@nestjs/core';
 
 // services
 import { PrismaService } from '../../modules/database/prisma.service';
 import { TagsService } from '../../tags/services/tags.service';
 import { SerializeService } from '../../integrations/serialize/serialize.service';
+import { PasswordService } from '../../auth/services/password.service';
 
 // inputs
 import { PostCreateInput } from '../input/post-create.input';
 import { PostDraftInput } from '../../drafts/input/post-draft.input';
 import { PostPublishedListQuery } from '../input/post-published-list.query';
 import { PostUpdateInput } from '../input/post-update.input';
+import { PostListQuery } from '../input/post-list.query';
+import { PostTrendingListQuery } from '../input/post-trending-list.query';
 
 // utils
 import { isEmpty } from '../../libs/assertion';
@@ -23,8 +27,7 @@ import { calculateRankingScore } from '../../libs/utils';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
-import { PostListQuery } from '../input/post-list.query';
-import { PostTrendingListQuery } from '../input/post-trending-list.query';
+import type { Request } from 'express';
 
 @Injectable()
 export class PostsService {
@@ -32,6 +35,8 @@ export class PostsService {
     private readonly prisma: PrismaService,
     private readonly tags: TagsService,
     private readonly serialize: SerializeService,
+    private readonly password: PasswordService,
+    @Inject(REQUEST) private request: Request,
   ) {}
 
   /**
@@ -900,6 +905,37 @@ export class PostsService {
           nextPage: hasNextPage ? pageNo + 1 : null,
         },
       },
+    };
+  }
+
+  /**
+   * @description 게시물 조회수
+   * @param {string} id
+   */
+  async read(id: string) {
+    const ipHash = this.password.hash(this.request.ip);
+
+    const data = await this.prisma.postRead.findFirst({
+      where: {
+        fk_post_id: id,
+        ipHash,
+      },
+    });
+
+    if (!data) {
+      await this.prisma.postRead.create({
+        data: {
+          ipHash,
+          fk_post_id: id,
+        },
+      });
+    }
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: null,
     };
   }
 }

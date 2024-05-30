@@ -30,7 +30,6 @@ model User {
   UserNotifications  UserNotification[]
   UserTags           UserTags[]
   File               File[]
-  PostRead           PostRead[]
   Post               Post[]
   PostLike           PostLike[]
   Series             Series[]
@@ -210,12 +209,9 @@ model PostRead {
   id         String  @id @default(cuid())
   ipHash     String? @db.VarChar(255)
   fk_post_id String
-  fk_user_id String
   Post       Post    @relation(fields: [fk_post_id], references: [id], onDelete: Cascade)
-  User       User    @relation(fields: [fk_user_id], references: [id], onDelete: Cascade)
 
   @@index([fk_post_id], map: "post_reads_fk_post_id")
-  @@index([ipHash, fk_post_id], map: "post_reads_ipHash_fk_post_id")
   @@map("post_reads")
 }
 

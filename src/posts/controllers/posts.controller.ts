@@ -141,4 +141,11 @@ export class PostsController {
   unlike(@Param('id') id: string, @AuthUser() user: SerializeUser) {
     return this.service.unlike(user, id);
   }
+
+  @Throttle({ default: { limit: 10, ttl: 60 } })
+  @Post(':id/read')
+  @ApiOperation({ summary: '게시글 조회수 증가' })
+  read(@Param('id') id: string) {
+    return this.service.read(id);
+  }
 }
