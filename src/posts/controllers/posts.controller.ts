@@ -22,6 +22,7 @@ import { PostUpdateInput } from '../input/post-update.input';
 import { PostListQuery } from '../input/post-list.query';
 import { PostTrendingListQuery } from '../input/post-trending-list.query';
 import { PostBookmarkListQuery } from '../input/post-bookmark-list.query';
+import { PostLikeListQuery } from '../input/post-like-list.query';
 
 // decorators
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
@@ -69,11 +70,11 @@ export class PostsController {
     description: '내가 작성한 게시글 목록 (공개)',
   })
   @UseGuards(LoggedInGuard)
-  published(
+  getPublished(
     @AuthUser() user: SerializeUser,
     @Query() query: PostPublishedListQuery,
   ) {
-    return this.service.published(user, query);
+    return this.service.getPublished(user, query);
   }
 
   @Get('trending')
@@ -84,7 +85,7 @@ export class PostsController {
     required: false,
     description: '트렌딩 게시글 목록',
   })
-  trending(@Query() query: PostTrendingListQuery) {
+  getTrendingArticles(@Query() query: PostTrendingListQuery) {
     return this.service.getTrendingArticles(query);
   }
 
@@ -97,11 +98,24 @@ export class PostsController {
     description: '트렌딩 게시글 목록',
   })
   @UseGuards(LoggedInGuard)
-  bookmark(
+  getBookmarks(
     @Query() query: PostBookmarkListQuery,
     @AuthUser() user: SerializeUser,
   ) {
     return this.service.getBookmarks(user, query);
+  }
+
+  @Get('like')
+  @ApiOperation({ summary: '좋아요한 게시글 목록' })
+  @ApiQuery({
+    name: 'query',
+    type: PostLikeListQuery,
+    required: false,
+    description: '좋아요한 게시글 목록',
+  })
+  @UseGuards(LoggedInGuard)
+  getLikes(@Query() query: PostLikeListQuery, @AuthUser() user: SerializeUser) {
+    return this.service.getLikes(user, query);
   }
 
   @Get(':id')

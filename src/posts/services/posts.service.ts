@@ -17,6 +17,7 @@ import { PostUpdateInput } from '../input/post-update.input';
 import { PostListQuery } from '../input/post-list.query';
 import { PostTrendingListQuery } from '../input/post-trending-list.query';
 import { PostBookmarkListQuery } from '../input/post-bookmark-list.query';
+import { PostLikeListQuery } from '../input/post-like-list.query';
 
 // utils
 import { isEmpty } from '../../libs/assertion';
@@ -70,7 +71,7 @@ export class PostsService {
    * @param {SerializeUser} user
    * @param {PostPublishedListQuery} query
    */
-  async published(user: SerializeUser, query: PostPublishedListQuery) {
+  async getPublished(user: SerializeUser, query: PostPublishedListQuery) {
     const limit = query.limit ? toFinite(query.limit) : 20;
 
     const pageNo = toFinite(query.pageNo);
@@ -954,6 +955,87 @@ export class PostsService {
             isDraft: false,
           },
           PostBookmark: {
+            some: {
+              fk_user_id: user.id,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        skip: (pageNo - 1) * limit,
+        take: limit,
+        select: getPostSelector(),
+      }),
+    ]);
+
+    const hasNextPage = totalCount > pageNo * limit;
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: {
+        totalCount,
+        list: list.map((item) =>
+          this.serialize.getPost(item, {
+            includeTagStats: false,
+          }),
+        ),
+        pageInfo: {
+          currentPage: pageNo,
+          hasNextPage,
+          nextPage: hasNextPage ? pageNo + 1 : null,
+        },
+      },
+    };
+  }
+
+  /**
+   * @description 좋아요 게시물 조회
+   * @param {SerializeUser} user
+   * @param {PostLikeListQuery} query
+   */
+  async getLikes(user: SerializeUser, query: PostLikeListQuery) {
+    const limit = query.limit ? toFinite(query.limit) : 20;
+
+    const pageNo = toFinite(query.pageNo);
+
+    const now = new Date();
+
+    const [totalCount, list] = await Promise.all([
+      this.prisma.post.count({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
+          PostLike: {
+            some: {
+              fk_user_id: user.id,
+            },
+          },
+        },
+      }),
+      this.prisma.post.findMany({
+        where: {
+          deletedAt: {
+            equals: null,
+          },
+          PostConfig: {
+            publishedAt: {
+              not: null,
+              lt: now,
+            },
+            isDraft: false,
+          },
+          PostLike: {
             some: {
               fk_user_id: user.id,
             },
