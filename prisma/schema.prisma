@@ -34,7 +34,7 @@ model User {
   PostLike           PostLike[]
   Series             Series[]
   BlogMembers        BlogMembers[]
-  PsotBookmark       PsotBookmark[]
+  PostBookmark       PostBookmark[]
 
   @@map("users")
 }
@@ -154,7 +154,7 @@ model Post {
   PostHistory  PostHistory[]
   PostLike     PostLike[]
   SeriesPost   SeriesPost[]
-  PsotBookmark PsotBookmark[]
+  PostBookmark PostBookmark[]
 
   @@index([urlSlug], map: "posts_urlSlug")
   @@map("posts")
@@ -282,7 +282,7 @@ model PostLike {
   @@map("post_likes")
 }
 
-model PsotBookmark {
+model PostBookmark {
   id         String @id @default(cuid())
   fk_post_id String
   fk_user_id String

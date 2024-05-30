@@ -109,17 +109,23 @@ export class WidgetsService {
    * @param {SerializeUser?} user 사용자 정보
    */
   async getMainLayoutWidgets(user?: SerializeUser) {
-    const trending = await this.post.getTrendingArticles({
-      duration: 7,
-      pageNo: 1,
-      limit: 6,
-    });
-
     if (user) {
-      const draft = await this.draft.list(user, {
-        pageNo: 1,
-        limit: 5,
-      });
+      const [trending, draft, bookmark] = await Promise.all([
+        this.post.getTrendingArticles({
+          duration: 7,
+          pageNo: 1,
+          limit: 6,
+        }),
+        this.draft.list(user, {
+          pageNo: 1,
+          limit: 5,
+        }),
+        this.post.getBookmarks(user, {
+          pageNo: 1,
+          limit: 2,
+        }),
+      ]);
+
       return {
         resultCode: EXCEPTION_CODE.OK,
         message: null,
@@ -127,9 +133,16 @@ export class WidgetsService {
         result: {
           draft: pick(draft.result, ['totalCount', 'list']),
           trending: pick(trending.result, ['totalCount', 'list']),
+          bookmark: pick(bookmark.result, ['totalCount', 'list']),
         },
       };
     }
+
+    const trending = await this.post.getTrendingArticles({
+      duration: 7,
+      pageNo: 1,
+      limit: 6,
+    });
 
     return {
       resultCode: EXCEPTION_CODE.OK,
@@ -141,6 +154,10 @@ export class WidgetsService {
           list: [],
         },
         trending: pick(trending.result, ['totalCount', 'list']),
+        bookmark: {
+          totalCount: 0,
+          list: [],
+        },
       },
     };
   }

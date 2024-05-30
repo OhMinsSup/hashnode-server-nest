@@ -21,6 +21,7 @@ import { PostPublishedListQuery } from '../input/post-published-list.query';
 import { PostUpdateInput } from '../input/post-update.input';
 import { PostListQuery } from '../input/post-list.query';
 import { PostTrendingListQuery } from '../input/post-trending-list.query';
+import { PostBookmarkListQuery } from '../input/post-bookmark-list.query';
 
 // decorators
 import { LoggedInGuard } from '../../decorators/logged-in.decorator';
@@ -85,6 +86,22 @@ export class PostsController {
   })
   trending(@Query() query: PostTrendingListQuery) {
     return this.service.getTrendingArticles(query);
+  }
+
+  @Get('bookmark')
+  @ApiOperation({ summary: '북마크한 게시글 목록' })
+  @ApiQuery({
+    name: 'query',
+    type: PostBookmarkListQuery,
+    required: false,
+    description: '트렌딩 게시글 목록',
+  })
+  @UseGuards(LoggedInGuard)
+  bookmark(
+    @Query() query: PostBookmarkListQuery,
+    @AuthUser() user: SerializeUser,
+  ) {
+    return this.service.getBookmarks(user, query);
   }
 
   @Get(':id')

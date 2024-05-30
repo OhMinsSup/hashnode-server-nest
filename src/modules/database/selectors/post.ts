@@ -34,6 +34,12 @@ export const getPostStatsSelector = () =>
     score: true,
   });
 
+export const getPostBookmarkSelector = () =>
+  Prisma.validator<Prisma.PostBookmarkSelect>()({
+    fk_user_id: true,
+    fk_post_id: true,
+  });
+
 export const getBasePostSelector = () =>
   Prisma.validator<Prisma.PostSelect>()({
     id: true,
@@ -54,6 +60,7 @@ export const getPostCountSelector = () =>
   Prisma.validator<Prisma.PostCountOutputTypeSelect>()({
     PostTags: true,
     PostLike: true,
+    PostRead: true,
   });
 
 export const getPostSelector = () =>
@@ -67,6 +74,9 @@ export const getPostSelector = () =>
     },
     PostSeo: {
       select: getPostSeoSelector(),
+    },
+    PostBookmark: {
+      select: getPostBookmarkSelector(),
     },
     _count: {
       select: getPostCountSelector(),

@@ -131,6 +131,8 @@ export type SerializePostSeo = {
 
 export type SerializePostCount = {
   PostTags: number;
+  PostLike: number;
+  PostRead: number;
 };
 
 export type SerializePostConfig = {
