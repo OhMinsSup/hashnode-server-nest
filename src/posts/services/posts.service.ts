@@ -824,7 +824,7 @@ export class PostsService {
         time.setDate(time.getDate() - 365);
         break;
       default:
-        time.setDate(time.getDate() - 7);
+        time.setDate(time.getDate() - 365);
         break;
     }
 
