@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Param,
   Put,
   Query,
   UseGuards,
@@ -53,6 +54,12 @@ export class UserController {
   @UseGuards(LoggedInGuard)
   deleteMyInfo(@AuthUser() user: SerializeUser) {
     return this.service.delete(user);
+  }
+
+  @Get(':username')
+  @ApiOperation({ summary: '사용자 정보' })
+  getUserInfo(@Param('username') username: string) {
+    return this.service.getUserInfo(username);
   }
 
   @Get('widget')

@@ -13,6 +13,7 @@ import { getUserExternalFullSelector } from '../../modules/database/selectors/us
 import { assertNotFound } from '../../errors/not-found.error';
 import { isEmpty, isEqual } from 'lodash';
 import { UserEmailUpdateInput } from '../input/user-email-update.input';
+import { assertUserExists } from '../../errors/user-exists.error';
 
 // types
 import type { SerializeUser } from '../../integrations/serialize/serialize.interface';
@@ -24,6 +25,38 @@ export class UserService {
     private readonly tags: TagsService,
     private readonly serialize: SerializeService,
   ) {}
+
+  /**
+   * @description 사용자 정보 조회
+   * @param {string} username 사용자 이름
+   */
+  async getUserInfo(username: string) {
+    const data = await this.prisma.user.findFirst({
+      where: {
+        UserProfile: {
+          username,
+        },
+        deletedAt: {
+          equals: null,
+        },
+      },
+      select: getUserExternalFullSelector(),
+    });
+
+    assertNotFound(!data, {
+      resultCode: EXCEPTION_CODE.NOT_EXIST,
+      message: '사용자 정보를 찾을 수 없습니다.',
+      error: null,
+      result: null,
+    });
+
+    return {
+      resultCode: EXCEPTION_CODE.OK,
+      message: null,
+      error: null,
+      result: this.serialize.getExternalUser(data),
+    };
+  }
 
   /**
    * @description 사용자 정보 조회
@@ -106,6 +139,54 @@ export class UserService {
       error: null,
       result: null,
     });
+
+    const existsEmailWithUsername = await this.prisma.user.findFirst({
+      where: {
+        OR: [
+          {
+            email: input.email,
+          },
+          {
+            UserProfile: {
+              username: input.profile.username,
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+        email: true,
+        UserProfile: {
+          select: {
+            username: true,
+          },
+        },
+      },
+    });
+
+    assertUserExists(
+      existsEmailWithUsername &&
+        existsEmailWithUsername.id !== userInfo.id &&
+        existsEmailWithUsername.email === input.email,
+      {
+        resultCode: EXCEPTION_CODE.ALREADY_EXIST,
+        message: '이미 사용 중인 이메일입니다.',
+        error: null,
+        result: null,
+      },
+    );
+
+    assertUserExists(
+      existsEmailWithUsername &&
+        existsEmailWithUsername.id !== userInfo.id &&
+        existsEmailWithUsername.UserProfile.username === input.profile.username,
+      {
+        resultCode: EXCEPTION_CODE.ALREADY_EXIST,
+        message: '이미 사용 중인 사용자 이름입니다.',
+        error: null,
+        result: null,
+      },
+    );
 
     const newData = {} as Parameters<
       typeof this.prisma.user.update

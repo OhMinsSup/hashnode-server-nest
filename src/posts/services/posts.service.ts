@@ -229,6 +229,9 @@ export class PostsService {
       where: {
         id: id,
         fk_user_id: user.id,
+        deletedAt: {
+          equals: null,
+        },
       },
       select: getPostSelector(),
     });
