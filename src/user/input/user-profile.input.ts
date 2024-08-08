@@ -11,7 +11,6 @@ export class UserProfileInput extends PickType(SignupInput, [
   @IsOptionalUrl()
   @ApiProperty({
     description: '유저 프로필 이미지',
-    maxLength: 255,
     type: 'string',
     required: false,
   })

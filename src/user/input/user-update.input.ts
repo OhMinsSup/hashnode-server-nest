@@ -3,9 +3,12 @@ import { IsOptionalArray } from '../../decorators/is-optional-array.decorator';
 import { UserProfileInput } from './user-profile.input';
 import { UserSocialsInput } from './user-social.input';
 import { SigninInput } from '../../auth/input/signin.input';
+import { ArrayMaxSize, ArrayUnique } from 'class-validator';
 
 export class UserUpdateInput extends PickType(SigninInput, ['email']) {
   @IsOptionalArray()
+  @ArrayMaxSize(10)
+  @ArrayUnique()
   @ApiProperty({
     description: '기술스택',
     type: 'array',
